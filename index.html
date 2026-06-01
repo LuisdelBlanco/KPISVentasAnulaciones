@@ -1521,7 +1521,7 @@ function updateOficinaSelect(){
   const oficinaSel = document.getElementById('mOficina')?.value || '';
   const gesOrdenadas = getGestorasOrdenadas(oficinaSel);
   const gesOpts = [{value:'',label:'Selecciona gestora'}].concat(
-    gesOrdenadas.map(g => g.sep ? {value:'__sep__',label:g.sep,disabled:true} : {value:g,label:g})
+    gesOrdenadas.map(g => g.sep ? {value:'__sep__',label:g.sep,disabled:true} : g)
   );
   ssPopulate('mGestora', gesOpts);
 }
@@ -1553,7 +1553,7 @@ function autoRellenarOficina(){
       gesOrdenadas = getGestorasOrdenadas(c.oficina);
     }
     const gesOpts = [{value:'',label:'Selecciona gestora'}].concat(
-      gesOrdenadas.map(g => g.sep ? {value:'__sep__',label:g.sep,disabled:true} : {value:g,label:g})
+      gesOrdenadas.map(g => g.sep ? {value:'__sep__',label:g.sep,disabled:true} : g)
     );
     ssPopulate('mGestora', gesOpts);
   }
