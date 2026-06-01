@@ -1,0 +1,1696 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SM Seguros · KPIs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --red: #C2003F;
+  --red-dark: #8C002D;
+  --red-dim: #F5E8EE;
+  --red-mid: #EAC0D0;
+  --bg: #F7F7F6;
+  --surface: #FFFFFF;
+  --surface-2: #FAFAF9;
+  --border: #E8E8E6;
+  --border-2: #D4D4D0;
+  --text: #1A1A18;
+  --text-2: #52524E;
+  --text-3: #A3A39E;
+  --green: #16A34A;
+  --green-bg: #F0FDF4;
+  --amber: #D97706;
+  --amber-bg: #FFFBEB;
+  --blue: #2563EB;
+  --blue-bg: #EFF6FF;
+  --gray-bg: #F4F4F2;
+  --sidebar-w: 220px;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg: 0 20px 40px rgba(0,0,0,0.12), 0 8px 16px rgba(0,0,0,0.06);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  min-height: 100vh;
+  position: fixed;
+  top: 0; left: 0;
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+.sidebar-logo {
+  padding: 20px 16px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.sidebar-logo-mark {
+  width: 28px; height: 28px; border-radius: 7px;
+  background: var(--red);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.sidebar-logo-mark svg { width: 14px; height: 14px; }
+.sidebar-logo-text .brand {
+  font-weight: 800; font-size: 13px; color: var(--text);
+  letter-spacing: -0.01em;
+}
+.sidebar-logo-text .sub {
+  font-size: 10px; color: var(--text-3); margin-top: 1px;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.nav-group { padding: 10px 8px 4px; }
+.nav-group-label {
+  font-size: 10px; font-weight: 600; color: var(--text-3);
+  text-transform: uppercase; letter-spacing: 0.08em;
+  padding: 0 8px; margin-bottom: 2px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px; border-radius: var(--radius-sm);
+  cursor: pointer; color: var(--text-2); font-size: 13px; font-weight: 500;
+  transition: all 0.12s; margin: 1px 0;
+}
+.nav-item:hover { background: var(--bg); color: var(--text); }
+.nav-item.active { background: var(--red-dim); color: var(--red); font-weight: 600; }
+.nav-item .nav-icon { font-size: 14px; width: 16px; text-align: center; flex-shrink: 0; }
+.sidebar-foot {
+  margin-top: auto; padding: 14px 16px;
+  border-top: 1px solid var(--border);
+  font-size: 10px; color: var(--text-3);
+}
+
+/* ── MAIN ── */
+.main { margin-left: var(--sidebar-w); flex: 1; min-height: 100vh; display: flex; flex-direction: column; }
+
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 52px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+}
+.topbar-left { display: flex; align-items: center; gap: 10px; }
+.hamburger {
+  display: none; width: 32px; height: 32px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); background: transparent; cursor: pointer;
+  align-items: center; justify-content: center; font-size: 16px; color: var(--text-2);
+}
+.topbar-breadcrumb {
+  display: flex; align-items: center; gap: 6px;
+}
+.topbar-title { font-size: 14px; font-weight: 600; color: var(--text); }
+.topbar-sub { font-size: 12px; color: var(--text-3); }
+.topbar-sep { color: var(--border-2); font-size: 16px; }
+.topbar-right { display: flex; align-items: center; gap: 8px; }
+
+/* ── BUTTONS ── */
+.btn {
+  padding: 0 14px; height: 32px; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 600; cursor: pointer; border: none;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  transition: all 0.12s; display: inline-flex; align-items: center; gap: 6px;
+  white-space: nowrap;
+}
+.btn-primary { background: var(--red); color: #fff; }
+.btn-primary:hover { background: var(--red-dark); }
+.btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text-2); }
+.btn-ghost:hover { background: var(--bg); border-color: var(--border-2); color: var(--text); }
+.btn-sm { height: 26px; padding: 0 10px; font-size: 12px; }
+.btn-danger { background: #FFF1F3; border: 1px solid #FECDD3; color: #BE123C; }
+.btn-danger:hover { background: #FFE4E6; }
+
+/* ── SELECT / INPUT ── */
+.filter-select, input[type=text], input[type=number], input[type=date], select, textarea {
+  height: 32px; padding: 0 10px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  font-size: 13px; font-family: 'Plus Jakarta Sans', sans-serif;
+  color: var(--text); background: var(--surface); outline: none;
+  transition: border 0.12s, box-shadow 0.12s;
+}
+.filter-select:focus, input[type=text]:focus, input[type=number]:focus, input[type=date]:focus, select:focus, textarea:focus {
+  border-color: var(--red); box-shadow: 0 0 0 3px rgba(194,0,63,0.08);
+}
+input::placeholder { color: var(--text-3); }
+textarea { height: auto; min-height: 72px; padding: 8px 10px; resize: vertical; }
+
+/* ── CONTENT ── */
+.content { padding: 24px; flex: 1; }
+
+/* ── PAGES ── */
+.page { display: none; }
+.page.active { display: block; animation: fadeIn 0.18s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* ── KPI GRID ── */
+.kpi-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 20px; }
+@media (max-width: 1200px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 700px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.kpi-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px;
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.15s, transform 0.15s;
+  position: relative; overflow: hidden;
+}
+.kpi-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.kpi-card-accent {
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: var(--accent, var(--red));
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+.kpi-label { font-size: 11px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+.kpi-value { font-size: 26px; font-weight: 800; color: var(--text); letter-spacing: -0.02em; line-height: 1; }
+.kpi-delta { font-size: 11px; color: var(--text-3); margin-top: 6px; }
+
+/* ── CHARTS GRID ── */
+.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+@media (max-width: 900px) { .charts-grid { grid-template-columns: 1fr; } }
+
+.chart-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px;
+  box-shadow: var(--shadow);
+}
+.chart-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.chart-card-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.chart-wrap { position: relative; height: 210px; }
+
+/* ── TABLE CARD ── */
+.table-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  overflow: hidden; margin-bottom: 20px;
+}
+.table-card-header {
+  padding: 14px 18px; display: flex; justify-content: space-between;
+  align-items: center; border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.table-card-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th {
+  font-size: 11px; font-weight: 600; color: var(--text-3);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  padding: 10px 14px; text-align: left;
+  background: var(--surface-2); border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+td { padding: 9px 14px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: var(--bg); }
+
+/* ── BADGES ── */
+.badge {
+  display: inline-flex; align-items: center; padding: 2px 8px;
+  border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap;
+}
+.badge-venta { background: var(--green-bg); color: var(--green); }
+.badge-anulacion { background: #FFF1F3; color: #BE123C; }
+.badge-rehabilitacion { background: var(--blue-bg); color: var(--blue); }
+.badge-sustitucion { background: var(--amber-bg); color: var(--amber); }
+.badge-sin-efecto { background: var(--gray-bg); color: var(--text-3); }
+
+/* ── FILTERS BAR ── */
+.filters-bar {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  background: var(--surface); padding: 10px 14px;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow); margin-bottom: 16px;
+}
+.filters-label { font-size: 11px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* ── PROGRESS ── */
+.progress-bar { background: var(--red-dim); border-radius: 3px; height: 5px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--red); border-radius: 3px; transition: width 0.4s; }
+
+/* ── SECTION LABEL ── */
+.section-label {
+  font-size: 11px; font-weight: 700; color: var(--red);
+  text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px;
+}
+
+/* ── OFICINA CARDS ── */
+.oficinas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px,1fr)); gap: 14px; margin-bottom: 20px; }
+.oficina-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow);
+}
+.oficina-card-name {
+  font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 12px;
+  display: flex; align-items: center; gap: 6px;
+}
+.oficina-stat {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 5px 0; font-size: 12px; border-bottom: 1px solid var(--border);
+}
+.oficina-stat:last-of-type { border-bottom: none; }
+.oficina-stat span:last-child { font-weight: 700; font-size: 13px; }
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.35);
+  z-index: 200; display: none; align-items: center; justify-content: center;
+  backdrop-filter: blur(4px); padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface); border-radius: 14px;
+  padding: 28px; width: 100%; max-width: 580px; max-height: 90vh; overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+  animation: modalIn 0.2s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(8px); } to { opacity: 1; transform: none; } }
+.modal-title {
+  font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 20px;
+  display: flex; align-items: center; gap: 8px;
+}
+.modal-title-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group.span2 { grid-column: span 2; }
+.form-group label { font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.05em; }
+.form-group input, .form-group select, .form-group textarea { width: 100%; }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--border); }
+
+/* ── IMPORT ── */
+.import-drop {
+  border: 2px dashed var(--red-mid); border-radius: var(--radius);
+  padding: 28px; text-align: center; cursor: pointer;
+  color: var(--text-3); font-size: 13px; margin-bottom: 16px;
+  transition: all 0.15s;
+}
+.import-drop:hover { border-color: var(--red); color: var(--red); background: var(--red-dim); }
+.import-drop-icon { font-size: 28px; margin-bottom: 8px; }
+
+/* ── TAG ── */
+.tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--red-dim); color: var(--red);
+  padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
+}
+.tag-remove { background: none; border: none; cursor: pointer; color: var(--red); font-size: 14px; padding: 0; line-height: 1; }
+
+/* ── EMPTY STATE ── */
+.empty-state { text-align: center; padding: 40px 20px; color: var(--text-3); }
+.empty-icon { font-size: 32px; margin-bottom: 10px; }
+.empty-state p { font-size: 13px; }
+
+/* ── TOPBAR BADGE ── */
+.office-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--red-dim); color: var(--red);
+  padding: 3px 10px 3px 6px; border-radius: 20px; font-size: 12px; font-weight: 600;
+}
+.office-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--red); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  :root { --sidebar-w: 0px; }
+  .sidebar { transform: translateX(-220px); width: 220px; }
+  .sidebar.open { transform: none; }
+  .main { margin-left: 0; }
+  .hamburger { display: flex; }
+  .charts-grid { grid-template-columns: 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
+  .form-group.span2 { grid-column: span 1; }
+  .content { padding: 16px; }
+  .topbar { padding: 0 16px; }
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 10px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-mark">
+      <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M7 1L13 4.5V9.5L7 13L1 9.5V4.5L7 1Z" fill="white" fill-opacity="0.9"/>
+      </svg>
+    </div>
+    <div class="sidebar-logo-text">
+      <div class="brand">SM SEGUROS</div>
+      <div class="sub">Dashboard KPIs</div>
+    </div>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-label">Análisis</div>
+    <div class="nav-item active" onclick="goPage('dashboard')"><span class="nav-icon">⬡</span> Resumen general</div>
+    <div class="nav-item" onclick="goPage('oficinas')"><span class="nav-icon">⊞</span> Por oficina</div>
+    <div class="nav-item" onclick="goPage('comerciales')"><span class="nav-icon">≡</span> Por agente</div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Datos</div>
+    <div class="nav-item" onclick="goPage('registros')"><span class="nav-icon">☰</span> Registros</div>
+    <div class="nav-item" onclick="goPage('importar')"><span class="nav-icon">↓</span> Importar</div>
+    <div class="nav-item" onclick="goPage('actividad')"><span class="nav-icon">◎</span> Actividad comercial</div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Sistema</div>
+    <div class="nav-item" onclick="goPage('config')"><span class="nav-icon">◈</span> Ajustes</div>
+  </div>
+
+  <div class="sidebar-foot">Occident · Agencia exclusiva</div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger" id="hamburger" onclick="toggleSidebar()">☰</button>
+      <div class="topbar-breadcrumb">
+        <span class="topbar-title" id="pageTitle">Resumen general</span>
+        <span class="topbar-sep">·</span>
+        <span class="topbar-sub" id="pageSubtitle">Visión global de producción</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <select class="filter-select" id="yearFilter" onchange="renderAll()" style="width:90px">
+        <option value="todos">Todos</option>
+        <option value="2024">2024</option>
+        <option value="2025">2025</option>
+        <option value="2026" selected>2026</option>
+      </select>
+      <select class="filter-select" id="monthFilter" onchange="renderAll()" style="width:110px">
+        <option value="todos">Todos meses</option>
+        <option value="1">Enero</option><option value="2">Febrero</option>
+        <option value="3">Marzo</option><option value="4">Abril</option>
+        <option value="5">Mayo</option><option value="6">Junio</option>
+        <option value="7">Julio</option><option value="8">Agosto</option>
+        <option value="9">Septiembre</option><option value="10">Octubre</option>
+        <option value="11">Noviembre</option><option value="12">Diciembre</option>
+      </select>
+      <button class="btn btn-primary" onclick="openModal()">+ Nueva póliza</button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- PAGE: DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="filters-bar">
+        <span class="filters-label">Vista</span>
+        <select class="filter-select" id="dashOficina" onchange="actualizarAgenteDash();renderAll();" style="width:160px">
+          <option value="">Todas las oficinas</option>
+        </select>
+        <select class="filter-select" id="dashAgente" onchange="renderAll()" style="width:150px">
+          <option value="">Todos los agentes</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" onclick="resetFiltrosDash()">✕ Limpiar</button>
+      </div>
+
+      <div class="kpi-grid" id="kpiGrid"></div>
+
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <span class="chart-card-title">Producción mensual</span>
+            <button id="btnObjetivo" class="btn btn-ghost btn-sm" onclick="toggleObjetivo()" style="font-size:11px;">◎ Objetivo</button>
+          </div>
+          <div class="chart-wrap"><canvas id="chartMensual"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <span class="chart-card-title">Distribución por tipo</span>
+          </div>
+          <div class="chart-wrap"><canvas id="chartTipos"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <span class="chart-card-title">Anulaciones por motivo</span>
+          </div>
+          <div class="chart-wrap"><canvas id="chartMotivos"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <span class="chart-card-title">Ranking de ramos</span>
+          </div>
+          <div class="chart-wrap"><canvas id="chartRamos"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <span class="chart-card-title">Por oficina</span>
+          </div>
+          <div class="chart-wrap"><canvas id="chartOficinas"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: OFICINAS -->
+    <div class="page" id="page-oficinas">
+      <div class="oficinas-grid" id="oficinasGrid"></div>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-card-title">Detalle por oficina</span>
+        </div>
+        <div class="table-scroll"><table id="tablaOficinas"><thead></thead><tbody></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- PAGE: COMERCIALES -->
+    <div class="page" id="page-comerciales">
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-card-title">Ranking por agente</span>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr>
+              <th>#</th><th>Agente</th><th>Oficina</th>
+              <th>Emisiones</th><th>Anulaciones</th><th>Rehab.</th><th>Reempl.</th><th>Sin efecto</th><th>Neto</th><th>Retención</th>
+            </tr></thead>
+            <tbody id="bodyComerciales"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: REGISTROS -->
+    <div class="page" id="page-registros">
+      <div class="filters-bar">
+        <span class="filters-label">Filtrar</span>
+        <select class="filter-select" id="fOficina" onchange="renderRegistros()" style="width:150px">
+          <option value="">Todas las oficinas</option>
+        </select>
+        <select class="filter-select" id="fAgente" onchange="renderRegistros()" style="width:140px">
+          <option value="">Todos los agentes</option>
+        </select>
+        <select class="filter-select" id="fTipo" onchange="renderRegistros()" style="width:130px">
+          <option value="">Todos los tipos</option>
+          <option value="Emisión">Emisión</option>
+          <option value="Anulación">Anulación</option>
+          <option value="Sin efecto">Sin efecto</option>
+          <option value="Reemplazo">Reemplazo</option>
+          <option value="Suspenso">Suspenso</option>
+          <option value="Rehabilitación">Rehabilitación</option>
+        </select>
+        <select class="filter-select" id="fRamo" onchange="renderRegistros()" style="width:130px">
+          <option value="">Todos los ramos</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" onclick="resetFiltros()">✕ Limpiar</button>
+        <span style="margin-left:auto;font-size:12px;color:var(--text-3);" id="countRegistros"></span>
+      </div>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-card-title">Movimientos</span>
+          <button class="btn btn-primary btn-sm" onclick="openModal()">+ Añadir</button>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr>
+              <th>Fecha</th><th>Tipo</th><th>Nº Póliza</th><th>Ramo</th>
+              <th>Gestora</th><th>Oficina</th><th>Prima neta</th><th>Prima corregida</th>
+              <th>Tomador</th><th>Agente</th><th>Observaciones</th><th></th>
+            </tr></thead>
+            <tbody id="bodyRegistros"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: IMPORTAR -->
+    <div class="page" id="page-importar">
+      <div style="max-width:680px;">
+
+        <!-- BACKUP COMPLETO -->
+        <p class="section-label">Copia de seguridad completa</p>
+        <div class="table-card" style="margin-bottom:24px;">
+          <div class="table-card-header"><span class="table-card-title">Exportar / Importar todos los datos</span></div>
+          <div style="padding:18px;">
+            <p style="font-size:13px;color:var(--text-2);margin-bottom:16px;">Guarda <strong>todos tus datos</strong> — pólizas, actividad comercial, agentes, gestoras y configuración — en un archivo JSON. Úsalo para hacer copias de seguridad o para restaurar los datos en otro navegador o dispositivo.</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <button class="btn btn-primary" onclick="exportarBackup()">⬇ Exportar copia de seguridad</button>
+              <button class="btn btn-ghost" onclick="document.getElementById('backupInput').click()">⬆ Restaurar copia de seguridad
+                <input type="file" id="backupInput" accept=".json" style="display:none" onchange="importarBackup(this)">
+              </button>
+            </div>
+            <div id="backupMsg" style="margin-top:10px;font-size:12px;"></div>
+          </div>
+        </div>
+
+        <p class="section-label">Importar desde Excel / CSV</p>
+        <div class="import-drop" onclick="document.getElementById('csvInput').click()">
+          <div class="import-drop-icon">📄</div>
+          <strong>Arrastra tu archivo CSV o haz clic para seleccionar</strong>
+          <div style="margin-top:6px;font-size:12px;">Formato: fecha, tipo, poliza, ramo, gestora, oficina, prima_neta, prima_corregida, tomador, agente, observaciones</div>
+          <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="importCSV(this)">
+        </div>
+        <div class="table-card" style="margin-bottom:16px;">
+          <div class="table-card-header"><span class="table-card-title">Formato esperado</span></div>
+          <table>
+            <thead><tr><th>Columna</th><th>Ejemplo</th><th>Obligatorio</th></tr></thead>
+            <tbody>
+              <tr><td><code style="font-family:'JetBrains Mono',monospace;font-size:12px">fecha</code></td><td>2024-01-15</td><td>✅</td></tr>
+              <tr><td><code style="font-family:'JetBrains Mono',monospace;font-size:12px">tipo</code></td><td>Emisión / Anulación / Sin efecto / Reemplazo / Suspenso / Rehabilitación</td><td>✅</td></tr>
+              <tr><td><code style="font-family:'JetBrains Mono',monospace;font-size:12px">poliza</code></td><td>12345678</td><td>✅</td></tr>
+              <tr><td><code style="font-family:'JetBrains Mono',monospace;font-size:12px">ramo</code></td><td>Autos / Hogar…</td><td>✅</td></tr>
+              <tr><td><code style="font-family:'JetBrains Mono',monospace;font-size:12px">gestora</code></td><td>8-93101</td><td>✅</td></tr>
+              <tr><td><code style="font-family:'JetBrains Mono',monospace;font-size:12px">oficina</code></td><td>Barcelona</td><td>✅</td></tr>
+              <tr><td><code style="font-family:'JetBrains Mono',monospace;font-size:12px">prima_neta</code></td><td>350.50</td><td>No</td></tr>
+              <tr><td><code style="font-family:'JetBrains Mono',monospace;font-size:12px">prima_corregida</code></td><td>320.00</td><td>No</td></tr>
+              <tr><td><code style="font-family:'JetBrains Mono',monospace;font-size:12px">tomador</code></td><td>Juan García</td><td>No</td></tr>
+              <tr><td><code style="font-family:'JetBrains Mono',monospace;font-size:12px">agente</code></td><td>Vicky Giménez</td><td>No</td></tr>
+              <tr><td><code style="font-family:'JetBrains Mono',monospace;font-size:12px">observaciones</code></td><td>Texto libre</td><td>No</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="font-size:12px;color:var(--text-3);margin-bottom:8px;">O pega el texto CSV directamente:</p>
+        <textarea id="csvText" style="width:100%;height:110px;font-family:'JetBrains Mono',monospace;font-size:12px;" placeholder="fecha,tipo,poliza,ramo,gestora,oficina,prima_neta,prima_corregida,tomador,agente,observaciones&#10;2024-03-10,Emisión,12345678,Autos,8-93101,Barcelona,420,390,Juan García,Vicky Giménez,"></textarea>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <button class="btn btn-primary" onclick="importCSVText()">Importar texto</button>
+          <button class="btn btn-danger" onclick="if(confirm('¿Borrar TODOS los registros?')){registros=[];saveData();renderAll();}">🗑 Borrar todo</button>
+          <button class="btn btn-ghost" onclick="generarEjemplos()">⚡ Generar datos de ejemplo</button>
+        </div>
+        <div id="importMsg" style="margin-top:10px;font-size:13px;"></div>
+      </div>
+    </div>
+
+    <!-- PAGE: ACTIVIDAD COMERCIAL -->
+    <div class="page" id="page-actividad">
+      <div style="max-width:800px;">
+        <p class="section-label">Actividad comercial · Dirección comercial</p>
+        <div class="table-card" style="margin-bottom:20px;">
+          <div class="table-card-header"><span class="table-card-title">Registrar actividad del mes</span></div>
+          <div style="padding:18px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;align-items:end;">
+              <div class="form-group">
+                <label>Mes</label>
+                <select id="acMes">
+                  <option value="1">Enero</option><option value="2">Febrero</option>
+                  <option value="3">Marzo</option><option value="4">Abril</option>
+                  <option value="5">Mayo</option><option value="6">Junio</option>
+                  <option value="7">Julio</option><option value="8">Agosto</option>
+                  <option value="9">Septiembre</option><option value="10">Octubre</option>
+                  <option value="11">Noviembre</option><option value="12">Diciembre</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Año</label>
+                <select id="acAnio">
+                  <option value="2024">2024</option>
+                  <option value="2025">2025</option>
+                  <option value="2026" selected>2026</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Oficina</label>
+                <select id="acOficina" onchange="actualizarAgentesActividad()"></select>
+              </div>
+              <div class="form-group">
+                <label>Agente</label>
+                <select id="acAgente"></select>
+              </div>
+              <div class="form-group">
+                <label>Oportunidades creadas</label>
+                <input type="number" id="acOportunidades" placeholder="0" min="0" step="1">
+              </div>
+              <div></div><div></div>
+              <div style="display:flex;align-items:flex-end;">
+                <button class="btn btn-primary" onclick="guardarActividad()" style="width:100%">Guardar</button>
+              </div>
+            </div>
+            <div id="actividadMsg" style="margin-top:10px;font-size:12px;"></div>
+          </div>
+        </div>
+        <div class="table-card">
+          <div class="table-card-header"><span class="table-card-title">Histórico</span></div>
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th>Mes</th><th>Año</th><th>Oficina</th><th>Agente</th><th>Oportunidades</th><th></th></tr></thead>
+              <tbody id="bodyActividad"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: AJUSTES -->
+    <div class="page" id="page-config">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:960px;">
+        <div class="table-card">
+          <div class="table-card-header"><span class="table-card-title">Oficinas</span></div>
+          <div style="padding:14px;">
+            <table style="margin-bottom:12px;"><thead><tr><th>Nombre</th><th></th></tr></thead><tbody id="bodyOficinasCfg"></tbody></table>
+            <div style="display:flex;gap:8px;">
+              <input type="text" id="newOficina" placeholder="Nueva oficina..." style="flex:1;">
+              <button class="btn btn-primary btn-sm" onclick="addOficina()">+ Añadir</button>
+            </div>
+            <div id="oficinaMsg" style="margin-top:6px;font-size:12px;"></div>
+          </div>
+        </div>
+        <div class="table-card">
+          <div class="table-card-header"><span class="table-card-title">Comerciales / Agentes</span></div>
+          <div style="padding:14px;">
+            <table style="margin-bottom:12px;"><thead><tr><th>Nombre</th><th>Oficina</th><th></th></tr></thead><tbody id="bodyComercCfg"></tbody></table>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <input type="text" id="newComercNombre" placeholder="Nombre" style="flex:1;min-width:120px;">
+              <select id="newComercOficina" style="flex:1;min-width:120px;"></select>
+              <button class="btn btn-primary btn-sm" onclick="addComercial()">+ Añadir</button>
+            </div>
+            <div id="comercialMsg" style="margin-top:6px;font-size:12px;"></div>
+          </div>
+        </div>
+        <div class="table-card">
+          <div class="table-card-header"><span class="table-card-title">Gestoras</span></div>
+          <div style="padding:14px;">
+            <table style="margin-bottom:12px;"><thead><tr><th>Código</th><th></th></tr></thead><tbody id="bodyGestorasCfg"></tbody></table>
+            <div style="display:flex;gap:8px;">
+              <input type="text" id="newGestora" placeholder="Ej: 8-93101" style="flex:1;">
+              <button class="btn btn-primary btn-sm" onclick="addGestora()">+ Añadir</button>
+            </div>
+            <div id="gestoraMsg" style="margin-top:6px;font-size:12px;"></div>
+          </div>
+        </div>
+        <div class="table-card">
+          <div class="table-card-header"><span class="table-card-title">Ramos</span></div>
+          <div style="padding:14px;">
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;" id="ramosTagsContainer"></div>
+            <div style="display:flex;gap:8px;">
+              <input type="text" id="newRamo" placeholder="Nuevo ramo..." style="flex:1;">
+              <button class="btn btn-primary btn-sm" onclick="addRamo()">+ Añadir</button>
+            </div>
+            <div id="ramoMsg" style="margin-top:6px;font-size:12px;"></div>
+          </div>
+        </div>
+        <div class="table-card" style="grid-column:span 2;">
+          <div class="table-card-header">
+            <span class="table-card-title">Objetivos mensuales por agente</span>
+            <span style="font-size:12px;color:var(--text-3);">Total global: <strong id="totalObjetivoGlobal" style="color:var(--red)">0</strong> pól/mes</span>
+          </div>
+          <div style="padding:14px;">
+            <p style="font-size:12px;color:var(--text-3);margin-bottom:12px;">El total global se calcula automáticamente como suma de todos los objetivos individuales. Si un agente no tiene objetivo propio, se usa el de su oficina.</p>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;" id="objetivosAgentesGrid"></div>
+            <input type="hidden" id="objetivoMensual">
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-title"><span class="modal-title-dot"></span> Registrar movimiento</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Fecha de emisión *</label>
+        <input type="date" id="mFecha">
+      </div>
+      <div class="form-group">
+        <label>Tipo de operación *</label>
+        <select id="mTipo">
+          <option value="Emisión">Emisión</option>
+          <option value="Anulación">Anulación</option>
+          <option value="Sin efecto">Sin efecto</option>
+          <option value="Reemplazo">Reemplazo</option>
+          <option value="Suspenso">Suspenso</option>
+          <option value="Rehabilitación">Rehabilitación</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Número de póliza *</label>
+        <input type="text" id="mPoliza" placeholder="Ej: 8-11316079-L">
+      </div>
+      <div class="form-group">
+        <label>Ramo *</label>
+        <select id="mRamo"></select>
+      </div>
+      <div class="form-group">
+        <label>Agente</label>
+        <select id="mAgente" onchange="autoRellenarOficina()"></select>
+      </div>
+      <div class="form-group">
+        <label>Oficina *</label>
+        <select id="mOficina"></select>
+      </div>
+      <div class="form-group">
+        <label>Gestora *</label>
+        <select id="mGestora">
+          <option value="">Selecciona gestora</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Prima neta (€)</label>
+        <input type="number" id="mPrima" placeholder="0.00" min="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>Prima corregida (€)</label>
+        <input type="number" id="mPrimaCorregida" placeholder="0.00" min="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>Tomador</label>
+        <input type="text" id="mTomador" placeholder="Nombre del tomador">
+      </div>
+      <div class="form-group span2">
+        <label>Observaciones</label>
+        <textarea id="mNotas" placeholder="Observaciones opcionales..."></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarRegistro()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────
+const DEFAULTS = {
+  oficinas: ['Montornés', 'Polígono', 'Mataró', 'Barcelona'],
+  comerciales: [
+    {nombre:'Carlos del Blanco', oficina:'Montornés'},
+    {nombre:'María Linares', oficina:'Montornés'},
+    {nombre:'Raúl López', oficina:'Montornés'},
+    {nombre:'Macarena Melero', oficina:'Montornés'},
+    {nombre:'Imma Franco', oficina:'Montornés'},
+    {nombre:'Conchi Soto', oficina:'Polígono'},
+    {nombre:'Luis del Blanco', oficina:'Polígono'},
+    {nombre:'Vicky Giménez', oficina:'Barcelona'},
+    {nombre:'Cristina Egea', oficina:'Barcelona'},
+    {nombre:'Irene Ruiz', oficina:'Barcelona'},
+    {nombre:'Elsa Kubala', oficina:'Barcelona'},
+    {nombre:'Mary González', oficina:'Barcelona'},
+    {nombre:'Marta Calcerrada', oficina:'Barcelona'},
+    {nombre:'Iago Losada', oficina:'Mataró'},
+    {nombre:'Erika Gómez', oficina:'Mataró'},
+    {nombre:'Dafne Campaña', oficina:'Mataró'},
+  ],
+  ramos: ['Autos','Hogar','Comunidades','Comercios','PYMES','Vida temporal','Vida ahorro','Salud','Accidentes','RC','Riesgos industriales','Ciberriesgos','D&O','Multirriesgo','Otros'],
+  gestoras: ['8-93101','N-20587','8-77412','8-78005'],
+  objetivo: 154,
+  objetivosPorOficina: { 'Mataró':28, 'Montornés':60, 'Polígono':18, 'Barcelona':48 },
+  objetivosAgentes: {},
+  registros: []
+};
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem('sm_kpis_v2');
+    if (raw) {
+      const p = JSON.parse(raw);
+      if (!p.objetivosPorOficina) p.objetivosPorOficina = DEFAULTS.objetivosPorOficina;
+      if (!p.gestoras) p.gestoras = DEFAULTS.gestoras;
+      if (!p.objetivosAgentes) p.objetivosAgentes = {};
+
+      // ── MIGRACIÓN DE NOMBRES ──────────────────────
+      const renameOf = {
+        'Montornés Centro': 'Montornés',
+        'Polígono / Montornés Norte': 'Polígono'
+      };
+      // Renombrar en lista de oficinas
+      p.oficinas = p.oficinas.map(o => renameOf[o] || o);
+      // Renombrar en comerciales
+      p.comerciales = p.comerciales.map(c => ({
+        ...c, oficina: renameOf[c.oficina] || c.oficina
+      }));
+      // Renombrar claves en objetivosPorOficina
+      Object.entries(renameOf).forEach(([oldN, newN]) => {
+        if (p.objetivosPorOficina[oldN] !== undefined) {
+          p.objetivosPorOficina[newN] = p.objetivosPorOficina[oldN];
+          delete p.objetivosPorOficina[oldN];
+        }
+      });
+      // Renombrar en registros
+      if (p.registros) p.registros = p.registros.map(r => ({
+        ...r, oficina: renameOf[r.oficina] || r.oficina
+      }));
+      // Renombrar en actividad
+      if (p.actividad) p.actividad = p.actividad.map(a => ({
+        ...a, oficina: renameOf[a.oficina] || a.oficina
+      }));
+      // Corregir oficina de agentes específicos
+      const reasignar = {
+        'Carlos del Blanco': 'Montornés',
+        'María Linares': 'Montornés',
+        'Raúl López': 'Montornés'
+      };
+      p.comerciales = p.comerciales.map(c =>
+        reasignar[c.nombre] ? {...c, oficina: reasignar[c.nombre]} : c
+      );
+      if (p.registros) p.registros = p.registros.map(r => {
+        const of = reasignar[r.agente || r.comercial];
+        return of ? {...r, oficina: of} : r;
+      });
+      // Añadir agentes nuevos si no existen
+      const nuevos = [
+        {nombre:'Imma Franco', oficina:'Montornés'},
+        {nombre:'Luis del Blanco', oficina:'Polígono'},
+        {nombre:'Elsa Kubala', oficina:'Barcelona'},
+        {nombre:'Mary González', oficina:'Barcelona'},
+        {nombre:'Marta Calcerrada', oficina:'Barcelona'}
+      ];
+      nuevos.forEach(n => {
+        if (!p.comerciales.find(c => c.nombre === n.nombre)) p.comerciales.push(n);
+      });
+      // Asegurar oficinas nuevas existen
+      ['Montornés','Polígono'].forEach(o => {
+        if (!p.oficinas.includes(o)) p.oficinas.push(o);
+      });
+      // ─────────────────────────────────────────────
+
+      return p;
+    }
+  } catch(e) {}
+  return {...DEFAULTS, registros: generateSampleData(), actividad: []};
+}
+function saveData() {
+  localStorage.setItem('sm_kpis_v2', JSON.stringify({
+    oficinas, comerciales, ramos, gestoras, objetivo,
+    objetivosPorOficina, objetivosAgentes, registros, actividad
+  }));
+}
+let { oficinas, comerciales, ramos, gestoras = DEFAULTS.gestoras, objetivo,
+      objetivosPorOficina = DEFAULTS.objetivosPorOficina,
+      objetivosAgentes = {},
+      registros, actividad = [] } = loadData();
+
+function generateSampleData() {
+  const data = [];
+  const tipos = ['Emisión','Emisión','Emisión','Emisión','Emisión','Emisión','Anulación','Anulación','Rehabilitación','Reemplazo','Sin efecto','Suspenso'];
+  const motivosAnulacion = ['Competencia - precio','Competencia - precio','Venta del riesgo','Motivos económicos','Desaparición del riesgo','Competencia - otras causas','Falta de pago','Descontento siniestro','Otras causas no especificadas'];
+  const rlist = ramos.length ? ramos : DEFAULTS.ramos;
+  const team = comerciales.length ? comerciales : DEFAULTS.comerciales;
+  const gestlist = gestoras.length ? gestoras : DEFAULTS.gestoras;
+  const tomadores = ['Juan García López','Ana Martínez Ruiz','Pedro Sánchez Gómez','María López Fernández','Carlos Rodríguez Pérez','Laura González Díaz','José Hernández Muñoz','Carmen Jiménez Moreno','Francisco Martín Álvarez','Isabel Romero Serrano','Antonio Navarro Torres','Dolores Ramos Molina','Manuel Gutiérrez Rubio','Pilar Moreno Castillo','David Ortega Vidal'];
+  ['2024','2025','2026'].forEach(year => {
+    const months = year === '2026' ? 4 : 12;
+    for (let m = 1; m <= months; m++) {
+      const count = 100 + Math.floor(Math.random() * 60);
+      for (let i = 0; i < count; i++) {
+        const c = team[Math.floor(Math.random() * team.length)];
+        const day = 1 + Math.floor(Math.random() * 27);
+        const tipo = tipos[Math.floor(Math.random() * tipos.length)];
+        const ramo = rlist[Math.floor(Math.random() * rlist.length)];
+        const motivo = tipo === 'Anulación' ? motivosAnulacion[Math.floor(Math.random()*motivosAnulacion.length)] : '';
+        const prima = tipo === 'Anulación' ? 0 : Math.round((80 + Math.random() * 1200) * 100) / 100;
+        data.push({
+          id: Date.now() + Math.random(),
+          fecha: `${year}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`,
+          oficina: c.oficina, agente: c.nombre, tipo, ramo,
+          poliza: String(10000000 + Math.floor(Math.random()*89999999)),
+          gestora: gestlist[Math.floor(Math.random()*gestlist.length)],
+          prima, primaCorregida: prima > 0 ? Math.round(prima * 1.25 * 100)/100 : 0,
+          tomador: tomadores[Math.floor(Math.random()*tomadores.length)],
+          notas: motivo
+        });
+      }
+    }
+  });
+  return data;
+}
+
+// ── FILTERING ─────────────────────────────────────
+function getFiltered() {
+  const year = document.getElementById('yearFilter')?.value || 'todos';
+  const month = document.getElementById('monthFilter')?.value || 'todos';
+  const dOf = document.getElementById('dashOficina')?.value || '';
+  const dAg = document.getElementById('dashAgente')?.value || '';
+  return registros.filter(r => {
+    if (!r.fecha) return false;
+    const d = new Date(r.fecha);
+    if (year !== 'todos' && d.getFullYear() != year) return false;
+    if (month !== 'todos' && (d.getMonth()+1) != month) return false;
+    if (dOf && r.oficina !== dOf) return false;
+    if (dAg && (r.agente||r.comercial) !== dAg) return false;
+    return true;
+  });
+}
+function getFilteredRegistros() {
+  let data = getFiltered();
+  const fOf = document.getElementById('fOficina')?.value||'';
+  const fAg = document.getElementById('fAgente')?.value||'';
+  const fTi = document.getElementById('fTipo')?.value||'';
+  const fRa = document.getElementById('fRamo')?.value||'';
+  if (fOf) data = data.filter(r => r.oficina === fOf);
+  if (fAg) data = data.filter(r => (r.agente||r.comercial) === fAg);
+  if (fTi) data = data.filter(r => r.tipo === fTi);
+  if (fRa) data = data.filter(r => r.ramo === fRa);
+  return data;
+}
+
+// ── NAVIGATION ────────────────────────────────────
+const pageNames = {
+  dashboard: ['Resumen general','Visión global de producción'],
+  oficinas: ['Por oficina','KPIs por centro'],
+  comerciales: ['Por agente','Ranking individual'],
+  registros: ['Registros','Listado de movimientos'],
+  importar: ['Importar','CSV / Excel → sistema'],
+  actividad: ['Actividad comercial','Datos mensuales'],
+  config: ['Ajustes','Configuración del sistema']
+};
+function goPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+id)?.classList.add('active');
+  document.querySelector(`.nav-item[onclick*="'${id}'"]`)?.classList.add('active');
+  const [t,s] = pageNames[id]||['',''];
+  document.getElementById('pageTitle').textContent = t;
+  document.getElementById('pageSubtitle').textContent = s;
+  if (id==='registros') populateFilterSelects();
+  if (id==='config') renderConfig();
+  if (id==='actividad') { renderActividad(); preseleccionarMesActividad(); }
+  renderAll();
+}
+function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+
+// ── RENDER ALL ────────────────────────────────────
+let charts = {};
+let objetivoVisible = false;
+
+function getObj() {
+  const dOf = document.getElementById('dashOficina')?.value||'';
+  const dAg = document.getElementById('dashAgente')?.value||'';
+  if(dAg && objetivosAgentes[dAg]) return objetivosAgentes[dAg];
+  if(dAg){ const c=comerciales.find(c=>c.nombre===dAg); return c&&objetivosPorOficina[c.oficina]?objetivosPorOficina[c.oficina]:objetivo; }
+  if(dOf && objetivosPorOficina[dOf]) return objetivosPorOficina[dOf];
+  return objetivo;
+}
+
+function applyObjetivoLine() {
+  const chart = charts.mensual;
+  if(!chart) return;
+  chart.update();
+}
+
+function toggleObjetivo() {
+  objetivoVisible = !objetivoVisible;
+  const btn = document.getElementById('btnObjetivo');
+  if(btn) {
+    btn.style.background = objetivoVisible ? '#FFFBEB' : '';
+    btn.style.borderColor = objetivoVisible ? '#D97706' : '';
+    btn.style.color = objetivoVisible ? '#D97706' : '';
+  }
+  applyObjetivoLine();
+}
+
+const objetivoPlugin = {
+  id: 'objetivoLine',
+  afterDraw(chart) {
+    if(!objetivoVisible) return;
+    if(!chart.canvas || chart.canvas.id !== 'chartMensual') return;
+    const {ctx, chartArea, scales} = chart;
+    if(!chartArea || !scales || !scales.y) return;
+    const obj = getObj();
+    let yPos = scales.y.getPixelForValue(obj);
+    // Si el objetivo está fuera del rango visible, clipeamos al borde
+    const clipped = yPos < chartArea.top;
+    if(clipped) yPos = chartArea.top + 2;
+    if(yPos > chartArea.bottom) yPos = chartArea.bottom - 2;
+    ctx.save();
+    ctx.beginPath();
+    ctx.setLineDash([7, 4]);
+    ctx.strokeStyle = '#D97706';
+    ctx.lineWidth = 2.5;
+    ctx.moveTo(chartArea.left, yPos);
+    ctx.lineTo(chartArea.right, yPos);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#D97706';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'right';
+    const label = clipped ? `Obj: ${obj} ↑` : `Obj: ${obj}`;
+    ctx.fillText(label, chartArea.right, yPos + 13);
+    ctx.restore();
+  }
+};
+
+
+function renderAll() { renderKPIs(); renderCharts(); renderOficinas(); renderComerciales(); renderRegistros(); }
+
+// ── KPI CARDS ─────────────────────────────────────
+function renderKPIs() {
+  const data = getFiltered();
+  const ventas = data.filter(r => r.tipo==='Emisión').length;
+  const anulan = data.filter(r => r.tipo==='Anulación').length;
+  const rehab  = data.filter(r => r.tipo==='Rehabilitación').length;
+  const sust   = data.filter(r => r.tipo==='Reemplazo').length;
+  const sinEf  = data.filter(r => r.tipo==='Sin efecto').length;
+  const suspenso = data.filter(r => r.tipo==='Suspenso').length;
+  const neto = ventas - anulan - sinEf - suspenso + rehab;
+  const retRate = ventas > 0 ? Math.round((1-anulan/ventas)*100) : 100;
+  const totalPrima = data.filter(r=>r.tipo==='Emisión').reduce((s,r)=>s+(parseFloat(r.prima)||0),0);
+  const dOf = document.getElementById('dashOficina')?.value||'';
+  const dAg = document.getElementById('dashAgente')?.value||'';
+  let obj;
+  if (dOf && objetivosPorOficina[dOf]) { obj = objetivosPorOficina[dOf]; }
+  else if (dAg) { const c = comerciales.find(c=>c.nombre===dAg); obj = c&&objetivosAgentes[dAg]?objetivosAgentes[dAg]:(c&&objetivosPorOficina[c.oficina]?objetivosPorOficina[c.oficina]:objetivo); }
+  else { obj = objetivo; }
+
+  const emisNetas = ventas - sinEf;
+  const progPct = obj > 0 ? Math.min(Math.round((emisNetas / obj) * 100), 100) : 0;
+  const progColor = progPct >= 100 ? 'var(--green)' : progPct >= 70 ? 'var(--amber)' : 'var(--red)';
+
+  const kpis = [
+    { label:'Emisiones', value: emisNetas, accent:'var(--green)', delta:`Brutas: ${ventas} · Sin efecto: ${sinEf}`, progress: { pct: progPct, color: progColor, label: `${emisNetas} de ${obj} · ${progPct}%` } },
+    { label:'Anulaciones', value: anulan, accent:'#BE123C', delta:`${Math.round(anulan/(ventas||1)*100)}% sobre emisiones` },
+    { label:'Neto pólizas', value: neto>0?'+'+neto:neto, accent:'var(--blue)', delta:`Rehab: ${rehab} · Reempl: ${sust} · Susp: ${suspenso}` },
+    { label:'Sin efecto', value: sinEf, accent:'var(--text-3)', delta:'' },
+    { label:'Prima neta (€)', value: fmtK(totalPrima), accent:'var(--red)', delta:`Media: ${fmtK(totalPrima/(ventas||1))}€/póliza` },
+    { label:'Objetivo mensual', value: obj, accent:'var(--amber)', delta:`${ventas} emisiones registradas` },
+  ];
+  document.getElementById('kpiGrid').innerHTML = kpis.map(k =>
+    `<div class="kpi-card" style="--accent:${k.accent}">
+      <div class="kpi-card-accent"></div>
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value">${k.value}</div>
+      ${k.delta?`<div class="kpi-delta">${k.delta}</div>`:''}
+      ${k.progress ? `
+        <div style="margin-top:10px;">
+          <div class="progress-bar" style="height:6px;border-radius:4px;">
+            <div class="progress-fill" style="width:${k.progress.pct}%;background:${k.progress.color};border-radius:4px;transition:width 0.6s ease;"></div>
+          </div>
+          <div style="font-size:10px;color:var(--text-3);margin-top:4px;">${k.progress.label} objetivo</div>
+        </div>` : ''}
+    </div>`
+  ).join('');
+}
+function fmtK(n) {
+  if (n>=1000000) return (n/1000000).toFixed(1)+'M';
+  if (n>=1000) return (n/1000).toFixed(1)+'k';
+  return Math.round(n).toString();
+}
+
+// ── CHARTS ────────────────────────────────────────
+// ── AVATARES ──────────────────────────────────────
+const AVATAR_COLORS = [
+  '#C2003F','#2563EB','#16A34A','#D97706','#7C3AED',
+  '#0891B2','#DB2777','#059669','#EA580C','#4F46E5',
+  '#0284C7','#DC2626','#65A30D','#9333EA','#0D9488'
+];
+function getAvatarColor(nombre) {
+  let hash = 0;
+  for(let i=0;i<nombre.length;i++) hash = nombre.charCodeAt(i) + ((hash<<5)-hash);
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+function getInitials(nombre) {
+  const parts = nombre.trim().split(' ').filter(Boolean);
+  if(parts.length >= 2) return (parts[0][0]+parts[1][0]).toUpperCase();
+  return nombre.slice(0,2).toUpperCase();
+}
+function avatarHTML(nombre, size=28) {
+  const color = getAvatarColor(nombre);
+  const initials = getInitials(nombre);
+  return `<span style="display:inline-flex;align-items:center;justify-content:center;width:${size}px;height:${size}px;border-radius:50%;background:${color};color:#fff;font-size:${Math.round(size*0.38)}px;font-weight:700;flex-shrink:0;letter-spacing:-0.5px;">${initials}</span>`;
+}
+
+function destroyChart(id) { if(charts[id]){charts[id].destroy();delete charts[id];} }
+const CHART_OPTS = {
+  responsive: true, maintainAspectRatio: false,
+  plugins: { legend: { labels: { font: { family: 'Plus Jakarta Sans', size: 11 }, boxWidth: 10, padding: 12 } } },
+  scales: { x: { ticks: { font: { family:'Plus Jakarta Sans', size:10 }, color:'#A3A39E' }, grid: { display:false } }, y: { ticks: { font: { family:'Plus Jakarta Sans', size:10 }, color:'#A3A39E' }, grid: { color:'rgba(0,0,0,0.04)' } } }
+};
+
+function renderCharts() {
+  const data = getFiltered();
+  const dOf = document.getElementById('dashOficina')?.value||'';
+  const dAg = document.getElementById('dashAgente')?.value||'';
+  let obj;
+  if(dOf && objetivosPorOficina[dOf]){obj=objetivosPorOficina[dOf];}
+  else if(dAg){const c=comerciales.find(c=>c.nombre===dAg);obj=objetivosAgentes[dAg]||(c&&objetivosPorOficina[c.oficina]?objetivosPorOficina[c.oficina]:objetivo);}
+  else{obj=objetivo;}
+  destroyChart('mensual');
+  const byMonth = {};
+  data.forEach(r => {
+    const key = r.fecha?.substring(0,7); if(!key) return;
+    if(!byMonth[key]) byMonth[key]={ventas:0,sinEf:0,anulaciones:0,suspenso:0,rehab:0};
+    if(r.tipo==='Emisión') byMonth[key].ventas++;
+    if(r.tipo==='Sin efecto') byMonth[key].sinEf++;
+    if(r.tipo==='Anulación') byMonth[key].anulaciones++;
+    if(r.tipo==='Suspenso') byMonth[key].suspenso++;
+    if(r.tipo==='Rehabilitación') byMonth[key].rehab++;
+  });
+  const sortedMonths = Object.keys(byMonth).sort().slice(-18);
+  const MNAMES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const mLabels = sortedMonths.map(m=>{const[y,mo]=m.split('-');return MNAMES[parseInt(mo)-1]+' '+y.slice(2);});
+  const ctx1 = document.getElementById('chartMensual');
+  if(ctx1) { charts.mensual = new Chart(ctx1,{type:'bar',data:{labels:mLabels,datasets:[
+    {label:'Emisiones netas',data:sortedMonths.map(m=>byMonth[m].ventas-byMonth[m].sinEf),backgroundColor:'rgba(22,163,74,0.75)',borderRadius:4,borderSkipped:false},
+    {label:'Anulaciones',data:sortedMonths.map(m=>byMonth[m].anulaciones),backgroundColor:'rgba(194,0,63,0.15)',borderRadius:4,borderSkipped:false}
+  ]},options:{...CHART_OPTS,scales:{...CHART_OPTS.scales,x:{...CHART_OPTS.scales.x,ticks:{font:{family:'Plus Jakarta Sans',size:10},color:'#A3A39E',maxRotation:0}},y:{...CHART_OPTS.scales.y,beginAtZero:true}}}}); }
+
+  destroyChart('tipos');
+  const tipos={'Emisión':0,'Anulación':0,'Rehabilitación':0,'Reemplazo':0,'Sin efecto':0,'Suspenso':0};
+  data.forEach(r=>{if(tipos[r.tipo]!==undefined)tipos[r.tipo]++;});
+  const ctx2 = document.getElementById('chartTipos');
+  if(ctx2) charts.tipos = new Chart(ctx2,{type:'doughnut',data:{labels:Object.keys(tipos),datasets:[{data:Object.values(tipos),backgroundColor:['#16A34A','#BE123C','#2563EB','#D97706','#A3A39E','#6B7280'],borderWidth:2,borderColor:'#fff',hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'bottom',labels:{font:{family:'Plus Jakarta Sans',size:11},boxWidth:10,padding:10}}}}});
+
+  destroyChart('motivos');
+  const motivos={};
+  data.filter(r=>r.tipo==='Anulación').forEach(r=>{
+    const m=(r.notas||'Sin especificar').trim()||'Sin especificar';
+    motivos[m]=(motivos[m]||0)+1;
+  });
+  const motivosSorted=Object.entries(motivos).sort((a,b)=>b[1]-a[1]).slice(0,7);
+  const ctx3=document.getElementById('chartMotivos');
+  if(ctx3&&motivosSorted.length>0){
+    charts.motivos=new Chart(ctx3,{type:'doughnut',data:{
+      labels:motivosSorted.map(m=>m[0]),
+      datasets:[{data:motivosSorted.map(m=>m[1]),
+        backgroundColor:['#C2003F','#E05080','#2563EB','#D97706','#16A34A','#A3A39E','#6B7280'],
+        borderWidth:2,borderColor:'#fff',hoverOffset:4}]
+    },options:{responsive:true,maintainAspectRatio:false,cutout:'55%',
+      plugins:{legend:{position:'bottom',labels:{font:{family:'Plus Jakarta Sans',size:10},boxWidth:10,padding:8}}}}});
+  } else if(ctx3){
+    const ctx=ctx3.getContext('2d');
+    ctx.fillStyle='#A3A39E';ctx.font='13px Plus Jakarta Sans';ctx.textAlign='center';
+    ctx.fillText('Sin anulaciones en el período',ctx3.width/2,ctx3.height/2);
+  }
+
+  destroyChart('ramos');
+  const ramosCont={};
+  data.filter(r=>r.tipo==='Emisión').forEach(r=>{
+    const ramo=(r.ramo||'Sin ramo').split(' - ').pop().trim();
+    ramosCont[ramo]=(ramosCont[ramo]||0)+1;
+  });
+  const ramosSorted=Object.entries(ramosCont).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const ctx4r=document.getElementById('chartRamos');
+  if(ctx4r&&ramosSorted.length>0){
+    charts.ramos=new Chart(ctx4r,{type:'bar',data:{
+      labels:ramosSorted.map(r=>r[0]),
+      datasets:[{label:'Emisiones',data:ramosSorted.map(r=>r[1]),
+        backgroundColor:'rgba(194,0,63,0.75)',borderRadius:4,borderSkipped:false}]
+    },options:{...CHART_OPTS,indexAxis:'y',
+      plugins:{legend:{display:false}},
+      scales:{x:{ticks:{font:{family:'Plus Jakarta Sans',size:10},color:'#A3A39E'},grid:{color:'rgba(0,0,0,0.04)'}},
+               y:{ticks:{font:{family:'Plus Jakarta Sans',size:10},color:'#A3A39E'},grid:{display:false}}}}});
+  }
+
+  destroyChart('oficinas');
+  const byOf={};
+  data.forEach(r=>{
+    if(!byOf[r.oficina])byOf[r.oficina]={v:0,a:0};
+    if(r.tipo==='Emisión')byOf[r.oficina].v++;
+    if(r.tipo==='Anulación')byOf[r.oficina].a++;
+  });
+  const ctx4 = document.getElementById('chartOficinas');
+  if(ctx4){const labels=Object.keys(byOf);charts.oficinas=new Chart(ctx4,{type:'bar',data:{labels,datasets:[
+    {label:'Emisiones',data:labels.map(l=>byOf[l].v),backgroundColor:'#16A34A',borderRadius:6,borderSkipped:false},
+    {label:'Anulaciones',data:labels.map(l=>byOf[l].a),backgroundColor:'rgba(194,0,63,0.18)',borderRadius:6,borderSkipped:false}
+  ]},options:{...CHART_OPTS,scales:{...CHART_OPTS.scales,x:{...CHART_OPTS.scales.x,ticks:{font:{family:'Plus Jakarta Sans',size:10},color:'#A3A39E',maxRotation:15}},y:{...CHART_OPTS.scales.y,beginAtZero:true}}}});}
+}
+
+// ── OFICINAS PAGE ─────────────────────────────────
+function renderOficinas() {
+  const data=getFiltered();
+  const byOf={};
+  oficinas.forEach(o=>{byOf[o]={ventas:0,anulan:0,rehab:0,sust:0,sinEf:0,prima:0};});
+  data.forEach(r=>{
+    if(!byOf[r.oficina])byOf[r.oficina]={ventas:0,anulan:0,rehab:0,sust:0,sinEf:0,prima:0};
+    if(r.tipo==='Emisión'){byOf[r.oficina].ventas++;byOf[r.oficina].prima+=parseFloat(r.prima)||0;}
+    if(r.tipo==='Anulación')byOf[r.oficina].anulan++;
+    if(r.tipo==='Rehabilitación')byOf[r.oficina].rehab++;
+    if(r.tipo==='Reemplazo')byOf[r.oficina].sust++;
+    if(r.tipo==='Sin efecto')byOf[r.oficina].sinEf++;
+  });
+  document.getElementById('oficinasGrid').innerHTML=Object.entries(byOf).map(([of,d])=>{
+    const neto=d.ventas-d.anulan+d.rehab;
+    const ret=d.ventas>0?Math.round((1-d.anulan/d.ventas)*100):100;
+    return`<div class="oficina-card">
+      <div class="oficina-card-name">⬡ ${of}</div>
+      <div class="oficina-stat"><span>Emisiones</span><span style="color:var(--green)">${d.ventas}</span></div>
+      <div class="oficina-stat"><span>Anulaciones</span><span style="color:var(--red)">${d.anulan}</span></div>
+      <div class="oficina-stat"><span>Rehabilitaciones</span><span style="color:var(--blue)">${d.rehab}</span></div>
+      <div class="oficina-stat"><span>Reemplazos</span><span style="color:var(--amber)">${d.sust}</span></div>
+      <div class="oficina-stat"><span>Sin efecto</span><span>${d.sinEf}</span></div>
+      <div class="oficina-stat"><span>Neto</span><span style="color:${neto>=0?'var(--green)':'var(--red)'};font-weight:800">${neto>0?'+'+neto:neto}</span></div>
+      <div style="margin-top:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-3);margin-bottom:4px;"><span>Retención</span><span>${ret}%</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${ret}%"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── COMERCIALES PAGE ──────────────────────────────
+function renderComerciales() {
+  const data=getFiltered();
+  const byC={};
+  data.forEach(r=>{
+    const k=r.agente||r.comercial||'(sin asignar)';
+    if(!byC[k])byC[k]={oficina:r.oficina||'',v:0,a:0,rh:0,s:0,se:0};
+    if(r.tipo==='Emisión')byC[k].v++;
+    if(r.tipo==='Anulación')byC[k].a++;
+    if(r.tipo==='Rehabilitación')byC[k].rh++;
+    if(r.tipo==='Reemplazo')byC[k].s++;
+    if(r.tipo==='Sin efecto')byC[k].se++;
+  });
+  const sorted=Object.entries(byC).sort((a,b)=>b[1].v-a[1].v);
+  document.getElementById('bodyComerciales').innerHTML=sorted.length===0?
+    `<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">📊</div><p>Sin datos</p></div></td></tr>`:
+    sorted.map(([nombre,d],i)=>{
+      const neto=d.v-d.a+d.rh;
+      const ret=d.v>0?Math.round((1-d.a/d.v)*100):100;
+      return`<tr>
+        <td style="font-weight:700;color:var(--text-3);font-size:12px">${i+1}</td>
+        <td style="font-weight:600;display:flex;align-items:center;gap:8px;">${avatarHTML(nombre)} ${nombre}</td>
+        <td><span class="badge badge-sin-efecto">${d.oficina}</span></td>
+        <td style="color:var(--green);font-weight:700">${d.v}</td>
+        <td style="color:var(--red)">${d.a}</td>
+        <td style="color:var(--blue)">${d.rh}</td>
+        <td style="color:var(--amber)">${d.s}</td>
+        <td>${d.se}</td>
+        <td style="font-weight:800;color:${neto>=0?'var(--green)':'var(--red)'}">${neto>0?'+'+neto:neto}</td>
+        <td><div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="width:56px"><div class="progress-fill" style="width:${ret}%"></div></div><span style="font-size:11px;color:var(--text-3)">${ret}%</span></div></td>
+      </tr>`;
+    }).join('');
+}
+
+// ── REGISTROS PAGE ────────────────────────────────
+function populateFilterSelects() {
+  const fOf=document.getElementById('fOficina');
+  const fAg=document.getElementById('fAgente');
+  const fRa=document.getElementById('fRamo');
+  if(!fOf)return;
+  const pOf=fOf.value,pAg=fAg?.value||'',pRa=fRa.value;
+  fOf.innerHTML='<option value="">Todas las oficinas</option>'+oficinas.map(o=>`<option value="${o}"${o===pOf?' selected':''}>${o}</option>`).join('');
+  if(fAg)fAg.innerHTML='<option value="">Todos los agentes</option>'+comerciales.map(c=>`<option value="${c.nombre}"${c.nombre===pAg?' selected':''}>${c.nombre}</option>`).join('');
+  fRa.innerHTML='<option value="">Todos los ramos</option>'+ramos.map(r=>`<option value="${r}"${r===pRa?' selected':''}>${r}</option>`).join('');
+}
+
+function renderRegistros() {
+  const data=getFilteredRegistros().sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+  document.getElementById('countRegistros').textContent=`${data.length} registros`;
+  const tipoBadge={'Emisión':'badge-venta','Anulación':'badge-anulacion','Rehabilitación':'badge-rehabilitacion','Reemplazo':'badge-sustitucion','Sin efecto':'badge-sin-efecto','Suspenso':'badge-sin-efecto'};
+  document.getElementById('bodyRegistros').innerHTML=data.length===0?
+    `<tr><td colspan="12"><div class="empty-state"><div class="empty-icon">🔍</div><p>Sin resultados</p></div></td></tr>`:
+    data.map(r=>`<tr>
+      <td style="font-size:12px;white-space:nowrap;font-family:'JetBrains Mono',monospace">${formatDate(r.fecha)}</td>
+      <td><span class="badge ${tipoBadge[r.tipo]||''}">${r.tipo}</span></td>
+      <td style="font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--text-3)">${r.poliza||'—'}</td>
+      <td style="font-size:12px">${r.ramo}</td>
+      <td style="font-size:12px;font-family:'JetBrains Mono',monospace">${r.gestora||'—'}</td>
+      <td style="font-size:12px">${r.oficina}</td>
+      <td style="font-weight:600">${r.prima?parseFloat(r.prima).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €':'—'}</td>
+      <td style="font-weight:600">${r.primaCorregida?parseFloat(r.primaCorregida).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €':'—'}</td>
+      <td style="font-size:12px">${r.tomador||'—'}</td>
+      <td style="font-weight:500">${r.agente||r.comercial||'—'}</td>
+      <td style="font-size:12px;color:var(--text-3);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.notas||''}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteRegistro('${r.id}')">✕</button></td>
+    </tr>`).join('');
+}
+
+function formatDate(d){if(!d)return'—';const[y,m,day]=d.split('-');return`${day}/${m}/${y}`;}
+function resetFiltros(){['fOficina','fAgente','fTipo','fRamo'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});renderRegistros();}
+function deleteRegistro(id){if(!confirm('¿Eliminar este registro?'))return;registros=registros.filter(r=>String(r.id)!==String(id));saveData();renderAll();}
+
+// ── MODAL ─────────────────────────────────────────
+function openModal(){
+  const today=new Date().toISOString().split('T')[0];
+  document.getElementById('mFecha').value=today;
+  document.getElementById('mTipo').value='Emisión';
+  document.getElementById('mPoliza').value='';
+  document.getElementById('mPrima').value='';
+  document.getElementById('mPrimaCorregida').value='';
+  document.getElementById('mTomador').value='';
+  document.getElementById('mNotas').value='';
+  const mGest=document.getElementById('mGestora');
+  if(mGest)mGest.innerHTML='<option value="">Selecciona gestora</option>'+gestoras.map(g=>`<option value="${g}">${g}</option>`).join('');
+  updateOficinaSelect();
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('open');}
+function closeModalOutside(e){if(e.target===document.getElementById('modalOverlay'))closeModal();}
+
+function updateOficinaSelect(){
+  const selAg=document.getElementById('mAgente');
+  selAg.innerHTML='<option value="">(sin asignar)</option>'+comerciales.map(c=>`<option value="${c.nombre}" data-oficina="${c.oficina}">${c.nombre} — ${c.oficina}</option>`).join('');
+  const selOf=document.getElementById('mOficina');
+  selOf.innerHTML=oficinas.map(o=>`<option value="${o}">${o}</option>`).join('');
+  const selR=document.getElementById('mRamo');
+  selR.innerHTML=ramos.map(r=>`<option value="${r}">${r}</option>`).join('');
+  autoRellenarOficina();
+}
+function autoRellenarOficina(){
+  const selAg=document.getElementById('mAgente');
+  const selOf=document.getElementById('mOficina');
+  if(!selAg||!selOf)return;
+  const sel=selAg.options[selAg.selectedIndex];
+  const of=sel?.dataset?.oficina||'';
+  if(of)selOf.value=of;
+}
+function updateAgenteSelect(){}
+
+function normalizarPoliza(raw) {
+  if(!raw) return { poliza: raw, aviso: null };
+  const s = raw.trim();
+
+  // Ya tiene el formato correcto: PREFIJO-XX.XXX.XXX-LETRA
+  if(/^[A-Z0-9]+-\d{2}\.\d{3}\.\d{3}-[A-Z]$/i.test(s)) {
+    return { poliza: s.toUpperCase().replace(/^([^-]+)-/, m => m.toUpperCase()), aviso: null };
+  }
+
+  // Intentar reconstruir: extraer prefijo, dígitos y letra
+  const upper = s.toUpperCase();
+  const match = upper.match(/^([A-Z0-9]+)-?(\d+)-?([A-Z])$/);
+  if(match) {
+    const prefijo = match[1];
+    const digitos = match[2];
+    const letra = match[3];
+    // Aceptar solo exactamente 8 dígitos — si hay más, preguntar
+    if(digitos.length === 8) {
+      const cuerpo = digitos.slice(0,2) + '.' + digitos.slice(2,5) + '.' + digitos.slice(5,8);
+      return { poliza: `${prefijo}-${cuerpo}-${letra}`, aviso: null };
+    }
+  }
+
+  // También intentar sin letra final separada por guión (ej: 8-11316079L)
+  const match2 = upper.match(/^([A-Z0-9]+)-?(\d+)([A-Z])$/);
+  if(match2) {
+    const prefijo = match2[1];
+    const digitos = match2[2];
+    const letra = match2[3];
+    if(digitos.length === 8) {
+      const cuerpo = digitos.slice(0,2) + '.' + digitos.slice(2,5) + '.' + digitos.slice(5,8);
+      return { poliza: `${prefijo}-${cuerpo}-${letra}`, aviso: null };
+    }
+  }
+
+  // No cuadra — devolver tal cual y pedir confirmación
+  return {
+    poliza: s,
+    aviso: 'El formato no parece estándar (se esperan prefijo + 8 dígitos + letra, ej: 8-11.316.079-L).\n\n¿Guardarlo igualmente o cancelar para corregirlo?'
+  };
+}
+
+function guardarRegistro(){
+  const fecha=document.getElementById('mFecha').value;
+  const tipo=document.getElementById('mTipo').value;
+  const polizaRaw=document.getElementById('mPoliza').value.trim();
+  const ramo=document.getElementById('mRamo').value;
+  const gestora=document.getElementById('mGestora').value;
+  const oficina=document.getElementById('mOficina').value;
+  const prima=document.getElementById('mPrima').value;
+  const primaCorregida=document.getElementById('mPrimaCorregida').value;
+  const tomador=document.getElementById('mTomador').value;
+  const agente=document.getElementById('mAgente').value;
+  const notas=document.getElementById('mNotas').value;
+  if(!fecha||!tipo||!polizaRaw||!ramo||!gestora||!oficina){alert('Completa los campos obligatorios: fecha, tipo, nº póliza, ramo, gestora y oficina.');return;}
+
+  const { poliza, aviso } = normalizarPoliza(polizaRaw);
+  if(aviso) {
+    const continuar = confirm('⚠️ Nº de póliza: ' + polizaRaw + '\n\n' + aviso);
+    if(!continuar) return;
+  }
+
+  // Actualizar el campo visualmente con el valor corregido
+  document.getElementById('mPoliza').value = poliza;
+
+  registros.push({id:Date.now()+Math.random(),fecha,tipo,poliza,ramo,gestora,oficina,prima:parseFloat(prima)||0,primaCorregida:parseFloat(primaCorregida)||0,tomador,agente,notas});
+  saveData();closeModal();renderAll();
+}
+
+// ── IMPORT CSV ────────────────────────────────────
+function exportarBackup(){
+  const datos = {
+    version: 1,
+    fecha: new Date().toISOString(),
+    oficinas, comerciales, ramos, gestoras, objetivo,
+    objetivosPorOficina, objetivosAgentes, registros, actividad
+  };
+  const blob = new Blob([JSON.stringify(datos, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'sm_seguros_backup_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importarBackup(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const datos = JSON.parse(e.target.result);
+      if(!datos.registros) throw new Error('Archivo no válido');
+      if(!confirm('¿Restaurar la copia de seguridad? Se reemplazarán TODOS los datos actuales.')) return;
+      oficinas = datos.oficinas || oficinas;
+      comerciales = datos.comerciales || comerciales;
+      ramos = datos.ramos || ramos;
+      gestoras = datos.gestoras || gestoras;
+      objetivo = datos.objetivo || objetivo;
+      objetivosPorOficina = datos.objetivosPorOficina || objetivosPorOficina;
+      objetivosAgentes = datos.objetivosAgentes || {};
+      registros = datos.registros || [];
+      actividad = datos.actividad || [];
+      saveData();
+      renderAll();
+      renderConfig();
+      document.getElementById('backupMsg').innerHTML = '<span style="color:var(--green)">✅ Datos restaurados correctamente. ' + registros.length + ' registros cargados.</span>';
+      setTimeout(()=>{ document.getElementById('backupMsg').innerHTML=''; }, 4000);
+    } catch(err) {
+      document.getElementById('backupMsg').innerHTML = '<span style="color:var(--red)">⚠️ Error al leer el archivo. Asegúrate de que es un backup válido de SM Seguros.</span>';
+    }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function parseCSV(text){
+  const lines=text.trim().split('\n');
+  const header=lines[0].split(',').map(h=>h.trim().toLowerCase());
+  const results=[];
+  for(let i=1;i<lines.length;i++){
+    const vals=lines[i].split(',');
+    const row={};
+    header.forEach((h,j)=>{row[h]=(vals[j]||'').trim();});
+    if(row.fecha&&row.tipo){
+      results.push({id:Date.now()+i+Math.random(),fecha:row.fecha,tipo:row.tipo,poliza:row.poliza||'',ramo:row.ramo||'',gestora:row.gestora||'',oficina:row.oficina||'',prima:parseFloat(row.prima_neta||row.prima)||0,primaCorregida:parseFloat(row.prima_corregida)||0,tomador:row.tomador||'',agente:row.agente||'',notas:row.observaciones||row.notas||''});
+    }
+  }
+  return results;
+}
+function importCSV(input){const file=input.files[0];if(!file)return;const reader=new FileReader();reader.onload=e=>{const added=parseCSV(e.target.result);registros.push(...added);saveData();renderAll();document.getElementById('importMsg').innerHTML=`<span style="color:var(--green)">✅ ${added.length} registros importados.</span>`;};reader.readAsText(file);}
+function importCSVText(){const text=document.getElementById('csvText').value;if(!text.trim())return;const added=parseCSV(text);registros.push(...added);saveData();renderAll();document.getElementById('importMsg').innerHTML=`<span style="color:var(--green)">✅ ${added.length} registros importados.</span>`;document.getElementById('csvText').value='';}
+
+function generarEjemplos(){
+  const d = generateSampleData();
+  if(!d || d.length === 0){
+    alert('Error al generar datos. Recarga la página e inténtalo de nuevo.');
+    return;
+  }
+  registros = registros.concat(d);
+  saveData();
+  renderAll();
+  alert('✅ ' + d.length + ' registros de ejemplo generados correctamente.\n\nVe al Resumen general para verlos.');
+}
+
+// ── CONFIG ────────────────────────────────────────
+function renderConfig(){
+  document.getElementById('bodyOficinasCfg').innerHTML=oficinas.map((o,i)=>`<tr><td>${o}</td><td><button class="btn btn-danger btn-sm" onclick="removeOficina(${i})">✕</button></td></tr>`).join('');
+  document.getElementById('bodyComercCfg').innerHTML=comerciales.map((c,i)=>`<tr><td><div style="display:flex;align-items:center;gap:8px;">${avatarHTML(c.nombre,24)}<span>${c.nombre}</span></div></td><td style="font-size:12px;color:var(--text-3)">${c.oficina}</td><td><button class="btn btn-danger btn-sm" onclick="removeComercial(${i})">✕</button></td></tr>`).join('');
+  document.getElementById('bodyGestorasCfg').innerHTML=gestoras.map((g,i)=>`<tr><td style="font-family:'JetBrains Mono',monospace;font-weight:500">${g}</td><td><button class="btn btn-danger btn-sm" onclick="removeGestora(${i})">✕</button></td></tr>`).join('');
+  document.getElementById('ramosTagsContainer').innerHTML=ramos.map((r,i)=>`<span class="tag">${r}<button class="tag-remove" onclick="removeRamo(${i})">×</button></span>`).join('');
+  const sel=document.getElementById('newComercOficina');
+  sel.innerHTML=oficinas.map(o=>`<option value="${o}">${o}</option>`).join('');
+  const totalEl=document.getElementById('totalObjetivoGlobal');
+  if(totalEl)totalEl.textContent=objetivo;
+  const mGest=document.getElementById('mGestora');
+  if(mGest){const prev=mGest.value;mGest.innerHTML='<option value="">Selecciona gestora</option>'+gestoras.map(g=>`<option value="${g}"${g===prev?' selected':''}>${g}</option>`).join('');}
+  // Objetivos por agente
+  const grid = document.getElementById('objetivosAgentesGrid');
+  if(grid) {
+    // Agrupar por oficina
+    const byOf = {};
+    comerciales.forEach(c => { if(!byOf[c.oficina]) byOf[c.oficina]=[]; byOf[c.oficina].push(c.nombre); });
+    grid.innerHTML = Object.entries(byOf).map(([of, agentes]) => `
+      <div style="background:var(--bg);border-radius:8px;padding:12px;">
+        <div style="font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;">⬡ ${of}</div>
+        ${agentes.map(nombre => `
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
+            <div style="display:flex;align-items:center;gap:7px;flex:1;min-width:0;">
+              ${avatarHTML(nombre,24)}
+              <span style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${nombre}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
+              <input type="number" min="0" step="1"
+                id="obj_${nombre.replace(/\s+/g,'_')}"
+                value="${objetivosAgentes[nombre]||''}"
+                placeholder="—"
+                style="width:56px;height:26px;text-align:center;font-size:12px;"
+                oninput="guardarObjetivoAgente('${nombre.replace(/'/g,"\\'")}',this.value)">
+              <span style="font-size:10px;color:var(--text-3)">pol</span>
+            </div>
+          </div>`).join('')}
+      </div>`).join('');
+  }
+}
+function showMsg(id,msg,color,ms=3000){const el=document.getElementById(id);if(!el)return;el.innerHTML=`<span style="color:${color}">${msg}</span>`;setTimeout(()=>{el.innerHTML="";},ms);}
+function addOficina(){const val=document.getElementById("newOficina").value.trim();if(!val)return;if(oficinas.includes(val)){showMsg("oficinaMsg",`⚠️ La oficina <strong>${val}</strong> ya existe.`,"var(--red)");return;}oficinas.push(val);document.getElementById("newOficina").value="";saveData();renderConfig();}
+function removeOficina(i){oficinas.splice(i,1);saveData();renderConfig();}
+function addComercial(){const nombre=document.getElementById('newComercNombre').value.trim();const oficina=document.getElementById('newComercOficina').value;if(!nombre)return;if(comerciales.find(c=>c.nombre===nombre)){showMsg('comercialMsg','⚠️ El agente <strong>'+nombre+'</strong> ya existe.','var(--red)');return;}comerciales.push({nombre,oficina});document.getElementById('newComercNombre').value='';saveData();renderConfig();}
+function removeComercial(i){comerciales.splice(i,1);saveData();renderConfig();}
+function addRamo(){const val=document.getElementById('newRamo').value.trim();if(!val)return;if(ramos.includes(val)){showMsg('ramoMsg','⚠️ El ramo <strong>'+val+'</strong> ya existe.','var(--red)');return;}ramos.push(val);document.getElementById('newRamo').value='';saveData();renderConfig();}
+function removeRamo(i){ramos.splice(i,1);saveData();renderConfig();}
+function addGestora(){
+  const val=document.getElementById('newGestora').value.trim();
+  if(!val)return;
+  if(gestoras.includes(val)){document.getElementById('gestoraMsg').innerHTML=`<span style="color:var(--red)">⚠️ La gestora <strong>${val}</strong> ya está incluida.</span>`;setTimeout(()=>{document.getElementById('gestoraMsg').innerHTML='';},3000);return;}
+  gestoras.push(val);document.getElementById('newGestora').value='';document.getElementById('gestoraMsg').innerHTML='';saveData();renderConfig();
+}
+function removeGestora(i){gestoras.splice(i,1);saveData();renderConfig();}
+
+function guardarObjetivoAgente(nombre,valor){
+  const n=parseInt(valor);
+  if(!isNaN(n)&&n>0)objetivosAgentes[nombre]=n;
+  else delete objetivosAgentes[nombre];
+  const total=comerciales.reduce((s,c)=>s+(objetivosAgentes[c.nombre]||0),0);
+  objetivo=total>0?total:154;
+  saveData();
+  const el=document.getElementById('totalObjetivoGlobal');
+  if(el)el.textContent=objetivo;
+  renderAll();
+}
+
+// ── ACTIVIDAD COMERCIAL ───────────────────────────
+const MESES=['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+function preseleccionarMesActividad(){
+  const now=new Date();
+  const mes=document.getElementById('acMes');
+  const anio=document.getElementById('acAnio');
+  if(mes)mes.value=now.getMonth()+1;
+  if(anio)anio.value=now.getFullYear();
+  const acOf=document.getElementById('acOficina');
+  if(acOf){acOf.innerHTML=oficinas.map(o=>`<option value="${o}">${o}</option>`).join('');actualizarAgentesActividad();}
+}
+function actualizarAgentesActividad(){
+  const oficina=document.getElementById('acOficina')?.value;
+  const sel=document.getElementById('acAgente');
+  if(!sel)return;
+  const filtrados=comerciales.filter(c=>!oficina||c.oficina===oficina);
+  sel.innerHTML=filtrados.map(c=>`<option value="${c.nombre}">${c.nombre}</option>`).join('');
+  if(filtrados.length===0)sel.innerHTML='<option value="">(sin agentes)</option>';
+}
+function guardarActividad(){
+  const mes=parseInt(document.getElementById('acMes').value);
+  const anio=parseInt(document.getElementById('acAnio').value);
+  const oficina=document.getElementById('acOficina').value;
+  const agente=document.getElementById('acAgente').value;
+  const oportunidades=parseInt(document.getElementById('acOportunidades').value)||0;
+  const msg=document.getElementById('actividadMsg');
+  if(!oficina||!agente){msg.innerHTML=`<span style="color:var(--red)">⚠️ Selecciona oficina y agente.</span>`;return;}
+  const idx=actividad.findIndex(a=>a.mes===mes&&a.anio===anio&&a.agente===agente);
+  if(idx>=0){
+    actividad[idx]={...actividad[idx],mes,anio,oficina,agente,oportunidades};
+    msg.innerHTML=`<span style="color:var(--amber)">⚠️ Registro de ${agente} en ${MESES[mes]} ${anio} actualizado.</span>`;
+  } else {
+    actividad.push({uid:'uid_'+Date.now()+'_'+Math.random().toString(36).slice(2),mes,anio,oficina,agente,oportunidades});
+    msg.innerHTML=`<span style="color:var(--green)">✅ Datos de ${agente} en ${MESES[mes]} ${anio} guardados.</span>`;
+  }
+  saveData();renderActividad();document.getElementById('acOportunidades').value='';
+  setTimeout(()=>{msg.innerHTML='';},3000);
+}
+function renderActividad(){
+  const tbody=document.getElementById('bodyActividad');
+  if(!tbody)return;
+  const sorted=[...actividad].sort((a,b)=>{
+    if(a.oficina<b.oficina)return-1;if(a.oficina>b.oficina)return 1;
+    if(a.agente<b.agente)return-1;if(a.agente>b.agente)return 1;
+    return b.anio-a.anio||b.mes-a.mes;
+  });
+  if(sorted.length===0){
+    tbody.innerHTML='<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🎯</div><p>Todavía no hay datos introducidos</p></div></td></tr>';
+    return;
+  }
+  let lastOf=null;
+  let rows='';
+  sorted.forEach((a,i)=>{
+    const esNueva=a.oficina!==lastOf;lastOf=a.oficina;
+    if(esNueva) rows+='<tr><td colspan="6" style="background:var(--red-dim);font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.08em;padding:6px 14px;">⬡ '+a.oficina+'</td></tr>';
+    rows+='<tr>'
+      +'<td style="font-weight:600">'+MESES[a.mes]+'</td>'
+      +'<td>'+a.anio+'</td>'
+      +'<td style="font-size:12px;color:var(--text-3)">'+a.oficina+'</td>'
+      +'<td style="font-weight:500">'+a.agente+'</td>'
+      +'<td style="font-weight:800;color:var(--red);font-size:15px">'+a.oportunidades+'</td>'
+      +'<td><button class="btn btn-danger btn-sm del-actividad" data-mes="'+a.mes+'" data-anio="'+a.anio+'" data-agente="'+encodeURIComponent(a.agente)+'">✕</button></td>'
+      +'</tr>';
+  });
+  tbody.innerHTML=rows;
+}
+
+
+function poblarFiltrosDash(){
+  const selOf=document.getElementById('dashOficina');
+  const selAg=document.getElementById('dashAgente');
+  if(!selOf||!selAg)return;
+  const pOf=selOf.value;
+  selOf.innerHTML='<option value="">Todas las oficinas</option>'+oficinas.map(o=>`<option value="${o}"${o===pOf?' selected':''}>${o}</option>`).join('');
+  actualizarAgenteDash();
+}
+function actualizarAgenteDash(){
+  const oficina=document.getElementById('dashOficina')?.value||'';
+  const selAg=document.getElementById('dashAgente');if(!selAg)return;
+  const pAg=selAg.value;
+  const filtrados=oficina?comerciales.filter(c=>c.oficina===oficina):comerciales;
+  selAg.innerHTML='<option value="">Todos los agentes</option>'+filtrados.map(c=>`<option value="${c.nombre}"${c.nombre===pAg?' selected':''}>${c.nombre}</option>`).join('');
+}
+function resetFiltrosDash(){
+  const selOf=document.getElementById('dashOficina');
+  const selAg=document.getElementById('dashAgente');
+  if(selOf)selOf.value='';if(selAg)selAg.value='';
+  actualizarAgenteDash();renderAll();
+}
+
+// ── INIT ──────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',()=>{
+  Chart.register(objetivoPlugin);
+  renderAll();populateFilterSelects();poblarFiltrosDash();renderConfig();
+  const now=new Date();
+  const mSel=document.getElementById('monthFilter');
+  if(mSel)mSel.value=now.getMonth()+1;
+  renderAll();
+
+  // Event delegation para borrar actividad
+  document.getElementById('bodyActividad').addEventListener('click', function(e){
+    const btn = e.target.closest('.del-actividad');
+    if(!btn) return;
+    const mes  = parseInt(btn.getAttribute('data-mes'));
+    const anio = parseInt(btn.getAttribute('data-anio'));
+    const agente = decodeURIComponent(btn.getAttribute('data-agente'));
+    if(!confirm('¿Eliminar el registro de ' + agente + ' en ' + MESES[mes] + ' ' + anio + '?')) return;
+    actividad = actividad.filter(a => !(a.mes===mes && a.anio===anio && a.agente.trim()===agente.trim()));
+    saveData();
+    renderActividad();
+  });
+});
+</script>
+</body>
+</html>
