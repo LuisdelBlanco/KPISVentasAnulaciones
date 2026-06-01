@@ -845,145 +845,10 @@ const DEFAULTS = {
   registros: []
 };
 
-// ── SUPABASE REST API ────────────────────────────────────────
-const SUPABASE_URL = 'https://sblprwqnwcravldtmvat.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNibHByd3Fud2NyYXZsZHRtdmF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzMTMwNTIsImV4cCI6MjA5NTg4OTA1Mn0.0f08Urtc2g2A1ZGuXXyhaC3c0pmBpv5pIiEUxtXDuJw';
 
-async function sbFetch(path, options={}) {
-  const url = SUPABASE_URL + '/rest/v1/' + path;
-  const headers = {
-    'apikey': SUPABASE_KEY,
-    'Authorization': 'Bearer ' + SUPABASE_KEY,
-    'Content-Type': 'application/json',
-    ...options.headers
-  };
-  const res = await fetch(url, {...options, headers});
-  if(!res.ok) {
-    const err = await res.text();
-    throw new Error(res.status + ': ' + err);
-  }
-  const text = await res.text();
-  return text ? JSON.parse(text) : [];
-}
-
-async function sbSelect(table, params='') {
-  return await sbFetch(table + '?' + params, {headers:{'Accept':'application/json'}});
-}
-async function sbUpsert(table, data) {
-  const rows = Array.isArray(data) ? data : [data];
-  return await sbFetch(table, {
-    method:'POST',
-    headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},
-    body: JSON.stringify(rows)
-  });
-}
-async function sbDelete(table, id) {
-  return await sbFetch(table + '?id=eq.' + encodeURIComponent(id), {method:'DELETE'});
-}
-
-function setLoadingMsg(msg) {
-  const el = document.getElementById('loadingMsg');
-  if(el) el.textContent = msg;
-}
-function hideLoading() {
-  const el = document.getElementById('loadingOverlay');
-  if(el) el.style.display = 'none';
-}
-function showLoading(msg='Cargando...') {
-  const el = document.getElementById('loadingOverlay');
-  if(el) el.style.display = 'flex';
-  setLoadingMsg(msg);
-}
-
-// ── CONFIG en Supabase ──────────────────────────────────────
-async function loadConfigFromSupabase() {
-  const data = await sbSelect('config', 'select=clave,valor').catch(()=>null);
-  if(!data) return;
-  data.forEach(row => {
-    try {
-      const val = row.valor;
-      if(row.clave === 'oficinas') oficinas = val;
-      if(row.clave === 'comerciales') comerciales = val;
-      if(row.clave === 'ramos') ramos = val;
-      if(row.clave === 'gestoras') gestoras = val;
-      if(row.clave === 'objetivo') objetivo = val;
-      if(row.clave === 'objetivosPorOficina') objetivosPorOficina = val;
-      if(row.clave === 'objetivosAgentes') objetivosAgentes = val;
-    } catch(e) {}
-  });
-}
-
-async function saveConfigToSupabase() {
-  const configs = [
-    {clave:'oficinas', valor:oficinas},
-    {clave:'comerciales', valor:comerciales},
-    {clave:'ramos', valor:ramos},
-    {clave:'gestoras', valor:gestoras},
-    {clave:'objetivo', valor:objetivo},
-    {clave:'objetivosPorOficina', valor:objetivosPorOficina},
-    {clave:'objetivosAgentes', valor:objetivosAgentes}
-  ];
-  await sbUpsert('config', configs);
-  // Also save to localStorage as cache
-  localStorage.setItem('sm_config_v2', JSON.stringify({
-    oficinas, comerciales, ramos, gestoras, objetivo, objetivosPorOficina, objetivosAgentes
-  }));
-}
-
-// ── REGISTROS en Supabase ───────────────────────────────────
-async function loadRegistrosFromSupabase() {
-  setLoadingMsg('Cargando registros...');
-  let data=null, error=null; try { data = await sbSelect('registros','select=*&order=fecha.desc'); } catch(e){ error=e; }
-  if(error){ console.error('Error cargando registros:', error.message); return; }
-  registros = (data||[]).map(r => ({
-    id: r.id, fecha: r.fecha, tipo: r.tipo, poliza: r.poliza,
-    ramo: r.ramo, gestora: r.gestora, oficina: r.oficina,
-    agente: r.agente, tomador: r.tomador,
-    prima: r.prima||0, primaCorregida: r.prima_corregida||0, notas: r.notas||''
-  }));
-}
-
-async function saveRegistroToSupabase(reg) {
-  const row = {
-    id: String(reg.id), fecha: reg.fecha, tipo: reg.tipo, poliza: reg.poliza,
-    ramo: reg.ramo, gestora: reg.gestora, oficina: reg.oficina,
-    agente: reg.agente, tomador: reg.tomador||'',
-    prima: reg.prima||0, prima_corregida: reg.primaCorregida||0, notas: reg.notas||''
-  };
-  await sbUpsert('registros', row).catch(e=>console.error('Error guardando registro:', e.message));
-}
-
-async function deleteRegistroFromSupabase(id) {
-  await sbDelete('registros', String(id)).catch(e=>console.error('Error borrando registro:', e.message));
-}
-
-// ── ACTIVIDAD en Supabase ───────────────────────────────────
-async function loadActividadFromSupabase() {
-  const data = await sbSelect('actividad','select=*').catch(()=>null);
-  actividad = (data||[]).map(a => ({
-    uid: a.id, mes: a.mes, anio: a.anio,
-    oficina: a.oficina, agente: a.agente, oportunidades: a.oportunidades||0
-  }));
-}
-
-async function saveActividadToSupabase(act) {
-  const row = {
-    id: String(act.uid||act.id||Date.now()),
-    mes: act.mes, anio: act.anio,
-    oficina: act.oficina, agente: act.agente, oportunidades: act.oportunidades||0
-  };
-  await sbUpsert('actividad', row).catch(e=>console.error('Error guardando actividad:', e.message));
-}
-
-async function deleteActividadFromSupabase(uid) {
-  await sbDelete('actividad', String(uid)).catch(e=>console.error('Error borrando actividad:', e.message));
-}
-
-// ── LOAD / SAVE ─────────────────────────────────────────────
 function loadData() {
-  // Carga síncrona desde localStorage como cache inicial
   try {
-    const raw = localStorage.getItem('sm_config_v2');
+    const raw = localStorage.getItem('sm_kpis_v2');
     if(raw) {
       const p = JSON.parse(raw);
       if(p.oficinas) oficinas = p.oficinas;
@@ -992,82 +857,25 @@ function loadData() {
       if(p.gestoras) gestoras = p.gestoras;
       if(p.objetivo) objetivo = p.objetivo;
       if(p.objetivosPorOficina) objetivosPorOficina = p.objetivosPorOficina;
-      if(p.objetivosAgentes) objetivosAgentes = p.objetivosAgentes;
+      if(p.objetivosAgentes) objetivosAgentes = p.objetivosAgentes || {};
+      if(p.registros) registros = p.registros;
+      if(p.actividad) actividad = p.actividad;
     }
-  } catch(e) {}
-  return null;
+    aplicarMigraciones();
+  } catch(e) { console.warn('loadData error:', e.message); }
 }
 
 function saveData() {
-  // Guardar config en Supabase + localStorage
-  saveConfigToSupabase();
-}
-
-async function inicializarApp() {
-  showLoading('Conectando con la nube...');
   try {
-    // Test de conexión
-    setLoadingMsg('Verificando conexión...');
-    const testUrl = SUPABASE_URL + '/rest/v1/registros?select=id&limit=1';
-    console.log('Probando URL:', testUrl);
-    const testRes = await fetch(testUrl, {
-      method: 'GET',
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_KEY,
-        'Accept': 'application/json'
-      }
-    });
-    console.log('Status:', testRes.status, testRes.statusText);
-    const testText = await testRes.text();
-    console.log('Respuesta:', testText.slice(0,200));
-
-    if(!testRes.ok) {
-      throw new Error('HTTP ' + testRes.status + ': ' + testText);
-    }
-    setLoadingMsg('Cargando configuración...');
-    await loadConfigFromSupabase();
-    setLoadingMsg('Cargando registros...');
-    await loadRegistrosFromSupabase();
-    setLoadingMsg('Cargando actividad...');
-    await loadActividadFromSupabase();
-    // Aplicar migraciones si necesario
-    aplicarMigraciones();
-    hideLoading();
-    renderAll();
-    poblarFiltrosDash();
-    renderConfig();
-    renderActividad();
-    // Tiempo real desactivado en modo REST
-  } catch(err) {
-    console.error('Error iniciando app:', err);
-    hideLoading();
-    renderAll();
-    poblarFiltrosDash();
-    renderConfig();
-  }
+    localStorage.setItem('sm_kpis_v2', JSON.stringify({
+      oficinas, comerciales, ramos, gestoras, objetivo,
+      objetivosPorOficina, objetivosAgentes, registros, actividad
+    }));
+  } catch(e) { console.warn('saveData error:', e.message); }
 }
 
-function aplicarMigraciones() {
-  // Aplicar gestoras actualizadas
-  gestoras = DEFAULTS.gestoras;
-  // Aplicar ramos completos
-  ramos = [...new Set([...DEFAULTS.ramos])].filter(r => r !== '1300 - Vida');
-  // Asegurar agentes nuevos
-  const nuevos = [
-    {nombre:'Imma Franco', oficina:'Montornés'},
-    {nombre:'Luis del Blanco', oficina:'Polígono'},
-    {nombre:'Elsa Kubala', oficina:'Barcelona'},
-    {nombre:'Mary González', oficina:'Barcelona'},
-    {nombre:'Marta Calcerrada', oficina:'Barcelona'},
-    {nombre:'Jez Tristany', oficina:'Mataró'}
-  ];
-  nuevos.forEach(n => {
-    if(!comerciales.find(c=>c.nombre===n.nombre)) comerciales.push(n);
-  });
-  if(!objetivosAgentes) objetivosAgentes = {};
-  if(!objetivosPorOficina) objetivosPorOficina = DEFAULTS.objetivosPorOficina;
-}
+
+
 let oficinas = DEFAULTS.oficinas;
 let comerciales = DEFAULTS.comerciales;
 let ramos = DEFAULTS.ramos;
@@ -1931,9 +1739,9 @@ function guardarRegistro(){
 
   const reg = {id:String(Date.now()+Math.random()),fecha,tipo,poliza,ramo,gestora,oficina,prima:parseFloat(prima)||0,primaCorregida:parseFloat(primaCorregida)||0,tomador,agente,notas:notasCompleto};
   registros.unshift(reg);
+  saveData();
   closeModal();
   renderAll();
-  saveRegistroToSupabase(reg);
 }
 
 // ── IMPORT CSV ────────────────────────────────────
@@ -2212,8 +2020,8 @@ function guardarActividad(){
     actividad.push(act);
     msg.innerHTML=`<span style="color:var(--green)">✅ Datos de ${agente} en ${MESES[mes]} ${anio} guardados.</span>`;
   }
+  saveData();
   renderActividad();
-  saveActividadToSupabase(act);
   document.getElementById('acOportunidades').value='';
   setTimeout(()=>{msg.innerHTML='';},3000);
 }
@@ -2226,4 +2034,78 @@ function renderActividad(){
     return b.anio-a.anio||b.mes-a.mes;
   });
   if(sorted.length===0){
-    tbo
+    tbody.innerHTML='<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🎯</div><p>Todavía no hay datos introducidos</p></div></td></tr>';
+    return;
+  }
+  let lastOf=null;
+  let rows='';
+  sorted.forEach((a,i)=>{
+    const esNueva=a.oficina!==lastOf;lastOf=a.oficina;
+    if(esNueva) rows+='<tr><td colspan="6" style="background:var(--red-dim);font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.08em;padding:6px 14px;">⬡ '+a.oficina+'</td></tr>';
+    rows+='<tr>'
+      +'<td style="font-weight:600">'+MESES[a.mes]+'</td>'
+      +'<td>'+a.anio+'</td>'
+      +'<td style="font-size:12px;color:var(--text-3)">'+a.oficina+'</td>'
+      +'<td style="font-weight:500">'+a.agente+'</td>'
+      +'<td style="font-weight:800;color:var(--red);font-size:15px">'+a.oportunidades+'</td>'
+      +'<td><button class="btn btn-danger btn-sm del-actividad" data-mes="'+a.mes+'" data-anio="'+a.anio+'" data-agente="'+encodeURIComponent(a.agente)+'">✕</button></td>'
+      +'</tr>';
+  });
+  tbody.innerHTML=rows;
+}
+
+
+function poblarFiltrosDash(){
+  const selOf=document.getElementById('dashOficina');
+  const selAg=document.getElementById('dashAgente');
+  if(!selOf||!selAg)return;
+  const pOf=selOf.value;
+  selOf.innerHTML='<option value="">Todas las oficinas</option>'+oficinas.map(o=>`<option value="${o}"${o===pOf?' selected':''}>${o}</option>`).join('');
+  actualizarAgenteDash();
+}
+function actualizarAgenteDash(){
+  const oficina=document.getElementById('dashOficina')?.value||'';
+  const selAg=document.getElementById('dashAgente');if(!selAg)return;
+  const pAg=selAg.value;
+  const filtrados=oficina?comerciales.filter(c=>c.oficina===oficina):comerciales;
+  selAg.innerHTML='<option value="">Todos los agentes</option>'+filtrados.map(c=>`<option value="${c.nombre}"${c.nombre===pAg?' selected':''}>${c.nombre}</option>`).join('');
+}
+function resetFiltrosDash(){
+  const selOf=document.getElementById('dashOficina');
+  const selAg=document.getElementById('dashAgente');
+  if(selOf)selOf.value='';if(selAg)selAg.value='';
+  actualizarAgenteDash();renderAll();
+}
+
+// ── INIT ──────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',()=>{
+  Chart.register(objetivoPlugin);
+  const now=new Date();
+  const mSel=document.getElementById('monthFilter');
+  if(mSel)mSel.value=now.getMonth()+1;
+
+  // Event delegation para borrar actividad
+  document.getElementById('bodyActividad').addEventListener('click', function(e){
+    const btn = e.target.closest('.del-actividad');
+    if(!btn) return;
+    const mes  = parseInt(btn.getAttribute('data-mes'));
+    const anio = parseInt(btn.getAttribute('data-anio'));
+    const agente = decodeURIComponent(btn.getAttribute('data-agente'));
+    if(!confirm('¿Eliminar el registro de ' + agente + ' en ' + MESES[mes] + ' ' + anio + '?')) return;
+    const item = actividad.find(a => a.mes===mes && a.anio===anio && a.agente.trim()===agente.trim());
+    actividad = actividad.filter(a => !(a.mes===mes && a.anio===anio && a.agente.trim()===agente.trim()));
+    saveData();
+    renderActividad();
+  });
+
+  // Iniciar app
+  try {
+    loadData();
+  } catch(e) {}
+  renderAll();
+  poblarFiltrosDash();
+  renderConfig();
+});
+</script>
+</body>
+</html>
