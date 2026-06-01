@@ -344,6 +344,31 @@ tbody tr:hover td { background: var(--bg); }
 
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
+/* ── SEARCHABLE SELECT ── */
+.ss-wrap { position: relative; width: 100%; }
+.ss-input {
+  width: 100%; height: 32px; padding: 0 28px 0 10px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  font-size: 13px; font-family: 'Plus Jakarta Sans', sans-serif;
+  color: var(--text); background: var(--surface); outline: none;
+  transition: border 0.12s, box-shadow 0.12s; cursor: pointer;
+}
+.ss-input:focus { border-color: var(--red); box-shadow: 0 0 0 3px rgba(194,0,63,0.08); }
+.ss-arrow { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-3); font-size: 10px; }
+.ss-dropdown {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); box-shadow: var(--shadow-md);
+  max-height: 200px; overflow-y: auto; z-index: 9999; display: none;
+}
+.ss-dropdown.open { display: block; }
+.ss-option {
+  padding: 7px 10px; font-size: 13px; cursor: pointer; color: var(--text);
+  transition: background 0.1s;
+}
+.ss-option:hover, .ss-option.active { background: var(--red-dim); color: var(--red); }
+.ss-option.no-results { color: var(--text-3); cursor: default; font-style: italic; }
+
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 10px; }
 </style>
@@ -516,6 +541,7 @@ tbody tr:hover td { background: var(--bg); }
           <option value="Reemplazo">Reemplazo</option>
           <option value="Suspenso">Suspenso</option>
           <option value="Rehabilitación">Rehabilitación</option>
+          <option value="Inicial/Suple">Inicial/Suple</option>
         </select>
         <select class="filter-select" id="fRamo" onchange="renderRegistros()" style="width:130px">
           <option value="">Todos los ramos</option>
@@ -733,13 +759,14 @@ tbody tr:hover td { background: var(--bg); }
       </div>
       <div class="form-group">
         <label>Tipo de operación *</label>
-        <select id="mTipo">
+        <select id="mTipo" onchange="calcularPrimaCorregida();actualizarMotivos()">
           <option value="Emisión">Emisión</option>
           <option value="Anulación">Anulación</option>
           <option value="Sin efecto">Sin efecto</option>
           <option value="Reemplazo">Reemplazo</option>
           <option value="Suspenso">Suspenso</option>
           <option value="Rehabilitación">Rehabilitación</option>
+          <option value="Inicial/Suple">Inicial/Suple</option>
         </select>
       </div>
       <div class="form-group">
@@ -748,37 +775,37 @@ tbody tr:hover td { background: var(--bg); }
       </div>
       <div class="form-group">
         <label>Ramo *</label>
-        <select id="mRamo"></select>
+        <div class="ss-wrap"><input type="text" class="ss-input" id="mRamoInput" placeholder="Buscar ramo..." autocomplete="off" onclick="ssOpen('mRamo')" oninput="ssFilter('mRamo')"><span class="ss-arrow">▼</span><div class="ss-dropdown" id="mRamoList"></div><input type="hidden" id="mRamo"></div>
       </div>
       <div class="form-group">
         <label>Agente</label>
-        <select id="mAgente" onchange="autoRellenarOficina()"></select>
+        <div class="ss-wrap"><input type="text" class="ss-input" id="mAgenteInput" placeholder="Buscar agente..." autocomplete="off" onclick="ssOpen('mAgente')" oninput="ssFilter('mAgente')"><span class="ss-arrow">▼</span><div class="ss-dropdown" id="mAgenteList"></div><input type="hidden" id="mAgente"></div>
       </div>
       <div class="form-group">
         <label>Oficina *</label>
-        <select id="mOficina"></select>
+        <div class="ss-wrap"><input type="text" class="ss-input" id="mOficinaInput" placeholder="Buscar oficina..." autocomplete="off" onclick="ssOpen('mOficina')" oninput="ssFilter('mOficina')"><span class="ss-arrow">▼</span><div class="ss-dropdown" id="mOficinaList"></div><input type="hidden" id="mOficina"></div>
       </div>
       <div class="form-group">
         <label>Gestora *</label>
-        <select id="mGestora">
-          <option value="">Selecciona gestora</option>
-        </select>
+<div class="ss-wrap"><input type="text" class="ss-input" id="mGestoraInput" placeholder="Buscar gestora..." autocomplete="off" onclick="ssOpen('mGestora')" oninput="ssFilter('mGestora')"><span class="ss-arrow">▼</span><div class="ss-dropdown" id="mGestoraList"></div><input type="hidden" id="mGestora"></div>
       </div>
       <div class="form-group">
         <label>Prima neta (€)</label>
-        <input type="number" id="mPrima" placeholder="0.00" min="0" step="0.01">
+        <input type="number" id="mPrima" placeholder="0.00" min="0" step="0.01" oninput="calcularPrimaCorregida()">
       </div>
       <div class="form-group">
-        <label>Prima corregida (€)</label>
+        <label>Prima corregida (€) <span id="coefLabel" style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;display:none;"></span></label>
         <input type="number" id="mPrimaCorregida" placeholder="0.00" min="0" step="0.01">
+        <div id="coefInfo" style="margin-top:5px;font-size:11px;display:none;"></div>
       </div>
       <div class="form-group">
         <label>Tomador</label>
         <input type="text" id="mTomador" placeholder="Nombre del tomador">
       </div>
       <div class="form-group span2">
-        <label>Observaciones</label>
-        <textarea id="mNotas" placeholder="Observaciones opcionales..."></textarea>
+        <label>Motivo</label>
+        <select id="mMotivo" style="margin-bottom:8px;" onchange=""></select>
+        <textarea id="mNotas" placeholder="Explicación adicional (opcional)..." style="margin-top:6px;"></textarea>
       </div>
     </div>
     <div class="modal-actions">
@@ -810,8 +837,8 @@ const DEFAULTS = {
     {nombre:'Erika Gómez', oficina:'Mataró'},
     {nombre:'Dafne Campaña', oficina:'Mataró'},
   ],
-  ramos: ['Autos','Hogar','Comunidades','Comercios','PYMES','Vida temporal','Vida ahorro','Salud','Accidentes','RC','Riesgos industriales','Ciberriesgos','D&O','Multirriesgo','Otros'],
-  gestoras: ['8-93101','N-20587','8-77412','8-78005'],
+  ramos: ['1405 - Transporte', '1580 - Movilidad personal', '1616 - Salud subsidio hospitalización', '1617 - Salud asistencia sanitaria (CP20)', '1625 - Decesos', '1627 - Decesos repatriación', '1663 - Oficinas', '1685 - Hogar', '1688 - Pyme', '1689 - Comercios', '1690 - Comunidades', '1754 - Equipos de consumo', '1800 - Automóviles', '1802 - Vehículos', '1803 - Motos', '1805 - Flotas', '2386 - Ahorro capital', '1300 - Vida temporal', '1337 - Sialp', '1354 - Ahorro Creciente', '1364 - Universal PIAS Garantizado', '370 - Universal Vida y Jubilación', '384 - PPA', '390 - Universal Vida y Pensión', '935 - Catalana Occidente Patrimonio, F.I.', '1221 - Mascotas', '1200 - Protección jurídica conductores', '1201 - Protección jurídica comunidades', '1242 - Responsabilidad civil comercio, cultura y ocio', '1213 - Protección jurídica empresarial', '1212 - Protección jurídica familiar', '1799 - Responsabilidad medioambiental', '1766 - Ciberriesgos particulares', '2762 - Ciberriesgos empresas', '1480 - Embarcaciones', '1761 - Decenal', '1750 - Maquinaria y equipos electrónicos', '1768 - Todo riesgo de construcción y montaje', '1758 - Combinado', '2755 - TRDM', '1401 - Caravanas móviles', '1405 - Transporte cargadores', '1406 - Transportes transportistas', '1609 - Salud Bienestar', '1617 - Salud asistencia sanitaria (CP0)', '1260 - Viajes', '1328 - Cuenta Cliente', '375 - Universal Jubilación', '1617 - Salud asistencia sanitaria (Advance)', '1244 - Responsabilidad civil construcción', '1245 - Responsabilidad civil profesional', '1241 - Responsabilidad civil privada e inmuebles', '1279 - Accidentes convenios', '1280 - Accidentes colectivos', '1286 - Accidentes', '1310 - Inversión multifondos', '1617 - Salud asistencia sanitaria (CP5)', 'Planes Pensiones y EPSV', 'Fondos de Inversión'],
+  gestoras: ['N-20668', '8-78005', 'F-93101', 'T-66259', '1-93101', '6-93101', '7-93101', '8-47649', '8-48132', '8-53741', '8-68106', 'N-93161', '8-67700', '8-93016', '8-93161', '322650', '8-93101', 'N-20587', '7-20587', '8-20587', '323913', '322654', '8-77412', '323719', '323151', 'F-77412', 'N-77412', '7-77412', '1-60183', '6-65406', 'T-42142'],
   objetivo: 154,
   objetivosPorOficina: { 'Mataró':28, 'Montornés':60, 'Polígono':18, 'Barcelona':48 },
   objetivosAgentes: {},
@@ -824,7 +851,7 @@ function loadData() {
     if (raw) {
       const p = JSON.parse(raw);
       if (!p.objetivosPorOficina) p.objetivosPorOficina = DEFAULTS.objetivosPorOficina;
-      if (!p.gestoras) p.gestoras = DEFAULTS.gestoras;
+      p.gestoras = DEFAULTS.gestoras; // Siempre actualizar gestoras
       if (!p.objetivosAgentes) p.objetivosAgentes = {};
 
       // ── MIGRACIÓN DE NOMBRES ──────────────────────
@@ -853,6 +880,13 @@ function loadData() {
       if (p.actividad) p.actividad = p.actividad.map(a => ({
         ...a, oficina: renameOf[a.oficina] || a.oficina
       }));
+      // Actualizar ramos con lista completa de Occident (eliminar duplicados)
+      p.ramos = ['1405 - Transporte', '1580 - Movilidad personal', '1616 - Salud subsidio hospitalización', '1617 - Salud asistencia sanitaria (CP20)', '1625 - Decesos', '1627 - Decesos repatriación', '1663 - Oficinas', '1685 - Hogar', '1688 - Pyme', '1689 - Comercios', '1690 - Comunidades', '1754 - Equipos de consumo', '1800 - Automóviles', '1802 - Vehículos', '1803 - Motos', '1805 - Flotas', '2386 - Ahorro capital', '1300 - Vida temporal', '1337 - Sialp', '1354 - Ahorro Creciente', '1364 - Universal PIAS Garantizado', '370 - Universal Vida y Jubilación', '384 - PPA', '390 - Universal Vida y Pensión', '935 - Catalana Occidente Patrimonio, F.I.', '1221 - Mascotas', '1200 - Protección jurídica conductores', '1201 - Protección jurídica comunidades', '1242 - Responsabilidad civil comercio, cultura y ocio', '1213 - Protección jurídica empresarial', '1212 - Protección jurídica familiar', '1799 - Responsabilidad medioambiental', '1766 - Ciberriesgos particulares', '2762 - Ciberriesgos empresas', '1480 - Embarcaciones', '1761 - Decenal', '1750 - Maquinaria y equipos electrónicos', '1768 - Todo riesgo de construcción y montaje', '1758 - Combinado', '2755 - TRDM', '1401 - Caravanas móviles', '1405 - Transporte cargadores', '1406 - Transportes transportistas', '1609 - Salud Bienestar', '1617 - Salud asistencia sanitaria (CP0)', '1260 - Viajes', '1328 - Cuenta Cliente', '375 - Universal Jubilación', '1617 - Salud asistencia sanitaria (Advance)', '1244 - Responsabilidad civil construcción', '1245 - Responsabilidad civil profesional', '1241 - Responsabilidad civil privada e inmuebles', '1279 - Accidentes convenios', '1280 - Accidentes colectivos', '1286 - Accidentes', '1310 - Inversión multifondos', '1617 - Salud asistencia sanitaria (CP5)', 'Planes Pensiones y EPSV', 'Fondos de Inversión'];
+      p.ramos = [...new Set(p.ramos)].filter(r => r !== '1300 - Vida');
+      // Normalizar '1300 - Vida' → '1300 - Vida temporal' en registros
+      if(p.registros) p.registros = p.registros.map(r =>
+        r.ramo === '1300 - Vida' ? {...r, ramo: '1300 - Vida temporal'} : r
+      );
       // Corregir oficina de agentes específicos
       const reasignar = {
         'Carlos del Blanco': 'Montornés',
@@ -910,7 +944,7 @@ try {
   if(saved) {
     oficinas = saved.oficinas || oficinas;
     comerciales = saved.comerciales || comerciales;
-    ramos = saved.ramos || ramos;
+    ramos = saved.ramos ? [...new Set(saved.ramos)] : ramos;
     gestoras = saved.gestoras || gestoras;
     objetivo = saved.objetivo || objetivo;
     objetivosPorOficina = saved.objetivosPorOficina || objetivosPorOficina;
@@ -1361,32 +1395,328 @@ function openModal(){
   document.getElementById('mPrimaCorregida').value='';
   document.getElementById('mTomador').value='';
   document.getElementById('mNotas').value='';
-  const mGest=document.getElementById('mGestora');
-  if(mGest)mGest.innerHTML='<option value="">Selecciona gestora</option>'+gestoras.map(g=>`<option value="${g}">${g}</option>`).join('');
+  if(document.getElementById('mMotivo')) document.getElementById('mMotivo').value='';
+  actualizarMotivos();
+  // Reset searchable selects
+  ['mAgente','mOficina','mRamo','mGestora'].forEach(id=>{
+    const h=document.getElementById(id); if(h) h.value='';
+    const i=document.getElementById(id+'Input'); if(i) i.value='';
+  });
   updateOficinaSelect();
   document.getElementById('modalOverlay').classList.add('open');
 }
 function closeModal(){document.getElementById('modalOverlay').classList.remove('open');}
 function closeModalOutside(e){if(e.target===document.getElementById('modalOverlay'))closeModal();}
 
+
+// Gestoras ordenadas por oficina
+const GESTORAS_POR_OFICINA = {
+  'Polígono':  ['8-78005','N-20668'],
+  'Montornés': ['8-93101','7-93101','8-48132','8-67700','8-93016','8-47649','F-93101','T-66259','1-93101','6-93101','8-53741','8-68106','N-93161','8-93161','322650'],
+  'Mataró':    ['N-20587','8-20587','7-20587'],
+  'Barcelona': ['8-77412','7-77412','323719','323151','F-77412','N-77412','1-60183','6-65406','T-42142']
+};
+const GESTORAS_GENERALES = ['323913','322654'];
+const GESTORAS_LABELS = {'323913':'323913 (SB)','322654':'322654 (PU)'};
+
+function getGestoraLabel(g){ return GESTORAS_LABELS[g]||g; }
+
+function getGestorasOrdenadas(oficina) {
+  const propias = GESTORAS_POR_OFICINA[oficina] || [];
+  const resto = gestoras.filter(g => !propias.includes(g) && !GESTORAS_GENERALES.includes(g));
+  const generales = gestoras.filter(g => GESTORAS_GENERALES.includes(g));
+  return [
+    ...(propias.length ? [{sep:'── ' + (oficina||'Propias') + ' ──'}] : []),
+    ...propias.filter(g => gestoras.includes(g)).map(g=>({value:g,label:getGestoraLabel(g)})),
+    ...(generales.length ? [{sep:'── Generales ──'}] : []),
+    ...generales.map(g=>({value:g,label:getGestoraLabel(g)})),
+    ...(resto.length ? [{sep:'── Otras ──'}] : []),
+    ...resto.map(g=>({value:g,label:getGestoraLabel(g)}))
+  ];
+}
+
+// ── SEARCHABLE SELECT ──────────────────────────────
+const SS_DATA = {};
+
+function ssPopulate(id, options, selectedVal='') {
+  SS_DATA[id] = options;
+  ssRenderList(id, '');
+  const input = document.getElementById(id+'Input');
+  const hidden = document.getElementById(id);
+  if(!input||!hidden) return;
+  if(selectedVal) {
+    const opt = options.find(o=>o.value===selectedVal);
+    if(opt){ hidden.value=opt.value; input.value=opt.label||opt.value; }
+  } else { hidden.value=''; input.value=''; }
+}
+
+function ssRenderList(id, filter) {
+  const list = document.getElementById(id+'List');
+  if(!list) return;
+  list.dataset.ssid = id;
+  const allOpts = SS_DATA[id]||[];
+  const opts = allOpts.filter(o=>
+    o.disabled || !filter || (o.label||o.value).toLowerCase().includes(filter.toLowerCase())
+  );
+  const visibles = opts.filter(o=>!o.disabled);
+  if(visibles.length===0) {
+    list.innerHTML='<div class="ss-option no-results">Sin resultados</div>';
+  } else {
+    list.innerHTML = opts.map(o=>
+      o.disabled
+        ? '<div style="font-size:10px;font-weight:700;color:var(--text-3);padding:6px 10px 2px;letter-spacing:0.06em;cursor:default;">'+o.label+'</div>'
+        : '<div class="ss-option"'+
+          ' data-value="'+o.value.replace(/"/g,'&quot;')+'"'+
+          ' data-label="'+(o.label||o.value).replace(/"/g,'&quot;')+'">'+
+          (o.label||o.value)+'</div>'
+    ).join('');
+  }
+  // Event delegation on the list
+  list.onclick = function(e) {
+    const opt = e.target.closest('.ss-option');
+    if(!opt || !opt.dataset.value) return;
+    ssSelect(list.dataset.ssid, opt);
+  };
+}
+
+function ssOpen(id) {
+  document.querySelectorAll('.ss-dropdown').forEach(d=>{ if(d.id!==id+'List') d.classList.remove('open'); });
+  const list = document.getElementById(id+'List');
+  if(list) { list.classList.add('open'); ssRenderList(id, ''); }
+  const input = document.getElementById(id+'Input');
+  if(input) input.select();
+}
+
+function ssFilter(id) {
+  const input = document.getElementById(id+'Input');
+  const list = document.getElementById(id+'List');
+  if(!list) return;
+  list.classList.add('open');
+  ssRenderList(id, input?.value||'');
+}
+
+function ssSelect(id, el) {
+  const value = el.getAttribute('data-value');
+  const label = el.getAttribute('data-label');
+  const hidden = document.getElementById(id);
+  const input = document.getElementById(id+'Input');
+  const list = document.getElementById(id+'List');
+  if(hidden) hidden.value = value;
+  if(input) input.value = label;
+  if(list) list.classList.remove('open');
+  if(id==='mRamo') calcularPrimaCorregida();
+  if(id==='mAgente') autoRellenarOficina();
+}
+
+document.addEventListener('click', function(e) {
+  if(!e.target.closest('.ss-wrap')) {
+    document.querySelectorAll('.ss-dropdown').forEach(d=>d.classList.remove('open'));
+  }
+});
+
 function updateOficinaSelect(){
-  const selAg=document.getElementById('mAgente');
-  selAg.innerHTML='<option value="">(sin asignar)</option>'+comerciales.map(c=>`<option value="${c.nombre}" data-oficina="${c.oficina}">${c.nombre} — ${c.oficina}</option>`).join('');
-  const selOf=document.getElementById('mOficina');
-  selOf.innerHTML=oficinas.map(o=>`<option value="${o}">${o}</option>`).join('');
-  const selR=document.getElementById('mRamo');
-  selR.innerHTML=ramos.map(r=>`<option value="${r}">${r}</option>`).join('');
-  autoRellenarOficina();
+  ssPopulate('mAgente', [{value:'',label:'(sin asignar)'}].concat(comerciales.map(c=>({value:c.nombre,label:c.nombre+' — '+c.oficina}))));
+  ssPopulate('mOficina', oficinas.map(o=>({value:o,label:o})));
+  ssPopulate('mRamo', ramos.map(r=>({value:r,label:r})));
+  const oficinaSel = document.getElementById('mOficina')?.value || '';
+  const gesOrdenadas = getGestorasOrdenadas(oficinaSel);
+  const gesOpts = [{value:'',label:'Selecciona gestora'}].concat(
+    gesOrdenadas.map(g => g.sep ? {value:'__sep__',label:g.sep,disabled:true} : {value:g,label:g})
+  );
+  ssPopulate('mGestora', gesOpts);
 }
+
 function autoRellenarOficina(){
-  const selAg=document.getElementById('mAgente');
-  const selOf=document.getElementById('mOficina');
-  if(!selAg||!selOf)return;
-  const sel=selAg.options[selAg.selectedIndex];
-  const of=sel?.dataset?.oficina||'';
-  if(of)selOf.value=of;
+  const agenteVal = document.getElementById('mAgente')?.value||'';
+  if(!agenteVal) return;
+  const c = comerciales.find(c=>c.nombre===agenteVal);
+  if(c) {
+    const hidden = document.getElementById('mOficina');
+    const input = document.getElementById('mOficinaInput');
+    if(hidden) hidden.value = c.oficina;
+    if(input) input.value = c.oficina;
+    // Orden especial para Luis del Blanco
+    let gesOrdenadas;
+    if(agenteVal === 'Luis del Blanco') {
+      const principales = ['8-93101','N-20587','8-77412','8-78005'];
+      const resto = gestoras.filter(g => !principales.includes(g) && !GESTORAS_GENERALES.includes(g));
+      const generales = gestoras.filter(g => GESTORAS_GENERALES.includes(g));
+      gesOrdenadas = [
+        {sep:'── Principales ──'},
+        ...principales.filter(g => gestoras.includes(g)).map(g=>({value:g,label:getGestoraLabel(g)})),
+        {sep:'── Generales ──'},
+        ...generales.map(g=>({value:g,label:getGestoraLabel(g)})),
+        {sep:'── Otras ──'},
+        ...resto.map(g=>({value:g,label:getGestoraLabel(g)}))
+      ];
+    } else {
+      gesOrdenadas = getGestorasOrdenadas(c.oficina);
+    }
+    const gesOpts = [{value:'',label:'Selecciona gestora'}].concat(
+      gesOrdenadas.map(g => g.sep ? {value:'__sep__',label:g.sep,disabled:true} : {value:g,label:g})
+    );
+    ssPopulate('mGestora', gesOpts);
+  }
 }
+
 function updateAgenteSelect(){}
+
+const COEF_RAMOS = {
+  // MULTIRRIESGOS SENCILLOS
+  "1685 - Hogar": 2.00,
+  "1690 - Comunidades": 2.00,
+  "1663 - Oficinas": 1.75,
+  "1688 - Pyme": 1.25,
+  "1689 - Comercios": 1.25,
+  "1758 - Combinado": 1.00,
+  "2755 - TRDM": 1.00,
+  // AUTOS
+  "1800 - Automóviles": 0.55,
+  "1802 - Vehículos": 0.55,
+  "1803 - Motos": 0.55,
+  "1805 - Flotas": 0.55,
+  // DIVERSOS PARTICULARES
+  "1221 - Mascotas": 1.50,
+  "1580 - Movilidad personal": 1.50,
+  "1766 - Ciberriesgos particulares": 1.50,
+  "1754 - Equipos de consumo": 1.50,
+  "1401 - Caravanas móviles": 1.50,
+  "1200 - Protección jurídica conductores": 1.50,
+  "1201 - Protección jurídica comunidades": 1.50,
+  "1212 - Protección jurídica familiar": 1.50,
+  "1213 - Protección jurídica empresarial": 1.50,
+  "1260 - Viajes": 1.25,
+  "1279 - Accidentes convenios": 1.25,
+  "1280 - Accidentes colectivos": 1.25,
+  "1286 - Accidentes": 1.25,
+  "1242 - Responsabilidad civil comercio, cultura y ocio": 1.25,
+  "1244 - Responsabilidad civil construcción": 1.25,
+  "1245 - Responsabilidad civil profesional": 1.25,
+  "1241 - Responsabilidad civil privada e inmuebles": 1.25,
+  // DIVERSOS EMPRESAS
+  "1799 - Responsabilidad medioambiental": 1.00,
+  "2762 - Ciberriesgos empresas": 1.00,
+  "1405 - Transporte": 1.00,
+  "1405 - Transporte cargadores": 1.00,
+  "1406 - Transportes transportistas": 1.00,
+  "1480 - Embarcaciones": 1.00,
+  "1761 - Decenal": 0.75,
+  "1768 - Todo riesgo de construcción y montaje": 0.75,
+  "1750 - Maquinaria y equipos electrónicos": 0.75,
+  // VIDA RIESGO
+  "1300 - Vida temporal": 3.75,
+  "1617 - Salud asistencia sanitaria (CP0)": 0.50,
+  "1617 - Salud asistencia sanitaria (CP5)": 1.50,
+  "1617 - Salud asistencia sanitaria (CP20)": 2.00,
+  "1617 - Salud asistencia sanitaria (Advance)": 1.25,
+  "1616 - Salud subsidio hospitalización": 2.50,
+  "1609 - Salud Bienestar": 2.25,
+  "1625 - Decesos": 2.50,
+  "1627 - Decesos repatriación": 2.50,
+  // VIDA AHORRO PREVISTAS
+  "1354 - Ahorro Creciente": 0.80,
+  "384 - PPA": 0.80,
+  "1364 - Universal PIAS Garantizado": 0.40,
+  "1337 - Sialp": 0.40,
+  "935 - Catalana Occidente Patrimonio, F.I.": 0.80,
+  "1310 - Inversión multifondos": 1.20,
+  "Planes Pensiones y EPSV": 1.20,
+  "2386 - Ahorro capital": 0.02,
+  "1328 - Cuenta Cliente": 0.075,
+  "Fondos de Inversión": 0.05
+};
+
+// Coeficientes para Inicial/Suple (suplementarias)
+const COEF_SUPLE = {
+  "1354 - Ahorro Creciente": 0.04,
+  "384 - PPA": 0.04,
+  "1364 - Universal PIAS Garantizado": 0.04,
+  "1337 - Sialp": 0.04,
+  "935 - Catalana Occidente Patrimonio, F.I.": 0.02,
+  "1310 - Inversión multifondos": 0.12,
+  "Planes Pensiones y EPSV": 0.12,
+  "2386 - Ahorro capital": 0.02,
+  "1328 - Cuenta Cliente": 0.04,
+  "Fondos de Inversión": 0.05
+};
+
+const MOTIVOS_POR_TIPO = {
+  'Emisión':       ['Comprada','Vendida'],
+  'Inicial/Suple': ['Comprada','Vendida'],
+  'Anulación':     ['Competencia precio','Competencia otros','Desaparición del riesgo','Descontento agencia','Descontento siniestro','Falta de pago','Motivos económicos','Otras causas no especificadas','Vencimiento o Fin Seguro','Venta del riesgo','Vigilancia de cartera'],
+  'Reemplazo':     ['Automático','Con anulación','No automático'],
+  'Sin efecto':    ['Con nueva emisión','No completa anualidad','Sin nueva emisión'],
+  'Suspenso':      ['Desaparición','Venta'],
+  'Rehabilitación':['Recibo liquidado','Vigilancia de cartera']
+};
+
+function actualizarMotivos() {
+  const tipo = document.getElementById('mTipo')?.value || '';
+  const sel = document.getElementById('mMotivo');
+  if(!sel) return;
+  const motivos = MOTIVOS_POR_TIPO[tipo] || [];
+  if(motivos.length === 0) {
+    sel.innerHTML = '<option value="">— Sin motivo —</option>';
+    sel.style.display = 'none';
+  } else {
+    sel.style.display = '';
+    sel.innerHTML = '<option value="">Selecciona motivo...</option>' +
+      motivos.map(m => `<option value="${m}">${m}</option>`).join('');
+  }
+  calcularPrimaCorregida();
+}
+
+function calcularPrimaCorregida() {
+  const ramo = document.getElementById('mRamo')?.value || '';
+  const prima = parseFloat(document.getElementById('mPrima')?.value) || 0;
+  const tipo = document.getElementById('mTipo')?.value || '';
+  const campo = document.getElementById('mPrimaCorregida');
+  const label = document.getElementById('coefLabel');
+  const info = document.getElementById('coefInfo');
+
+  // Reset indicadores
+  if(label) { label.style.display='none'; label.textContent=''; }
+  if(info) { info.style.display='none'; info.textContent=''; }
+
+  if(!ramo) return;
+
+  let coef;
+  if(tipo === 'Inicial/Suple') {
+    coef = COEF_SUPLE[ramo];
+  } else {
+    coef = COEF_RAMOS[ramo];
+  }
+
+  // Sin coeficiente definido
+  if(!coef) {
+    if(campo) campo.value = '';
+    if(ramo && label) {
+      label.textContent = 'Sin coeficiente';
+      label.style.cssText = 'font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;background:#FEF9C3;color:#92400E;display:inline-block;';
+      label.style.display = 'inline-block';
+    }
+    return;
+  }
+
+  const pct = Math.round(coef * 100);
+
+  // Mostrar badge con el porcentaje — siempre verde
+  if(label) {
+    label.textContent = pct + '%';
+    label.style.cssText = 'font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;background:#DCFCE7;color:#166534;display:inline-block;margin-left:6px;';
+  }
+
+  if(!prima) return;
+
+  const corregida = Math.round(prima * coef * 100) / 100;
+  if(campo) campo.value = corregida;
+
+  // Info detalle
+  if(info) {
+    info.innerHTML = `<span style="color:var(--text-3)">${prima.toLocaleString('es-ES',{minimumFractionDigits:2})}€ × ${coef} = </span><strong style="color:var(--red)">${corregida.toLocaleString('es-ES',{minimumFractionDigits:2})}€</strong>`;
+    info.style.display = 'block';
+  }
+}
 
 function normalizarPoliza(raw) {
   if(!raw) return { poliza: raw, aviso: null };
@@ -1441,8 +1771,14 @@ function guardarRegistro(){
   const primaCorregida=document.getElementById('mPrimaCorregida').value;
   const tomador=document.getElementById('mTomador').value;
   const agente=document.getElementById('mAgente').value;
+  const motivo=document.getElementById('mMotivo')?.value||'';
   const notas=document.getElementById('mNotas').value;
+  const notasCompleto = motivo && notas ? motivo + ' — ' + notas : motivo || notas;
   if(!fecha||!tipo||!polizaRaw||!ramo||!gestora||!oficina){alert('Completa los campos obligatorios: fecha, tipo, nº póliza, ramo, gestora y oficina.');return;}
+  if(tipo==='Inicial/Suple'){
+    const primaVal=parseFloat(document.getElementById('mPrima').value)||0;
+    if(primaVal<500){alert('⚠️ Las operaciones de tipo Inicial/Suple requieren una prima neta mínima de 500€.');return;}
+  }
 
   const { poliza, aviso } = normalizarPoliza(polizaRaw);
   if(aviso) {
@@ -1453,7 +1789,7 @@ function guardarRegistro(){
   // Actualizar el campo visualmente con el valor corregido
   document.getElementById('mPoliza').value = poliza;
 
-  registros.push({id:Date.now()+Math.random(),fecha,tipo,poliza,ramo,gestora,oficina,prima:parseFloat(prima)||0,primaCorregida:parseFloat(primaCorregida)||0,tomador,agente,notas});
+  registros.push({id:Date.now()+Math.random(),fecha,tipo,poliza,ramo,gestora,oficina,prima:parseFloat(prima)||0,primaCorregida:parseFloat(primaCorregida)||0,tomador,agente,notas:notasCompleto});
   saveData();closeModal();renderAll();
 }
 
@@ -1563,8 +1899,76 @@ function generarEjemplos(){
 function renderConfig(){
   document.getElementById('bodyOficinasCfg').innerHTML=oficinas.map((o,i)=>`<tr><td>${o}</td><td><button class="btn btn-danger btn-sm" onclick="removeOficina(${i})">✕</button></td></tr>`).join('');
   document.getElementById('bodyComercCfg').innerHTML=comerciales.map((c,i)=>`<tr><td><div style="display:flex;align-items:center;gap:8px;">${avatarHTML(c.nombre,24)}<span>${c.nombre}</span></div></td><td style="font-size:12px;color:var(--text-3)">${c.oficina}</td><td><button class="btn btn-danger btn-sm" onclick="removeComercial(${i})">✕</button></td></tr>`).join('');
-  document.getElementById('bodyGestorasCfg').innerHTML=gestoras.map((g,i)=>`<tr><td style="font-family:'JetBrains Mono',monospace;font-weight:500">${g}</td><td><button class="btn btn-danger btn-sm" onclick="removeGestora(${i})">✕</button></td></tr>`).join('');
-  document.getElementById('ramosTagsContainer').innerHTML=ramos.map((r,i)=>`<span class="tag">${r}<button class="tag-remove" onclick="removeRamo(${i})">×</button></span>`).join('');
+  // Gestoras agrupadas por oficina
+  const ORDEN_OFICINAS_CFG = ['Montornés','Barcelona','Mataró','Polígono'];
+  const generalesSet = new Set(GESTORAS_GENERALES);
+  let gesHtml = '';
+  ORDEN_OFICINAS_CFG.forEach(of => {
+    const propias = (GESTORAS_POR_OFICINA[of] || []).filter(g => gestoras.includes(g));
+    if(!propias.length) return;
+    gesHtml += `<tr><td colspan="2" style="font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.07em;padding:8px 0 4px;border-bottom:1px solid var(--border);">⬡ ${of}</td></tr>`;
+    propias.forEach(g => {
+      const i = gestoras.indexOf(g);
+      gesHtml += `<tr><td style="font-family:'JetBrains Mono',monospace;font-weight:500">${g}</td><td><button class="btn btn-danger btn-sm" onclick="removeGestora(${i})">✕</button></td></tr>`;
+    });
+  });
+  // Generales
+  const generales = gestoras.filter(g => generalesSet.has(g));
+  if(generales.length) {
+    gesHtml += `<tr><td colspan="2" style="font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.07em;padding:8px 0 4px;border-bottom:1px solid var(--border);">⬡ Generales</td></tr>`;
+    generales.forEach(g => {
+      const i = gestoras.indexOf(g);
+      gesHtml += `<tr><td style="font-family:'JetBrains Mono',monospace;font-weight:500">${getGestoraLabel(g)}</td><td><button class="btn btn-danger btn-sm" onclick="removeGestora(${i})">✕</button></td></tr>`;
+    });
+  }
+  // Otras (no asignadas a ninguna oficina ni generales)
+  const asignadas = new Set([...Object.values(GESTORAS_POR_OFICINA).flat(), ...GESTORAS_GENERALES]);
+  const otras = gestoras.filter(g => !asignadas.has(g));
+  if(otras.length) {
+    gesHtml += `<tr><td colspan="2" style="font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.07em;padding:8px 0 4px;border-bottom:1px solid var(--border);">⬡ Otras</td></tr>`;
+    otras.forEach(g => {
+      const i = gestoras.indexOf(g);
+      gesHtml += `<tr><td style="font-family:'JetBrains Mono',monospace;font-weight:500">${g}</td><td><button class="btn btn-danger btn-sm" onclick="removeGestora(${i})">✕</button></td></tr>`;
+    });
+  }
+  document.getElementById('bodyGestorasCfg').innerHTML = gesHtml;
+  const GRUPOS_RAMOS = {
+    'Multirriesgos': ['1685 - Hogar','1690 - Comunidades','1663 - Oficinas','1688 - Pyme','1689 - Comercios','1758 - Combinado','2755 - TRDM'],
+    'Automóviles':   ['1800 - Automóviles','1802 - Vehículos','1803 - Motos','1805 - Flotas'],
+    'Diversos Particulares': ['1221 - Mascotas','1580 - Movilidad personal','1754 - Equipos de consumo','1401 - Caravanas móviles','1766 - Ciberriesgos particulares','1200 - Protección jurídica conductores','1201 - Protección jurídica comunidades','1212 - Protección jurídica familiar','1213 - Protección jurídica empresarial','1260 - Viajes','1279 - Accidentes convenios','1280 - Accidentes colectivos','1286 - Accidentes','1241 - Responsabilidad civil privada e inmuebles','1242 - Responsabilidad civil comercio, cultura y ocio','1244 - Responsabilidad civil construcción','1245 - Responsabilidad civil profesional'],
+    'Diversos Empresas': ['1799 - Responsabilidad medioambiental','2762 - Ciberriesgos empresas','1405 - Transporte','1405 - Transporte cargadores','1406 - Transportes transportistas','1480 - Embarcaciones','1761 - Decenal','1768 - Todo riesgo de construcción y montaje','1750 - Maquinaria y equipos electrónicos'],
+    'Vida Riesgo':   ['1300 - Vida temporal','1617 - Salud asistencia sanitaria (CP0)','1617 - Salud asistencia sanitaria (CP5)','1617 - Salud asistencia sanitaria (CP20)','1617 - Salud asistencia sanitaria (Advance)','1616 - Salud subsidio hospitalización','1609 - Salud Bienestar','1625 - Decesos','1627 - Decesos repatriación'],
+    'Vida Ahorro':   ['1354 - Ahorro Creciente','384 - PPA','1364 - Universal PIAS Garantizado','1337 - Sialp','935 - Catalana Occidente Patrimonio, F.I.','370 - Universal Vida y Jubilación','390 - Universal Vida y Pensión','375 - Universal Jubilación','1310 - Inversión multifondos','Planes Pensiones y EPSV','2386 - Ahorro capital','1328 - Cuenta Cliente','Fondos de Inversión']
+  };
+  const SECCION_RAMOS = {
+    'Multirriesgos':'NO VIDA','Automóviles':'NO VIDA','Diversos Particulares':'NO VIDA','Diversos Empresas':'NO VIDA',
+    'Vida Riesgo':'VIDA','Vida Ahorro':'VIDA'
+  };
+  const asignadosRamos = new Set(Object.values(GRUPOS_RAMOS).flat());
+  let ramosHtml = '';
+  let seccionActual = '';
+  Object.entries(GRUPOS_RAMOS).forEach(([grupo, lista]) => {
+    const seccion = SECCION_RAMOS[grupo];
+    if(seccion !== seccionActual) {
+      seccionActual = seccion;
+      ramosHtml += `<div style="width:100%;font-size:11px;font-weight:800;color:#fff;background:var(--red);padding:4px 10px;border-radius:6px;margin:10px 0 4px;letter-spacing:0.08em;">${seccion}</div>`;
+    }
+    ramosHtml += `<div style="width:100%;font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.07em;margin:6px 0 3px;">${grupo}</div>`;
+    lista.filter(r => ramos.includes(r)).forEach(r => {
+      const i = ramos.indexOf(r);
+      ramosHtml += `<span class="tag">${r}<button class="tag-remove" onclick="removeRamo(${i})">×</button></span>`;
+    });
+  });
+  // Otros ramos no clasificados
+  const otros = ramos.filter(r => !asignadosRamos.has(r));
+  if(otros.length) {
+    ramosHtml += `<div style="width:100%;font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.07em;margin:10px 0 3px;">Otros</div>`;
+    otros.forEach(r => {
+      const i = ramos.indexOf(r);
+      ramosHtml += `<span class="tag">${r}<button class="tag-remove" onclick="removeRamo(${i})">×</button></span>`;
+    });
+  }
+  document.getElementById('ramosTagsContainer').innerHTML = ramosHtml;
   const sel=document.getElementById('newComercOficina');
   sel.innerHTML=oficinas.map(o=>`<option value="${o}">${o}</option>`).join('');
   const totalEl=document.getElementById('totalObjetivoGlobal');
@@ -1604,7 +2008,7 @@ function addOficina(){const val=document.getElementById("newOficina").value.trim
 function removeOficina(i){oficinas.splice(i,1);saveData();renderConfig();}
 function addComercial(){const nombre=document.getElementById('newComercNombre').value.trim();const oficina=document.getElementById('newComercOficina').value;if(!nombre)return;if(comerciales.find(c=>c.nombre===nombre)){showMsg('comercialMsg','⚠️ El agente <strong>'+nombre+'</strong> ya existe.','var(--red)');return;}comerciales.push({nombre,oficina});document.getElementById('newComercNombre').value='';saveData();renderConfig();}
 function removeComercial(i){comerciales.splice(i,1);saveData();renderConfig();}
-function addRamo(){const val=document.getElementById('newRamo').value.trim();if(!val)return;if(ramos.includes(val)){showMsg('ramoMsg','⚠️ El ramo <strong>'+val+'</strong> ya existe.','var(--red)');return;}ramos.push(val);document.getElementById('newRamo').value='';saveData();renderConfig();}
+function addRamo(){const val=document.getElementById('newRamo').value.trim();if(!val)return;if(ramos.some(r=>r.toLowerCase()===val.toLowerCase())){showMsg('ramoMsg','⚠️ El ramo <strong>'+val+'</strong> ya existe.','var(--red)');return;}ramos.push(val);document.getElementById('newRamo').value='';saveData();renderConfig();}
 function removeRamo(i){ramos.splice(i,1);saveData();renderConfig();}
 function addGestora(){
   const val=document.getElementById('newGestora').value.trim();
