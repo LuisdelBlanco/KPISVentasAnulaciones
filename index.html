@@ -1454,12 +1454,25 @@ function exportarBackup(){
 function importarBackup(input){
   const file = input.files[0];
   if(!file) return;
+  const msg = document.getElementById('backupMsg');
   const reader = new FileReader();
   reader.onload = e => {
     try {
-      const datos = JSON.parse(e.target.result);
-      if(!datos.registros) throw new Error('Archivo no válido');
-      if(!confirm('¿Restaurar la copia de seguridad? Se reemplazarán TODOS los datos actuales.')) return;
+      const texto = e.target.result;
+      let datos;
+      try {
+        datos = JSON.parse(texto);
+      } catch(parseErr) {
+        msg.className='msg err';
+        msg.innerHTML='⚠️ El archivo no es un JSON válido. Asegúrate de exportar desde el botón "Exportar copia de seguridad".';
+        return;
+      }
+      if(!datos.registros) {
+        msg.className='msg err';
+        msg.innerHTML='⚠️ El archivo no contiene registros. Exporta de nuevo desde el dashboard local.';
+        return;
+      }
+      if(!confirm('¿Restaurar la copia de seguridad? Se reemplazarán TODOS los datos actuales.\n\n' + datos.registros.length + ' registros encontrados.')) return;
       oficinas = datos.oficinas || oficinas;
       comerciales = datos.comerciales || comerciales;
       ramos = datos.ramos || ramos;
@@ -1469,15 +1482,27 @@ function importarBackup(input){
       objetivosAgentes = datos.objetivosAgentes || {};
       registros = datos.registros || [];
       actividad = datos.actividad || [];
-      saveData();
+      try {
+        saveData();
+      } catch(storageErr) {
+        msg.className='msg err';
+        msg.innerHTML='⚠️ El archivo es demasiado grande para el almacenamiento del navegador. Prueba a borrar datos existentes primero o usar un navegador diferente.';
+        return;
+      }
       renderAll();
       renderConfig();
-      document.getElementById('backupMsg').innerHTML = '<span style="color:var(--green)">✅ Datos restaurados correctamente. ' + registros.length + ' registros cargados.</span>';
-      setTimeout(()=>{ document.getElementById('backupMsg').innerHTML=''; }, 4000);
+      msg.className='msg ok';
+      msg.innerHTML='✅ Datos restaurados correctamente. ' + registros.length + ' registros cargados.';
+      setTimeout(()=>{ msg.innerHTML=''; }, 5000);
     } catch(err) {
-      document.getElementById('backupMsg').innerHTML = '<span style="color:var(--red)">⚠️ Error al leer el archivo. Asegúrate de que es un backup válido de SM Seguros.</span>';
+      msg.className='msg err';
+      msg.innerHTML='⚠️ Error inesperado: ' + err.message;
     }
-    input.value = '';
+    input.value='';
+  };
+  reader.onerror = () => {
+    document.getElementById('backupMsg').className='msg err';
+    document.getElementById('backupMsg').innerHTML='⚠️ No se pudo leer el archivo. Inténtalo de nuevo.';
   };
   reader.readAsText(file);
 }
