@@ -894,10 +894,33 @@ function saveData() {
     objetivosPorOficina, objetivosAgentes, registros, actividad
   }));
 }
-let { oficinas, comerciales, ramos, gestoras = DEFAULTS.gestoras, objetivo,
-      objetivosPorOficina = DEFAULTS.objetivosPorOficina,
-      objetivosAgentes = {},
-      registros, actividad = [] } = loadData();
+let oficinas = DEFAULTS.oficinas;
+let comerciales = DEFAULTS.comerciales;
+let ramos = DEFAULTS.ramos;
+let gestoras = DEFAULTS.gestoras;
+let objetivo = DEFAULTS.objetivo;
+let objetivosPorOficina = DEFAULTS.objetivosPorOficina;
+let objetivosAgentes = {};
+let registros = [];
+let actividad = [];
+
+// Cargar datos guardados encima de los defaults
+try {
+  const saved = loadData();
+  if(saved) {
+    oficinas = saved.oficinas || oficinas;
+    comerciales = saved.comerciales || comerciales;
+    ramos = saved.ramos || ramos;
+    gestoras = saved.gestoras || gestoras;
+    objetivo = saved.objetivo || objetivo;
+    objetivosPorOficina = saved.objetivosPorOficina || objetivosPorOficina;
+    objetivosAgentes = saved.objetivosAgentes || {};
+    registros = saved.registros || [];
+    actividad = saved.actividad || [];
+  }
+} catch(e) {
+  console.warn('No se pudieron cargar datos guardados:', e.message);
+}
 
 function generateSampleData() {
   const data = [];
