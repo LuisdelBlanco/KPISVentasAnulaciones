@@ -1057,8 +1057,17 @@ async function cargarDatosSupabase() {
   } catch(e) { console.warn('Config no cargada:', e.message); }
   try {
     document.getElementById('loadingMsg').textContent = 'Cargando registros...';
-    const data = await sbGet('registros', 'select=*&order=fecha.desc');
-    registros = (data||[]).map(r => ({
+    let allData = [];
+    let from = 0;
+    const PAGE = 1000;
+    while(true) {
+      const chunk = await supaFetch(`/rest/v1/registros?select=*&order=fecha.desc&limit=${PAGE}&offset=${from}`);
+      if(!chunk || chunk.length === 0) break;
+      allData = allData.concat(chunk);
+      if(chunk.length < PAGE) break;
+      from += PAGE;
+    }
+    registros = allData.map(r => ({
       id:r.id, fecha:r.fecha, tipo:r.tipo, poliza:r.poliza,
       ramo:r.ramo, gestora:r.gestora, oficina:r.oficina,
       agente:r.agente, tomador:r.tomador||'',
