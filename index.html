@@ -375,6 +375,39 @@ tbody tr:hover td { background: var(--bg); }
 </head>
 <body>
 
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" style="display:none;position:fixed;inset:0;background:#F7F7F6;z-index:99999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:40px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,0.12);">
+    <div style="text-align:center;margin-bottom:28px;">
+      <div style="width:48px;height:48px;background:#C2003F;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;">
+        <svg width="24" height="24" viewBox="0 0 14 14" fill="none"><path d="M7 1L13 4.5V9.5L7 13L1 9.5V4.5L7 1Z" fill="white"/></svg>
+      </div>
+      <div style="font-size:20px;font-weight:800;color:#1A1A18;">SM Seguros</div>
+      <div style="font-size:13px;color:#A3A39E;margin-top:4px;">Dashboard KPIs · Acceso restringido</div>
+    </div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:12px;font-weight:600;color:#52524E;display:block;margin-bottom:5px;">Email</label>
+      <input type="email" id="loginEmail" placeholder="usuario@occident.com" style="width:100%;padding:10px 12px;border:1px solid #E8E8E4;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div style="margin-bottom:20px;">
+      <label style="font-size:12px;font-weight:600;color:#52524E;display:block;margin-bottom:5px;">Contraseña</label>
+      <input type="password" id="loginPassword" placeholder="••••••••" style="width:100%;padding:10px 12px;border:1px solid #E8E8E4;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button onclick="doLogin()" id="loginBtn" style="width:100%;background:#C2003F;color:#fff;border:none;border-radius:8px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Entrar</button>
+    <div id="loginError" style="margin-top:10px;font-size:12px;color:#C2003F;text-align:center;"></div>
+  </div>
+</div>
+
+<!-- LOADING OVERLAY -->
+<div id="loadingOverlay" style="display:none;position:fixed;inset:0;background:rgba(247,247,246,0.95);z-index:99998;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
+  <div style="width:40px;height:40px;border:3px solid #f0d0dc;border-top-color:#C2003F;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+  <div style="font-size:14px;font-weight:600;color:#C2003F;" id="loadingMsg">Cargando...</div>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+
+<!-- MAIN APP -->
+<div id="mainLayout" style="display:none;">
+
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-logo">
@@ -818,6 +851,8 @@ tbody tr:hover td { background: var(--bg); }
     </div>
   </div>
 </div>
+
+</div><!-- end mainLayout -->
 
 <script>
 // ── DATA ──────────────────────────────────────────
@@ -2137,4 +2172,159 @@ function renderConfig(){
 function showMsg(id,msg,color,ms=3000){const el=document.getElementById(id);if(!el)return;el.innerHTML=`<span style="color:${color}">${msg}</span>`;setTimeout(()=>{el.innerHTML="";},ms);}
 function addOficina(){const val=document.getElementById("newOficina").value.trim();if(!val)return;if(oficinas.includes(val)){showMsg("oficinaMsg",`⚠️ La oficina <strong>${val}</strong> ya existe.`,"var(--red)");return;}oficinas.push(val);document.getElementById("newOficina").value="";saveData();renderConfig();}
 function removeOficina(i){oficinas.splice(i,1);saveData();renderConfig();}
-function addComercial(){const nombre=document.getEl
+function addComercial(){const nombre=document.getElementById('newComercNombre').value.trim();const oficina=document.getElementById('newComercOficina').value;if(!nombre)return;if(comerciales.find(c=>c.nombre===nombre)){showMsg('comercialMsg','⚠️ El agente <strong>'+nombre+'</strong> ya existe.','var(--red)');return;}comerciales.push({nombre,oficina});document.getElementById('newComercNombre').value='';saveData();renderConfig();}
+function removeComercial(i){comerciales.splice(i,1);saveData();renderConfig();}
+function addRamo(){const val=document.getElementById('newRamo').value.trim();if(!val)return;if(ramos.some(r=>r.toLowerCase()===val.toLowerCase())){showMsg('ramoMsg','⚠️ El ramo <strong>'+val+'</strong> ya existe.','var(--red)');return;}ramos.push(val);document.getElementById('newRamo').value='';saveData();renderConfig();}
+function removeRamo(i){ramos.splice(i,1);saveData();renderConfig();}
+function addGestora(){
+  const val=document.getElementById('newGestora').value.trim();
+  if(!val)return;
+  if(gestoras.includes(val)){document.getElementById('gestoraMsg').innerHTML=`<span style="color:var(--red)">⚠️ La gestora <strong>${val}</strong> ya está incluida.</span>`;setTimeout(()=>{document.getElementById('gestoraMsg').innerHTML='';},3000);return;}
+  gestoras.push(val);document.getElementById('newGestora').value='';document.getElementById('gestoraMsg').innerHTML='';saveData();renderConfig();
+}
+function removeGestora(i){gestoras.splice(i,1);saveData();renderConfig();}
+
+function guardarObjetivoAgente(nombre,valor){
+  const n=parseInt(valor);
+  if(!isNaN(n)&&n>0)objetivosAgentes[nombre]=n;
+  else delete objetivosAgentes[nombre];
+  const total=comerciales.reduce((s,c)=>s+(objetivosAgentes[c.nombre]||0),0);
+  objetivo=total>0?total:154;
+  saveData();
+  const el=document.getElementById('totalObjetivoGlobal');
+  if(el)el.textContent=objetivo;
+  renderAll();
+}
+
+// ── ACTIVIDAD COMERCIAL ───────────────────────────
+const MESES=['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+function preseleccionarMesActividad(){
+  const now=new Date();
+  const mes=document.getElementById('acMes');
+  const anio=document.getElementById('acAnio');
+  if(mes)mes.value=now.getMonth()+1;
+  if(anio)anio.value=now.getFullYear();
+  const acOf=document.getElementById('acOficina');
+  if(acOf){acOf.innerHTML=oficinas.map(o=>`<option value="${o}">${o}</option>`).join('');actualizarAgentesActividad();}
+}
+function actualizarAgentesActividad(){
+  const oficina=document.getElementById('acOficina')?.value;
+  const sel=document.getElementById('acAgente');
+  if(!sel)return;
+  const filtrados=comerciales.filter(c=>!oficina||c.oficina===oficina);
+  sel.innerHTML=filtrados.map(c=>`<option value="${c.nombre}">${c.nombre}</option>`).join('');
+  if(filtrados.length===0)sel.innerHTML='<option value="">(sin agentes)</option>';
+}
+function guardarActividad(){
+  const mes=parseInt(document.getElementById('acMes').value);
+  const anio=parseInt(document.getElementById('acAnio').value);
+  const oficina=document.getElementById('acOficina').value;
+  const agente=document.getElementById('acAgente').value;
+  const oportunidades=parseInt(document.getElementById('acOportunidades').value)||0;
+  const msg=document.getElementById('actividadMsg');
+  if(!oficina||!agente){msg.innerHTML=`<span style="color:var(--red)">⚠️ Selecciona oficina y agente.</span>`;return;}
+  const idx=actividad.findIndex(a=>a.mes===mes&&a.anio===anio&&a.agente===agente);
+  let act;
+  if(idx>=0){
+    actividad[idx]={...actividad[idx],mes,anio,oficina,agente,oportunidades};
+    act=actividad[idx];
+    msg.innerHTML=`<span style="color:var(--amber)">⚠️ Registro de ${agente} en ${MESES[mes]} ${anio} actualizado.</span>`;
+  } else {
+    act={uid:'uid_'+Date.now()+'_'+Math.random().toString(36).slice(2),mes,anio,oficina,agente,oportunidades};
+    actividad.push(act);
+    msg.innerHTML=`<span style="color:var(--green)">✅ Datos de ${agente} en ${MESES[mes]} ${anio} guardados.</span>`;
+  }
+  saveData();
+  renderActividad();
+  document.getElementById('acOportunidades').value='';
+  setTimeout(()=>{msg.innerHTML='';},3000);
+}
+function renderActividad(){
+  const tbody=document.getElementById('bodyActividad');
+  if(!tbody)return;
+  const sorted=[...actividad].sort((a,b)=>{
+    if(a.oficina<b.oficina)return-1;if(a.oficina>b.oficina)return 1;
+    if(a.agente<b.agente)return-1;if(a.agente>b.agente)return 1;
+    return b.anio-a.anio||b.mes-a.mes;
+  });
+  if(sorted.length===0){
+    tbody.innerHTML='<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🎯</div><p>Todavía no hay datos introducidos</p></div></td></tr>';
+    return;
+  }
+  let lastOf=null;
+  let rows='';
+  sorted.forEach((a,i)=>{
+    const esNueva=a.oficina!==lastOf;lastOf=a.oficina;
+    if(esNueva) rows+='<tr><td colspan="6" style="background:var(--red-dim);font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.08em;padding:6px 14px;">⬡ '+a.oficina+'</td></tr>';
+    rows+='<tr>'
+      +'<td style="font-weight:600">'+MESES[a.mes]+'</td>'
+      +'<td>'+a.anio+'</td>'
+      +'<td style="font-size:12px;color:var(--text-3)">'+a.oficina+'</td>'
+      +'<td style="font-weight:500">'+a.agente+'</td>'
+      +'<td style="font-weight:800;color:var(--red);font-size:15px">'+a.oportunidades+'</td>'
+      +'<td><button class="btn btn-danger btn-sm del-actividad" data-mes="'+a.mes+'" data-anio="'+a.anio+'" data-agente="'+encodeURIComponent(a.agente)+'">✕</button></td>'
+      +'</tr>';
+  });
+  tbody.innerHTML=rows;
+}
+
+
+function poblarFiltrosDash(){
+  const selOf=document.getElementById('dashOficina');
+  const selAg=document.getElementById('dashAgente');
+  if(!selOf||!selAg)return;
+  const pOf=selOf.value;
+  selOf.innerHTML='<option value="">Todas las oficinas</option>'+oficinas.map(o=>`<option value="${o}"${o===pOf?' selected':''}>${o}</option>`).join('');
+  actualizarAgenteDash();
+}
+function actualizarAgenteDash(){
+  const oficina=document.getElementById('dashOficina')?.value||'';
+  const selAg=document.getElementById('dashAgente');if(!selAg)return;
+  const pAg=selAg.value;
+  const filtrados=oficina?comerciales.filter(c=>c.oficina===oficina):comerciales;
+  selAg.innerHTML='<option value="">Todos los agentes</option>'+filtrados.map(c=>`<option value="${c.nombre}"${c.nombre===pAg?' selected':''}>${c.nombre}</option>`).join('');
+}
+function resetFiltrosDash(){
+  const selOf=document.getElementById('dashOficina');
+  const selAg=document.getElementById('dashAgente');
+  if(selOf)selOf.value='';if(selAg)selAg.value='';
+  actualizarAgenteDash();renderAll();
+}
+
+// ── INIT ──────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async ()=>{
+  Chart.register(objetivoPlugin);
+  const now = new Date();
+  const mSel = document.getElementById('monthFilter');
+  if(mSel) mSel.value = now.getMonth()+1;
+
+  // Comprobar sesión guardada en localStorage
+  const session = getSession();
+  if(session?.access_token) {
+    accessToken = session.access_token;
+    currentUser = session.user;
+    await loadUserRole();
+    await arrancarApp();
+  } else {
+    document.getElementById('loginScreen').style.display = 'flex';
+  }
+
+  // Event delegation borrar actividad
+  document.getElementById('bodyActividad').addEventListener('click', function(e){
+    const btn = e.target.closest('.del-actividad');
+    if(!btn) return;
+    const mes = parseInt(btn.getAttribute('data-mes'));
+    const anio = parseInt(btn.getAttribute('data-anio'));
+    const agente = decodeURIComponent(btn.getAttribute('data-agente'));
+    if(!confirm('¿Eliminar el registro de ' + agente + ' en ' + MESES[mes] + ' ' + anio + '?')) return;
+    const item = actividad.find(a => a.mes===mes && a.anio===anio && a.agente.trim()===agente.trim());
+    actividad = actividad.filter(a => !(a.mes===mes && a.anio===anio && a.agente.trim()===agente.trim()));
+    saveData();
+    renderActividad();
+    if(item) sbDel('actividad', String(item.uid||item.id)).catch(e=>console.warn(e));
+  });
+});
+</script>
+</body>
+</html>
