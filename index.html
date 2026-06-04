@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 :root {
   --red: #C2003F;
@@ -406,7 +407,11 @@ tbody tr:hover td { background: var(--bg); }
     <div class="nav-item" onclick="goPage('config')"><span class="nav-icon">◈</span> Ajustes</div>
   </div>
 
-  <div class="sidebar-foot">Occident · Agencia exclusiva</div>
+  <div class="sidebar-foot">
+    <div id="sidebarUser" style="font-size:11px;color:var(--text-3);margin-bottom:6px;"></div>
+    <button onclick="doLogout()" style="background:none;border:none;font-size:11px;color:var(--text-3);cursor:pointer;font-family:inherit;padding:0;">⎋ Cerrar sesión</button>
+    <div style="margin-top:6px;">Occident · Agencia exclusiva</div>
+  </div>
 </aside>
 
 <!-- MAIN -->
@@ -846,32 +851,157 @@ const DEFAULTS = {
 };
 
 
-function loadData() {
+// ── SUPABASE AUTH ─────────────────────────────────────────
+const SUPA_URL = 'https://sblprwqnwcravldtmvat.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNibHByd3Fud2NyYXZsZHRtdmF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzMTMwNTIsImV4cCI6MjA5NTg4OTA1Mn0.0f08Urtc2g2A1ZGuXXyhaC3c0pmBpv5pIiEUxtXDuJw';
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+let currentUser = null;
+let currentRole = 'basic'; // 'basic' | 'advanced'
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const btn = document.getElementById('loginBtn');
+  const err = document.getElementById('loginError');
+  if(!email || !password) { err.textContent = 'Introduce email y contraseña.'; return; }
+  btn.textContent = 'Entrando...'; btn.disabled = true; err.textContent = '';
   try {
-    const raw = localStorage.getItem('sm_kpis_v2');
-    if(raw) {
-      const p = JSON.parse(raw);
-      if(p.oficinas) oficinas = p.oficinas;
-      if(p.comerciales) comerciales = p.comerciales;
-      if(p.ramos) ramos = p.ramos;
-      if(p.gestoras) gestoras = p.gestoras;
-      if(p.objetivo) objetivo = p.objetivo;
-      if(p.objetivosPorOficina) objetivosPorOficina = p.objetivosPorOficina;
-      if(p.objetivosAgentes) objetivosAgentes = p.objetivosAgentes || {};
-      if(p.registros) registros = p.registros;
-      if(p.actividad) actividad = p.actividad;
-    }
-  } catch(e) { console.warn('loadData error:', e.message); }
+    const { data, error } = await supa.auth.signInWithPassword({ email, password });
+    if(error) throw error;
+    currentUser = data.user;
+    await loadUserRole();
+    await arrancarApp();
+  } catch(e) {
+    err.textContent = 'Email o contraseña incorrectos.';
+    btn.textContent = 'Entrar'; btn.disabled = false;
+  }
+}
+
+async function loadUserRole() {
+  try {
+    const { data } = await supa.from('user_roles').select('role').eq('user_id', currentUser.id).single();
+    currentRole = data?.role || 'basic';
+  } catch(e) {
+    currentRole = 'basic';
+  }
+}
+
+async function doLogout() {
+  await supa.auth.signOut();
+  currentUser = null; currentRole = 'basic';
+  document.getElementById('mainLayout').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginPassword').value = '';
+  document.getElementById('loginError').textContent = '';
+}
+
+function aplicarPermisos() {
+  const isAdvanced = currentRole === 'advanced';
+  // Botón nueva póliza
+  const btnNueva = document.querySelector('[onclick="openModal()"]');
+  if(btnNueva) btnNueva.style.display = '';
+  // Ajustes solo para avanzados
+  const ajustesLink = document.querySelector('[onclick*="config"]');
+  if(ajustesLink) ajustesLink.style.display = isAdvanced ? '' : 'none';
+  // Mostrar nombre usuario en sidebar
+  const userInfo = document.getElementById('sidebarUser');
+  if(userInfo) {
+    const nombre = currentUser?.email?.split('@')[0] || '';
+    userInfo.textContent = nombre + (isAdvanced ? ' · Admin' : '');
+  }
+}
+
+async function arrancarApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  const overlay = document.getElementById('loadingOverlay');
+  if(overlay) { overlay.style.display = 'flex'; }
+  document.getElementById('mainLayout').style.display = '';
+  // Cargar datos desde Supabase
+  await cargarDatosSupabase();
+  if(overlay) overlay.style.display = 'none';
+  aplicarPermisos();
+  renderAll();
+  poblarFiltrosDash();
+  renderConfig();
+}
+
+async function sbGet(table, params='') {
+  const url = SUPA_URL + '/rest/v1/' + table + (params ? '?' + params : '');
+  const r = await fetch(url, { headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + (await supa.auth.getSession()).data.session?.access_token, 'Accept': 'application/json' }});
+  if(!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+async function sbPost(table, data, prefer='resolution=merge-duplicates,return=minimal') {
+  const token = (await supa.auth.getSession()).data.session?.access_token;
+  const rows = Array.isArray(data) ? data : [data];
+  const r = await fetch(SUPA_URL + '/rest/v1/' + table, {
+    method: 'POST',
+    headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': prefer }
+    , body: JSON.stringify(rows)
+  });
+  if(!r.ok) throw new Error(await r.text());
+}
+
+async function sbDel(table, id) {
+  const token = (await supa.auth.getSession()).data.session?.access_token;
+  const r = await fetch(SUPA_URL + '/rest/v1/' + table + '?id=eq.' + encodeURIComponent(id), {
+    method: 'DELETE',
+    headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + token }
+  });
+  if(!r.ok) throw new Error(await r.text());
+}
+
+async function cargarDatosSupabase() {
+  try {
+    document.getElementById('loadingMsg').textContent = 'Cargando configuración...';
+    const cfg = await sbGet('config', 'select=clave,valor');
+    (cfg||[]).forEach(row => {
+      if(row.clave==='oficinas') oficinas=row.valor;
+      if(row.clave==='comerciales') comerciales=row.valor;
+      if(row.clave==='ramos') ramos=row.valor;
+      if(row.clave==='gestoras') gestoras=row.valor;
+      if(row.clave==='objetivo') objetivo=row.valor;
+      if(row.clave==='objetivosPorOficina') objetivosPorOficina=row.valor;
+      if(row.clave==='objetivosAgentes') objetivosAgentes=row.valor;
+    });
+  } catch(e) { console.warn('Config desde localStorage'); }
+
+  try {
+    document.getElementById('loadingMsg').textContent = 'Cargando registros...';
+    const data = await sbGet('registros', 'select=*&order=fecha.desc');
+    registros = (data||[]).map(r => ({
+      id:r.id, fecha:r.fecha, tipo:r.tipo, poliza:r.poliza,
+      ramo:r.ramo, gestora:r.gestora, oficina:r.oficina,
+      agente:r.agente, tomador:r.tomador||'',
+      prima:r.prima||0, primaCorregida:r.prima_corregida||0, notas:r.notas||''
+    }));
+  } catch(e) { console.warn('Registros desde localStorage:', e.message); }
+
+  try {
+    document.getElementById('loadingMsg').textContent = 'Cargando actividad...';
+    const data = await sbGet('actividad', 'select=*');
+    actividad = (data||[]).map(a => ({
+      uid:a.id, mes:a.mes, anio:a.anio,
+      oficina:a.oficina, agente:a.agente, oportunidades:a.oportunidades||0
+    }));
+  } catch(e) { console.warn('Actividad desde localStorage:', e.message); }
 }
 
 function saveData() {
-  try {
-    localStorage.setItem('sm_kpis_v2', JSON.stringify({
-      oficinas, comerciales, ramos, gestoras, objetivo,
-      objetivosPorOficina, objetivosAgentes, registros, actividad
-    }));
-  } catch(e) { console.warn('saveData error:', e.message); }
+  // Guardar config en Supabase
+  const configs = [
+    {clave:'oficinas',valor:oficinas},{clave:'comerciales',valor:comerciales},
+    {clave:'ramos',valor:ramos},{clave:'gestoras',valor:gestoras},
+    {clave:'objetivo',valor:objetivo},{clave:'objetivosPorOficina',valor:objetivosPorOficina},
+    {clave:'objetivosAgentes',valor:objetivosAgentes}
+  ];
+  sbPost('config', configs).catch(e => console.warn('saveConfig error:', e.message));
+  // Cache local
+  try { localStorage.setItem('sm_kpis_v2', JSON.stringify({oficinas,comerciales,ramos,gestoras,objetivo,objetivosPorOficina,objetivosAgentes,registros,actividad})); } catch(e){}
 }
+
 
 
 
@@ -885,23 +1015,20 @@ let objetivosAgentes = {};
 let registros = [];
 let actividad = [];
 
-// Cargar datos guardados encima de los defaults
+// Cargar cache local como fallback inicial
 try {
-  const saved = loadData();
-  if(saved) {
-    oficinas = saved.oficinas || oficinas;
-    comerciales = saved.comerciales || comerciales;
-    ramos = saved.ramos ? [...new Set(saved.ramos)] : ramos;
-    gestoras = saved.gestoras || gestoras;
-    objetivo = saved.objetivo || objetivo;
-    objetivosPorOficina = saved.objetivosPorOficina || objetivosPorOficina;
-    objetivosAgentes = saved.objetivosAgentes || {};
-    registros = saved.registros || [];
-    actividad = saved.actividad || [];
+  const raw = localStorage.getItem('sm_kpis_v2');
+  if(raw) {
+    const p = JSON.parse(raw);
+    if(p.oficinas) oficinas = p.oficinas;
+    if(p.comerciales) comerciales = p.comerciales;
+    if(p.ramos) ramos = [...new Set(p.ramos)];
+    if(p.gestoras) gestoras = p.gestoras;
+    if(p.objetivo) objetivo = p.objetivo;
+    if(p.objetivosPorOficina) objetivosPorOficina = p.objetivosPorOficina;
+    if(p.objetivosAgentes) objetivosAgentes = p.objetivosAgentes || {};
   }
-} catch(e) {
-  console.warn('No se pudieron cargar datos guardados:', e.message);
-}
+} catch(e) {}
 
 function generateSampleData() {
   const data = [];
@@ -1733,6 +1860,53 @@ function guardarRegistro(){
     if(!continuar) return;
   }
 
+  // ── Detección de duplicados ──────────────────────────────
+  try {
+    const polizaNorm = poliza.replace(/[\.\-\s]/g,'').toUpperCase();
+
+    // 1. Duplicado exacto: misma póliza + mismo tipo + misma fecha
+    const exacto = registros.find(r =>
+      r.poliza && r.poliza.replace(/[\.\-\s]/g,'').toUpperCase() === polizaNorm &&
+      r.tipo === tipo &&
+      r.fecha === fecha
+    );
+    if(exacto) {
+      const ok = confirm(
+        '🚨 POSIBLE DUPLICADO EXACTO\n\n' +
+        'Ya existe un registro con:\n' +
+        '  · Póliza: ' + exacto.poliza + '\n' +
+        '  · Tipo: ' + exacto.tipo + '\n' +
+        '  · Fecha: ' + exacto.fecha + '\n' +
+        '  · Agente: ' + exacto.agente + '\n\n' +
+        '¿Guardar igualmente?'
+      );
+      if(!ok) return;
+    }
+
+    // 2. Mismo movimiento: misma póliza + mismo tipo (fecha diferente)
+    if(!exacto) {
+      const similar = registros.find(r =>
+        r.poliza && r.poliza.replace(/[\.\-\s]/g,'').toUpperCase() === polizaNorm &&
+        r.tipo === tipo &&
+        r.fecha !== fecha
+      );
+      if(similar) {
+        const ok = confirm(
+          '⚠️ MOVIMIENTO SIMILAR DETECTADO\n\n' +
+          'Ya existe un ' + similar.tipo + ' de esta póliza:\n' +
+          '  · Póliza: ' + similar.poliza + '\n' +
+          '  · Fecha anterior: ' + similar.fecha + '\n' +
+          '  · Agente: ' + similar.agente + '\n\n' +
+          '¿Guardar igualmente?'
+        );
+        if(!ok) return;
+      }
+    }
+  } catch(e) {
+    console.warn('Error en detección de duplicados:', e.message);
+    // Si falla la detección, se guarda igualmente
+  }
+
   // Actualizar el campo visualmente con el valor corregido
   document.getElementById('mPoliza').value = poliza;
 
@@ -1741,6 +1915,8 @@ function guardarRegistro(){
   saveData();
   closeModal();
   renderAll();
+  // Guardar en Supabase
+  sbPost('registros', {id:reg.id,fecha:reg.fecha,tipo:reg.tipo,poliza:reg.poliza,ramo:reg.ramo,gestora:reg.gestora,oficina:reg.oficina,agente:reg.agente,tomador:reg.tomador||'',prima:reg.prima,prima_corregida:reg.primaCorregida,notas:reg.notas||''}).catch(e=>console.warn('Error guardando en Supabase:',e.message));
 }
 
 // ── IMPORT CSV ────────────────────────────────────
@@ -1956,155 +2132,4 @@ function renderConfig(){
 function showMsg(id,msg,color,ms=3000){const el=document.getElementById(id);if(!el)return;el.innerHTML=`<span style="color:${color}">${msg}</span>`;setTimeout(()=>{el.innerHTML="";},ms);}
 function addOficina(){const val=document.getElementById("newOficina").value.trim();if(!val)return;if(oficinas.includes(val)){showMsg("oficinaMsg",`⚠️ La oficina <strong>${val}</strong> ya existe.`,"var(--red)");return;}oficinas.push(val);document.getElementById("newOficina").value="";saveData();renderConfig();}
 function removeOficina(i){oficinas.splice(i,1);saveData();renderConfig();}
-function addComercial(){const nombre=document.getElementById('newComercNombre').value.trim();const oficina=document.getElementById('newComercOficina').value;if(!nombre)return;if(comerciales.find(c=>c.nombre===nombre)){showMsg('comercialMsg','⚠️ El agente <strong>'+nombre+'</strong> ya existe.','var(--red)');return;}comerciales.push({nombre,oficina});document.getElementById('newComercNombre').value='';saveData();renderConfig();}
-function removeComercial(i){comerciales.splice(i,1);saveData();renderConfig();}
-function addRamo(){const val=document.getElementById('newRamo').value.trim();if(!val)return;if(ramos.some(r=>r.toLowerCase()===val.toLowerCase())){showMsg('ramoMsg','⚠️ El ramo <strong>'+val+'</strong> ya existe.','var(--red)');return;}ramos.push(val);document.getElementById('newRamo').value='';saveData();renderConfig();}
-function removeRamo(i){ramos.splice(i,1);saveData();renderConfig();}
-function addGestora(){
-  const val=document.getElementById('newGestora').value.trim();
-  if(!val)return;
-  if(gestoras.includes(val)){document.getElementById('gestoraMsg').innerHTML=`<span style="color:var(--red)">⚠️ La gestora <strong>${val}</strong> ya está incluida.</span>`;setTimeout(()=>{document.getElementById('gestoraMsg').innerHTML='';},3000);return;}
-  gestoras.push(val);document.getElementById('newGestora').value='';document.getElementById('gestoraMsg').innerHTML='';saveData();renderConfig();
-}
-function removeGestora(i){gestoras.splice(i,1);saveData();renderConfig();}
-
-function guardarObjetivoAgente(nombre,valor){
-  const n=parseInt(valor);
-  if(!isNaN(n)&&n>0)objetivosAgentes[nombre]=n;
-  else delete objetivosAgentes[nombre];
-  const total=comerciales.reduce((s,c)=>s+(objetivosAgentes[c.nombre]||0),0);
-  objetivo=total>0?total:154;
-  saveData();
-  const el=document.getElementById('totalObjetivoGlobal');
-  if(el)el.textContent=objetivo;
-  renderAll();
-}
-
-// ── ACTIVIDAD COMERCIAL ───────────────────────────
-const MESES=['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-
-function preseleccionarMesActividad(){
-  const now=new Date();
-  const mes=document.getElementById('acMes');
-  const anio=document.getElementById('acAnio');
-  if(mes)mes.value=now.getMonth()+1;
-  if(anio)anio.value=now.getFullYear();
-  const acOf=document.getElementById('acOficina');
-  if(acOf){acOf.innerHTML=oficinas.map(o=>`<option value="${o}">${o}</option>`).join('');actualizarAgentesActividad();}
-}
-function actualizarAgentesActividad(){
-  const oficina=document.getElementById('acOficina')?.value;
-  const sel=document.getElementById('acAgente');
-  if(!sel)return;
-  const filtrados=comerciales.filter(c=>!oficina||c.oficina===oficina);
-  sel.innerHTML=filtrados.map(c=>`<option value="${c.nombre}">${c.nombre}</option>`).join('');
-  if(filtrados.length===0)sel.innerHTML='<option value="">(sin agentes)</option>';
-}
-function guardarActividad(){
-  const mes=parseInt(document.getElementById('acMes').value);
-  const anio=parseInt(document.getElementById('acAnio').value);
-  const oficina=document.getElementById('acOficina').value;
-  const agente=document.getElementById('acAgente').value;
-  const oportunidades=parseInt(document.getElementById('acOportunidades').value)||0;
-  const msg=document.getElementById('actividadMsg');
-  if(!oficina||!agente){msg.innerHTML=`<span style="color:var(--red)">⚠️ Selecciona oficina y agente.</span>`;return;}
-  const idx=actividad.findIndex(a=>a.mes===mes&&a.anio===anio&&a.agente===agente);
-  let act;
-  if(idx>=0){
-    actividad[idx]={...actividad[idx],mes,anio,oficina,agente,oportunidades};
-    act=actividad[idx];
-    msg.innerHTML=`<span style="color:var(--amber)">⚠️ Registro de ${agente} en ${MESES[mes]} ${anio} actualizado.</span>`;
-  } else {
-    act={uid:'uid_'+Date.now()+'_'+Math.random().toString(36).slice(2),mes,anio,oficina,agente,oportunidades};
-    actividad.push(act);
-    msg.innerHTML=`<span style="color:var(--green)">✅ Datos de ${agente} en ${MESES[mes]} ${anio} guardados.</span>`;
-  }
-  saveData();
-  renderActividad();
-  document.getElementById('acOportunidades').value='';
-  setTimeout(()=>{msg.innerHTML='';},3000);
-}
-function renderActividad(){
-  const tbody=document.getElementById('bodyActividad');
-  if(!tbody)return;
-  const sorted=[...actividad].sort((a,b)=>{
-    if(a.oficina<b.oficina)return-1;if(a.oficina>b.oficina)return 1;
-    if(a.agente<b.agente)return-1;if(a.agente>b.agente)return 1;
-    return b.anio-a.anio||b.mes-a.mes;
-  });
-  if(sorted.length===0){
-    tbody.innerHTML='<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🎯</div><p>Todavía no hay datos introducidos</p></div></td></tr>';
-    return;
-  }
-  let lastOf=null;
-  let rows='';
-  sorted.forEach((a,i)=>{
-    const esNueva=a.oficina!==lastOf;lastOf=a.oficina;
-    if(esNueva) rows+='<tr><td colspan="6" style="background:var(--red-dim);font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.08em;padding:6px 14px;">⬡ '+a.oficina+'</td></tr>';
-    rows+='<tr>'
-      +'<td style="font-weight:600">'+MESES[a.mes]+'</td>'
-      +'<td>'+a.anio+'</td>'
-      +'<td style="font-size:12px;color:var(--text-3)">'+a.oficina+'</td>'
-      +'<td style="font-weight:500">'+a.agente+'</td>'
-      +'<td style="font-weight:800;color:var(--red);font-size:15px">'+a.oportunidades+'</td>'
-      +'<td><button class="btn btn-danger btn-sm del-actividad" data-mes="'+a.mes+'" data-anio="'+a.anio+'" data-agente="'+encodeURIComponent(a.agente)+'">✕</button></td>'
-      +'</tr>';
-  });
-  tbody.innerHTML=rows;
-}
-
-
-function poblarFiltrosDash(){
-  const selOf=document.getElementById('dashOficina');
-  const selAg=document.getElementById('dashAgente');
-  if(!selOf||!selAg)return;
-  const pOf=selOf.value;
-  selOf.innerHTML='<option value="">Todas las oficinas</option>'+oficinas.map(o=>`<option value="${o}"${o===pOf?' selected':''}>${o}</option>`).join('');
-  actualizarAgenteDash();
-}
-function actualizarAgenteDash(){
-  const oficina=document.getElementById('dashOficina')?.value||'';
-  const selAg=document.getElementById('dashAgente');if(!selAg)return;
-  const pAg=selAg.value;
-  const filtrados=oficina?comerciales.filter(c=>c.oficina===oficina):comerciales;
-  selAg.innerHTML='<option value="">Todos los agentes</option>'+filtrados.map(c=>`<option value="${c.nombre}"${c.nombre===pAg?' selected':''}>${c.nombre}</option>`).join('');
-}
-function resetFiltrosDash(){
-  const selOf=document.getElementById('dashOficina');
-  const selAg=document.getElementById('dashAgente');
-  if(selOf)selOf.value='';if(selAg)selAg.value='';
-  actualizarAgenteDash();renderAll();
-}
-
-// ── INIT ──────────────────────────────────────────
-document.addEventListener('DOMContentLoaded',()=>{
-  Chart.register(objetivoPlugin);
-  const now=new Date();
-  const mSel=document.getElementById('monthFilter');
-  if(mSel)mSel.value=now.getMonth()+1;
-
-  // Event delegation para borrar actividad
-  document.getElementById('bodyActividad').addEventListener('click', function(e){
-    const btn = e.target.closest('.del-actividad');
-    if(!btn) return;
-    const mes  = parseInt(btn.getAttribute('data-mes'));
-    const anio = parseInt(btn.getAttribute('data-anio'));
-    const agente = decodeURIComponent(btn.getAttribute('data-agente'));
-    if(!confirm('¿Eliminar el registro de ' + agente + ' en ' + MESES[mes] + ' ' + anio + '?')) return;
-    const item = actividad.find(a => a.mes===mes && a.anio===anio && a.agente.trim()===agente.trim());
-    actividad = actividad.filter(a => !(a.mes===mes && a.anio===anio && a.agente.trim()===agente.trim()));
-    saveData();
-    renderActividad();
-  });
-
-  // Iniciar app
-  try {
-    loadData();
-  } catch(e) {}
-  renderAll();
-  poblarFiltrosDash();
-  renderConfig();
-});
-</script>
-</body>
-</html>
+function addComercial(){const nombre=do
