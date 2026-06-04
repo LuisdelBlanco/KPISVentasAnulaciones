@@ -1213,6 +1213,7 @@ function toggleSidebar() { document.getElementById('sidebar').classList.toggle('
 
 // ── RENDER ALL ────────────────────────────────────
 let charts = {};
+let editingRegistroId = null;
 let objetivoVisible = false;
 
 function getObj() {
@@ -1543,7 +1544,10 @@ function renderRegistros() {
       <td style="font-size:12px">${r.tomador||'—'}</td>
       <td style="font-weight:500">${r.agente||r.comercial||'—'}</td>
       <td style="font-size:12px;color:var(--text-3);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.notas||''}</td>
-      <td><button class="btn btn-danger btn-sm" onclick="deleteRegistro('${r.id}')">✕</button></td>
+      <td style="white-space:nowrap;display:flex;gap:4px;">
+        <button class="btn btn-ghost btn-sm" data-edit-id="${r.id}" onclick="editRegistro(this.dataset.editId)">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteRegistro('${r.id}')">✕</button>
+      </td>
     </tr>`).join('');
 }
 
@@ -1552,6 +1556,45 @@ function resetFiltros(){['fOficina','fAgente','fTipo','fRamo'].forEach(id=>{cons
 function deleteRegistro(id){if(!confirm('¿Eliminar este registro?'))return;registros=registros.filter(r=>String(r.id)!==String(id));saveData();renderAll();}
 
 // ── MODAL ─────────────────────────────────────────
+function editRegistro(id) {
+  const r = registros.find(r => String(r.id) === String(id));
+  if(!r) return;
+  editingRegistroId = String(id);
+  // Abrir modal con datos del registro
+  document.getElementById('mFecha').value = r.fecha || '';
+  document.getElementById('mPoliza').value = r.poliza || '';
+  document.getElementById('mPrima').value = r.prima || '';
+  document.getElementById('mPrimaCorregida').value = r.primaCorregida || '';
+  document.getElementById('mTomador').value = r.tomador || '';
+  document.getElementById('mNotas').value = r.notas || '';
+  // Tipo
+  const mTipo = document.getElementById('mTipo');
+  if(mTipo) mTipo.value = r.tipo || 'Emisión';
+  actualizarMotivos();
+  // Searchable selects
+  updateOficinaSelect();
+  ssPopulate('mAgente', [{value:'',label:'(sin asignar)'}].concat(comerciales.map(c=>({value:c.nombre,label:c.nombre+' — '+c.oficina}))));
+  ssPopulate('mOficina', oficinas.map(o=>({value:o,label:o})));
+  ssPopulate('mRamo', ramos.map(r=>({value:r,label:r})));
+  const gesOpts = [{value:'',label:'Selecciona gestora'}].concat(
+    getGestorasOrdenadas(r.oficina).map(g => g.sep ? {value:'__sep__',label:g.sep,disabled:true} : g)
+  );
+  ssPopulate('mGestora', gesOpts);
+  // Setear valores en los searchable selects
+  [['mAgente', r.agente||''],['mOficina', r.oficina||''],['mRamo', r.ramo||''],['mGestora', r.gestora||'']].forEach(([id, val]) => {
+    const hidden = document.getElementById(id);
+    const input = document.getElementById(id+'Input');
+    if(hidden) hidden.value = val;
+    if(input) input.value = val;
+  });
+  // Cambiar título del modal
+  const title = document.querySelector('#modalOverlay .modal-title');
+  if(title) title.textContent = 'Editar registro';
+  const saveBtn = document.querySelector('#modalOverlay .btn-primary');
+  if(saveBtn) saveBtn.textContent = 'Guardar cambios';
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
 function openModal(){
   const today=new Date().toISOString().split('T')[0];
   document.getElementById('mFecha').value=today;
@@ -1569,6 +1612,11 @@ function openModal(){
     const i=document.getElementById(id+'Input'); if(i) i.value='';
   });
   updateOficinaSelect();
+  editingRegistroId = null;
+  const title = document.querySelector('#modalOverlay .modal-title');
+  if(title) title.textContent = 'Nueva póliza';
+  const saveBtn = document.querySelector('#modalOverlay .btn-primary');
+  if(saveBtn) saveBtn.textContent = 'Guardar';
   document.getElementById('modalOverlay').classList.add('open');
 }
 function closeModal(){document.getElementById('modalOverlay').classList.remove('open');}
@@ -2002,6 +2050,21 @@ function guardarRegistro(){
   // Actualizar el campo visualmente con el valor corregido
   document.getElementById('mPoliza').value = poliza;
 
+  if(editingRegistroId) {
+    // Editar registro existente
+    const idx = registros.findIndex(r => String(r.id) === editingRegistroId);
+    if(idx >= 0) {
+      registros[idx] = {...registros[idx], fecha, tipo, poliza, ramo, gestora, oficina,
+        prima:parseFloat(prima)||0, primaCorregida:parseFloat(primaCorregida)||0, tomador, agente, notas:notasCompleto};
+      const reg = registros[idx];
+      saveData(); closeModal(); renderAll();
+      sbPost('registros', {id:String(reg.id),fecha:reg.fecha,tipo:reg.tipo,poliza:reg.poliza,ramo:reg.ramo,
+        gestora:reg.gestora,oficina:reg.oficina,agente:reg.agente,tomador:reg.tomador||'',
+        prima:reg.prima,prima_corregida:reg.primaCorregida,notas:reg.notas||''}).catch(e=>console.warn(e));
+    }
+    editingRegistroId = null;
+    return;
+  }
   const reg = {id:String(Date.now()+Math.random()),fecha,tipo,poliza,ramo,gestora,oficina,prima:parseFloat(prima)||0,primaCorregida:parseFloat(primaCorregida)||0,tomador,agente,notas:notasCompleto};
   registros.unshift(reg);
   saveData();
