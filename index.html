@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 :root {
   --red: #C2003F;
@@ -851,13 +850,40 @@ const DEFAULTS = {
 };
 
 
-// ── SUPABASE AUTH ─────────────────────────────────────────
+// ── SUPABASE REST AUTH ───────────────────────────────────
 const SUPA_URL = 'https://sblprwqnwcravldtmvat.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNibHByd3Fud2NyYXZsZHRtdmF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzMTMwNTIsImV4cCI6MjA5NTg4OTA1Mn0.0f08Urtc2g2A1ZGuXXyhaC3c0pmBpv5pIiEUxtXDuJw';
-const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+const SUPA_AUTH_KEY = 'sm_supa_session';
 
 let currentUser = null;
-let currentRole = 'basic'; // 'basic' | 'advanced'
+let currentRole = 'basic';
+let accessToken = null;
+
+function saveSession(session) {
+  try { localStorage.setItem(SUPA_AUTH_KEY, JSON.stringify(session)); } catch(e) {}
+}
+function getSession() {
+  try { return JSON.parse(localStorage.getItem(SUPA_AUTH_KEY)); } catch(e) { return null; }
+}
+function clearSession() {
+  localStorage.removeItem(SUPA_AUTH_KEY);
+}
+
+async function supaFetch(path, options={}, useAuth=true) {
+  const url = SUPA_URL + path;
+  const headers = {
+    'apikey': SUPA_KEY,
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    ...options.headers
+  };
+  if(useAuth && accessToken) headers['Authorization'] = 'Bearer ' + accessToken;
+  else headers['Authorization'] = 'Bearer ' + SUPA_KEY;
+  const res = await fetch(url, {...options, headers});
+  const text = await res.text();
+  if(!res.ok) throw new Error(res.status + ': ' + text);
+  return text ? JSON.parse(text) : null;
+}
 
 async function doLogin() {
   const email = document.getElementById('loginEmail').value.trim();
@@ -867,9 +893,13 @@ async function doLogin() {
   if(!email || !password) { err.textContent = 'Introduce email y contraseña.'; return; }
   btn.textContent = 'Entrando...'; btn.disabled = true; err.textContent = '';
   try {
-    const { data, error } = await supa.auth.signInWithPassword({ email, password });
-    if(error) throw error;
+    const data = await supaFetch('/auth/v1/token?grant_type=password', {
+      method: 'POST',
+      body: JSON.stringify({ email, password })
+    }, false);
+    accessToken = data.access_token;
     currentUser = data.user;
+    saveSession({ access_token: data.access_token, user: data.user, expires_at: data.expires_at });
     await loadUserRole();
     await arrancarApp();
   } catch(e) {
@@ -880,31 +910,24 @@ async function doLogin() {
 
 async function loadUserRole() {
   try {
-    const { data } = await supa.from('user_roles').select('role').eq('user_id', currentUser.id).single();
-    currentRole = data?.role || 'basic';
-  } catch(e) {
-    currentRole = 'basic';
-  }
+    const data = await supaFetch('/rest/v1/user_roles?select=role&user_id=eq.' + currentUser.id);
+    currentRole = data?.[0]?.role || 'basic';
+  } catch(e) { currentRole = 'basic'; }
 }
 
 async function doLogout() {
-  await supa.auth.signOut();
-  currentUser = null; currentRole = 'basic';
+  try { await supaFetch('/auth/v1/logout', {method:'POST'}); } catch(e) {}
+  clearSession();
+  accessToken = null; currentUser = null; currentRole = 'basic';
   document.getElementById('mainLayout').style.display = 'none';
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('loginPassword').value = '';
-  document.getElementById('loginError').textContent = '';
 }
 
 function aplicarPermisos() {
   const isAdvanced = currentRole === 'advanced';
-  // Botón nueva póliza
-  const btnNueva = document.querySelector('[onclick="openModal()"]');
-  if(btnNueva) btnNueva.style.display = '';
-  // Ajustes solo para avanzados
-  const ajustesLink = document.querySelector('[onclick*="config"]');
+  const ajustesLink = null; // permisos vía data-page
   if(ajustesLink) ajustesLink.style.display = isAdvanced ? '' : 'none';
-  // Mostrar nombre usuario en sidebar
   const userInfo = document.getElementById('sidebarUser');
   if(userInfo) {
     const nombre = currentUser?.email?.split('@')[0] || '';
@@ -917,7 +940,6 @@ async function arrancarApp() {
   const overlay = document.getElementById('loadingOverlay');
   if(overlay) { overlay.style.display = 'flex'; }
   document.getElementById('mainLayout').style.display = '';
-  // Cargar datos desde Supabase
   await cargarDatosSupabase();
   if(overlay) overlay.style.display = 'none';
   aplicarPermisos();
@@ -926,31 +948,19 @@ async function arrancarApp() {
   renderConfig();
 }
 
-async function sbGet(table, params='') {
-  const url = SUPA_URL + '/rest/v1/' + table + (params ? '?' + params : '');
-  const r = await fetch(url, { headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + (await supa.auth.getSession()).data.session?.access_token, 'Accept': 'application/json' }});
-  if(!r.ok) throw new Error(await r.text());
-  return r.json();
+async function sbGet(path, params='') {
+  return await supaFetch('/rest/v1/' + path + (params ? '?' + params : ''));
 }
-
-async function sbPost(table, data, prefer='resolution=merge-duplicates,return=minimal') {
-  const token = (await supa.auth.getSession()).data.session?.access_token;
+async function sbPost(table, data) {
   const rows = Array.isArray(data) ? data : [data];
-  const r = await fetch(SUPA_URL + '/rest/v1/' + table, {
+  return await supaFetch('/rest/v1/' + table, {
     method: 'POST',
-    headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': prefer }
-    , body: JSON.stringify(rows)
+    headers: {'Prefer': 'resolution=merge-duplicates,return=minimal'},
+    body: JSON.stringify(rows)
   });
-  if(!r.ok) throw new Error(await r.text());
 }
-
 async function sbDel(table, id) {
-  const token = (await supa.auth.getSession()).data.session?.access_token;
-  const r = await fetch(SUPA_URL + '/rest/v1/' + table + '?id=eq.' + encodeURIComponent(id), {
-    method: 'DELETE',
-    headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + token }
-  });
-  if(!r.ok) throw new Error(await r.text());
+  return await supaFetch('/rest/v1/' + table + '?id=eq.' + encodeURIComponent(id), {method:'DELETE'});
 }
 
 async function cargarDatosSupabase() {
@@ -964,10 +974,9 @@ async function cargarDatosSupabase() {
       if(row.clave==='gestoras') gestoras=row.valor;
       if(row.clave==='objetivo') objetivo=row.valor;
       if(row.clave==='objetivosPorOficina') objetivosPorOficina=row.valor;
-      if(row.clave==='objetivosAgentes') objetivosAgentes=row.valor;
+      if(row.clave==='objetivosAgentes') objetivosAgentes=row.valor||{};
     });
-  } catch(e) { console.warn('Config desde localStorage'); }
-
+  } catch(e) { console.warn('Config no cargada:', e.message); }
   try {
     document.getElementById('loadingMsg').textContent = 'Cargando registros...';
     const data = await sbGet('registros', 'select=*&order=fecha.desc');
@@ -977,8 +986,7 @@ async function cargarDatosSupabase() {
       agente:r.agente, tomador:r.tomador||'',
       prima:r.prima||0, primaCorregida:r.prima_corregida||0, notas:r.notas||''
     }));
-  } catch(e) { console.warn('Registros desde localStorage:', e.message); }
-
+  } catch(e) { console.warn('Registros no cargados:', e.message); }
   try {
     document.getElementById('loadingMsg').textContent = 'Cargando actividad...';
     const data = await sbGet('actividad', 'select=*');
@@ -986,25 +994,22 @@ async function cargarDatosSupabase() {
       uid:a.id, mes:a.mes, anio:a.anio,
       oficina:a.oficina, agente:a.agente, oportunidades:a.oportunidades||0
     }));
-  } catch(e) { console.warn('Actividad desde localStorage:', e.message); }
+  } catch(e) { console.warn('Actividad no cargada:', e.message); }
 }
 
 function saveData() {
-  // Guardar config en Supabase
   const configs = [
     {clave:'oficinas',valor:oficinas},{clave:'comerciales',valor:comerciales},
     {clave:'ramos',valor:ramos},{clave:'gestoras',valor:gestoras},
     {clave:'objetivo',valor:objetivo},{clave:'objetivosPorOficina',valor:objetivosPorOficina},
     {clave:'objetivosAgentes',valor:objetivosAgentes}
   ];
-  sbPost('config', configs).catch(e => console.warn('saveConfig error:', e.message));
-  // Cache local
+  sbPost('config', configs).catch(e=>console.warn('saveConfig:', e.message));
   try { localStorage.setItem('sm_kpis_v2', JSON.stringify({oficinas,comerciales,ramos,gestoras,objetivo,objetivosPorOficina,objetivosAgentes,registros,actividad})); } catch(e){}
 }
 
 
-
-
+// ── VARIABLES GLOBALES ────────────────────────────────────
 let oficinas = DEFAULTS.oficinas;
 let comerciales = DEFAULTS.comerciales;
 let ramos = DEFAULTS.ramos;
@@ -2132,4 +2137,4 @@ function renderConfig(){
 function showMsg(id,msg,color,ms=3000){const el=document.getElementById(id);if(!el)return;el.innerHTML=`<span style="color:${color}">${msg}</span>`;setTimeout(()=>{el.innerHTML="";},ms);}
 function addOficina(){const val=document.getElementById("newOficina").value.trim();if(!val)return;if(oficinas.includes(val)){showMsg("oficinaMsg",`⚠️ La oficina <strong>${val}</strong> ya existe.`,"var(--red)");return;}oficinas.push(val);document.getElementById("newOficina").value="";saveData();renderConfig();}
 function removeOficina(i){oficinas.splice(i,1);saveData();renderConfig();}
-function addComercial(){const nombre=do
+function addComercial(){const nombre=document.getEl
