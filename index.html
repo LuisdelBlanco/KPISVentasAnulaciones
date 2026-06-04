@@ -857,7 +857,7 @@ tbody tr:hover td { background: var(--bg); }
 <script>
 // ── DATA ──────────────────────────────────────────
 const DEFAULTS = {
-  oficinas: ['Montornés', 'Polígono', 'Mataró', 'Barcelona'],
+  oficinas: ['Montornés','Polígono','Mataró','Barcelona'],
   comerciales: [
     {nombre:'Carlos del Blanco', oficina:'Montornés'},
     {nombre:'María Linares', oficina:'Montornés'},
@@ -866,22 +866,59 @@ const DEFAULTS = {
     {nombre:'Imma Franco', oficina:'Montornés'},
     {nombre:'Conchi Soto', oficina:'Polígono'},
     {nombre:'Luis del Blanco', oficina:'Polígono'},
+    {nombre:'Iago Losada', oficina:'Mataró'},
+    {nombre:'Erika Gómez', oficina:'Mataró'},
+    {nombre:'Dafne Campaña', oficina:'Mataró'},
+    {nombre:'Jez Tristany', oficina:'Mataró'},
     {nombre:'Vicky Giménez', oficina:'Barcelona'},
     {nombre:'Cristina Egea', oficina:'Barcelona'},
     {nombre:'Irene Ruiz', oficina:'Barcelona'},
     {nombre:'Elsa Kubala', oficina:'Barcelona'},
     {nombre:'Mary González', oficina:'Barcelona'},
-    {nombre:'Marta Calcerrada', oficina:'Barcelona'},
-    {nombre:'Iago Losada', oficina:'Mataró'},
-    {nombre:'Erika Gómez', oficina:'Mataró'},
-    {nombre:'Dafne Campaña', oficina:'Mataró'},
+    {nombre:'Marta Calcerrada', oficina:'Barcelona'}
   ],
-  ramos: ['1405 - Transporte', '1580 - Movilidad personal', '1616 - Salud subsidio hospitalización', '1617 - Salud asistencia sanitaria (CP20)', '1625 - Decesos', '1627 - Decesos repatriación', '1663 - Oficinas', '1685 - Hogar', '1688 - Pyme', '1689 - Comercios', '1690 - Comunidades', '1754 - Equipos de consumo', '1800 - Automóviles', '1802 - Vehículos', '1803 - Motos', '1805 - Flotas', '2386 - Ahorro capital', '1300 - Vida temporal', '1337 - Sialp', '1354 - Ahorro Creciente', '1364 - Universal PIAS Garantizado', '370 - Universal Vida y Jubilación', '384 - PPA', '390 - Universal Vida y Pensión', '935 - Catalana Occidente Patrimonio, F.I.', '1221 - Mascotas', '1200 - Protección jurídica conductores', '1201 - Protección jurídica comunidades', '1242 - Responsabilidad civil comercio, cultura y ocio', '1213 - Protección jurídica empresarial', '1212 - Protección jurídica familiar', '1799 - Responsabilidad medioambiental', '1766 - Ciberriesgos particulares', '2762 - Ciberriesgos empresas', '1480 - Embarcaciones', '1761 - Decenal', '1750 - Maquinaria y equipos electrónicos', '1768 - Todo riesgo de construcción y montaje', '1758 - Combinado', '2755 - TRDM', '1401 - Caravanas móviles', '1405 - Transporte cargadores', '1406 - Transportes transportistas', '1609 - Salud Bienestar', '1617 - Salud asistencia sanitaria (CP0)', '1260 - Viajes', '1328 - Cuenta Cliente', '375 - Universal Jubilación', '1617 - Salud asistencia sanitaria (Advance)', '1244 - Responsabilidad civil construcción', '1245 - Responsabilidad civil profesional', '1241 - Responsabilidad civil privada e inmuebles', '1279 - Accidentes convenios', '1280 - Accidentes colectivos', '1286 - Accidentes', '1310 - Inversión multifondos', '1617 - Salud asistencia sanitaria (CP5)', 'Planes Pensiones y EPSV', 'Fondos de Inversión'],
-  gestoras: ['N-20668', '8-78005', 'F-93101', 'T-66259', '1-93101', '6-93101', '7-93101', '8-47649', '8-48132', '8-53741', '8-68106', 'N-93161', '8-67700', '8-93016', '8-93161', '322650', '8-93101', 'N-20587', '7-20587', '8-20587', '323913', '322654', '8-77412', '323719', '323151', 'F-77412', 'N-77412', '7-77412', '1-60183', '6-65406', 'T-42142'],
+  ramos: [
+    '1405 - Transporte','1580 - Movilidad personal',
+    '1616 - Salud subsidio hospitalización','1617 - Salud asistencia sanitaria (CP20)',
+    '1625 - Decesos','1627 - Decesos repatriación','1663 - Oficinas',
+    '1685 - Hogar','1688 - Pyme','1689 - Comercios','1690 - Comunidades',
+    '1754 - Equipos de consumo','1800 - Automóviles','1802 - Vehículos',
+    '1803 - Motos','1805 - Flotas','2386 - Ahorro capital',
+    '1300 - Vida temporal','1337 - Sialp','1354 - Ahorro Creciente',
+    '1364 - Universal PIAS Garantizado','370 - Universal Vida y Jubilación',
+    '384 - PPA','390 - Universal Vida y Pensión',
+    '935 - Catalana Occidente Patrimonio, F.I.','1221 - Mascotas',
+    '1200 - Protección jurídica conductores','1201 - Protección jurídica comunidades',
+    '1242 - Responsabilidad civil comercio, cultura y ocio',
+    '1213 - Protección jurídica empresarial','1212 - Protección jurídica familiar',
+    '1799 - Responsabilidad medioambiental','1766 - Ciberriesgos particulares',
+    '2762 - Ciberriesgos empresas','1480 - Embarcaciones','1761 - Decenal',
+    '1750 - Maquinaria y equipos electrónicos',
+    '1768 - Todo riesgo de construcción y montaje','1758 - Combinado','2755 - TRDM',
+    '1401 - Caravanas móviles','1405 - Transporte cargadores',
+    '1406 - Transportes transportistas','1609 - Salud Bienestar',
+    '1617 - Salud asistencia sanitaria (CP0)','1260 - Viajes',
+    '1328 - Cuenta Cliente','375 - Universal Jubilación',
+    '1617 - Salud asistencia sanitaria (Advance)',
+    '1244 - Responsabilidad civil construcción',
+    '1245 - Responsabilidad civil profesional',
+    '1241 - Responsabilidad civil privada e inmuebles',
+    '1279 - Accidentes convenios','1280 - Accidentes colectivos','1286 - Accidentes',
+    '1310 - Inversión multifondos','1617 - Salud asistencia sanitaria (CP5)',
+    'Planes Pensiones y EPSV','Fondos de Inversión'
+  ],
+  gestoras: [
+    'N-20668','8-78005','F-93101','T-66259','1-93101','6-93101','7-93101',
+    '8-47649','8-48132','8-53741','8-68106','N-93161','8-67700','8-93016',
+    '8-93161','322650','8-93101','N-20587','7-20587','8-20587','323913',
+    '322654','8-77412','323719','323151','F-77412','N-77412','7-77412',
+    '1-60183','6-65406','T-42142'
+  ],
   objetivo: 154,
-  objetivosPorOficina: { 'Mataró':28, 'Montornés':60, 'Polígono':18, 'Barcelona':48 },
+  objetivosPorOficina: {'Mataró':28,'Montornés':60,'Polígono':18,'Barcelona':48},
   objetivosAgentes: {},
-  registros: []
+  registros: [],
+  actividad: []
 };
 
 
@@ -1002,15 +1039,21 @@ async function cargarDatosSupabase() {
   try {
     document.getElementById('loadingMsg').textContent = 'Cargando configuración...';
     const cfg = await sbGet('config', 'select=clave,valor');
-    (cfg||[]).forEach(row => {
-      if(row.clave==='oficinas') oficinas=row.valor;
-      if(row.clave==='comerciales') comerciales=row.valor;
-      if(row.clave==='ramos') ramos=row.valor;
-      if(row.clave==='gestoras') gestoras=row.valor;
-      if(row.clave==='objetivo') objetivo=row.valor;
-      if(row.clave==='objetivosPorOficina') objetivosPorOficina=row.valor;
-      if(row.clave==='objetivosAgentes') objetivosAgentes=row.valor||{};
-    });
+    if(cfg && cfg.length > 0) {
+      (cfg||[]).forEach(row => {
+        if(row.clave==='oficinas') oficinas=row.valor;
+        if(row.clave==='comerciales') comerciales=row.valor;
+        if(row.clave==='ramos') ramos=row.valor;
+        if(row.clave==='gestoras') gestoras=row.valor;
+        if(row.clave==='objetivo') objetivo=row.valor;
+        if(row.clave==='objetivosPorOficina') objetivosPorOficina=row.valor;
+        if(row.clave==='objetivosAgentes') objetivosAgentes=row.valor||{};
+      });
+    } else {
+      // Primera vez — guardar DEFAULTS en Supabase
+      document.getElementById('loadingMsg').textContent = 'Configurando por primera vez...';
+      await saveData();
+    }
   } catch(e) { console.warn('Config no cargada:', e.message); }
   try {
     document.getElementById('loadingMsg').textContent = 'Cargando registros...';
