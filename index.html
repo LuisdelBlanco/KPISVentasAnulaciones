@@ -1071,7 +1071,7 @@ function iniciarPolling() {
       const desde = lastPollingCheck;
       lastPollingCheck = new Date().toISOString();
       const nuevos = await supaFetch(
-        '/rest/v1/registros?select=*,created_at&created_at=gt.' + encodeURIComponent(desde) + '&order=fecha.desc'
+        '/rest/v1/registros?select=*,created_at&created_at=gt.' + encodeURIComponent(desde) + '&order=created_at.desc'
       );
       if(nuevos && nuevos.length > 0) {
         // Filtrar los que no tenemos ya
@@ -1166,7 +1166,7 @@ async function cargarDatosSupabase() {
     let from = 0;
     const PAGE = 1000;
     while(true) {
-      const chunk = await supaFetch(`/rest/v1/registros?select=*&order=fecha.desc&limit=${PAGE}&offset=${from}`);
+      const chunk = await supaFetch(`/rest/v1/registros?select=*,created_at&order=created_at.desc&limit=${PAGE}&offset=${from}`);
       if(!chunk || chunk.length === 0) break;
       allData = allData.concat(chunk);
       if(chunk.length < PAGE) break;
@@ -1633,7 +1633,12 @@ function populateFilterSelects() {
 }
 
 function renderRegistros() {
-  const data=getFilteredRegistros().sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+  const data=getFilteredRegistros().sort((a,b)=>{
+    // Ordenar por fecha de creación descendente (último introducido arriba)
+    const ca = a.createdAt || a.fecha || '';
+    const cb = b.createdAt || b.fecha || '';
+    return cb.localeCompare(ca);
+  });
   document.getElementById('countRegistros').textContent=`${data.length} registros`;
   const tipoBadge={'Emisión':'badge-venta','Anulación':'badge-anulacion','Rehabilitación':'badge-rehabilitacion','Reemplazo':'badge-sustitucion','Sin efecto':'badge-sin-efecto','Suspenso':'badge-sin-efecto'};
   if(data.length===0){
