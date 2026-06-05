@@ -877,6 +877,11 @@ tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
   </div>
 </div>
 
+  <!-- POLLING TOAST -->
+  <div id="pollingToast" style="display:none;position:fixed;bottom:24px;right:24px;background:#1A1A18;color:#fff;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.2);display:flex;align-items:center;gap:10px;transition:opacity 0.3s;">
+    <span id="pollingMsg">Actualizando...</span>
+    <button onclick="document.getElementById('pollingToast').style.display='none'" style="background:rgba(255,255,255,0.15);border:none;color:#fff;border-radius:6px;padding:2px 8px;cursor:pointer;font-size:12px;">✕</button>
+  </div>
 </div><!-- end mainLayout -->
 
 <script>
@@ -1018,6 +1023,7 @@ async function doLogout() {
   if(currentUser?.id) {
     localStorage.setItem('sm_last_seen_' + currentUser.id, new Date().toISOString());
   }
+  detenerPolling();
   try { await supaFetch('/auth/v1/logout', {method:'POST'}); } catch(e) {}
   clearSession();
   accessToken = null; currentUser = null; currentRole = 'basic';
@@ -1049,6 +1055,62 @@ async function arrancarApp() {
   renderAll();
   poblarFiltrosDash();
   renderConfig();
+  iniciarPolling();
+}
+
+let pollingInterval = null;
+let lastPollingCheck = new Date().toISOString();
+
+function iniciarPolling() {
+  if(pollingInterval) clearInterval(pollingInterval);
+  lastPollingCheck = new Date().toISOString();
+  pollingInterval = setInterval(async () => {
+    // No hacer polling si el modal está abierto
+    if(document.getElementById('modalOverlay')?.classList.contains('open')) return;
+    try {
+      const desde = lastPollingCheck;
+      lastPollingCheck = new Date().toISOString();
+      const nuevos = await supaFetch(
+        '/rest/v1/registros?select=*,created_at&created_at=gt.' + encodeURIComponent(desde) + '&order=fecha.desc'
+      );
+      if(nuevos && nuevos.length > 0) {
+        // Filtrar los que no tenemos ya
+        const ids = new Set(registros.map(r => String(r.id)));
+        const realesNuevos = nuevos.filter(r => !ids.has(String(r.id)));
+        if(realesNuevos.length > 0) {
+          // Añadir a la lista
+          const mapped = realesNuevos.map(r => ({
+            id:r.id, fecha:r.fecha, tipo:r.tipo, poliza:r.poliza,
+            ramo:r.ramo, gestora:r.gestora, oficina:r.oficina,
+            agente:r.agente, tomador:r.tomador||'',
+            prima:r.prima||0, primaCorregida:r.prima_corregida||0,
+            notas:r.notas||'', createdAt:r.created_at||''
+          }));
+          // Marcar como nuevos para el parpadeo
+          if(!window._registrosNuevosIds) window._registrosNuevosIds = new Set();
+          mapped.forEach(r => window._registrosNuevosIds.add(String(r.id)));
+          registros = [...mapped, ...registros];
+          renderAll();
+          // Mostrar toast
+          const toast = document.getElementById('pollingToast');
+          const msg = document.getElementById('pollingMsg');
+          if(toast && msg) {
+            msg.textContent = realesNuevos.length === 1
+              ? '1 nuevo registro añadido'
+              : realesNuevos.length + ' nuevos registros añadidos';
+            toast.style.display = 'flex';
+            setTimeout(() => { toast.style.display = 'none'; }, 5000);
+          }
+        }
+      }
+    } catch(e) {
+      // Fallo silencioso
+    }
+  }, 30000); // cada 30 segundos
+}
+
+function detenerPolling() {
+  if(pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
 }
 
 function resaltarRegistrosNuevos() {
