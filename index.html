@@ -1619,7 +1619,15 @@ function renderRegistros() {
 
 function formatDate(d){if(!d)return'—';const[y,m,day]=d.split('-');return`${day}/${m}/${y}`;}
 function resetFiltros(){['fOficina','fAgente','fTipo','fRamo'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});renderRegistros();}
-function deleteRegistro(id){if(!confirm('¿Eliminar este registro?'))return;registros=registros.filter(r=>String(r.id)!==String(id));saveData();renderAll();}
+function deleteRegistro(id){
+  if(!confirm('¿Eliminar este registro?')) return;
+  registros = registros.filter(r => String(r.id) !== String(id));
+  saveData();
+  renderAll();
+  // Borrar en Supabase
+  supaFetch('/rest/v1/registros?id=eq.' + encodeURIComponent(id), {method:'DELETE'})
+    .catch(e => console.warn('Error borrando en Supabase:', e.message));
+}
 
 // ── MODAL ─────────────────────────────────────────
 function editRegistro(id) {
