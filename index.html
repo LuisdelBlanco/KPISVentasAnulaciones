@@ -1634,9 +1634,11 @@ function populateFilterSelects() {
 
 function renderRegistros() {
   const data=getFilteredRegistros().sort((a,b)=>{
-    // Ordenar por fecha de creación descendente (último introducido arriba)
-    const ca = a.createdAt || a.fecha || '';
-    const cb = b.createdAt || b.fecha || '';
+    // Primero por fecha de póliza descendente, luego por hora de introducción
+    const fechaComp = (b.fecha||'').localeCompare(a.fecha||'');
+    if(fechaComp !== 0) return fechaComp;
+    const ca = a.createdAt || '';
+    const cb = b.createdAt || '';
     return cb.localeCompare(ca);
   });
   document.getElementById('countRegistros').textContent=`${data.length} registros`;
