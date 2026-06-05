@@ -344,6 +344,31 @@ tbody tr:hover td { background: var(--bg); }
 
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
+/* ── NUEVO REGISTRO HIGHLIGHT ── */
+@keyframes blinkVerde {
+  0%,100% { background: rgba(22,163,74,0.0); }
+  50%     { background: rgba(22,163,74,0.22); }
+}
+@keyframes blinkRojo {
+  0%,100% { background: rgba(194,0,63,0.0); }
+  50%     { background: rgba(194,0,63,0.18); }
+}
+@keyframes blinkAmbar {
+  0%,100% { background: rgba(217,119,6,0.0); }
+  50%     { background: rgba(217,119,6,0.20); }
+}
+@keyframes blinkAzul {
+  0%,100% { background: rgba(37,99,235,0.0); }
+  50%     { background: rgba(37,99,235,0.18); }
+}
+tr.new-emision td      { animation: blinkVerde 1.4s ease-in-out 7; }
+tr.new-anulacion td    { animation: blinkRojo  1.4s ease-in-out 7; }
+tr.new-reemplazo td    { animation: blinkAmbar 1.4s ease-in-out 7; }
+tr.new-sinefecto td    { animation: blinkAzul  1.4s ease-in-out 7; }
+tr.new-suspenso td     { animation: blinkAmbar 1.4s ease-in-out 7; }
+tr.new-rehab td        { animation: blinkVerde 1.4s ease-in-out 7; }
+tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
+
 /* ── SEARCHABLE SELECT ── */
 .ss-wrap { position: relative; width: 100%; }
 .ss-input {
@@ -410,7 +435,7 @@ tbody tr:hover td { background: var(--bg); }
 
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
-  <div class="sidebar-logo">
+  <div class="sidebar-logo" onclick="location.reload()" title="Refrescar datos" style="cursor:pointer;">
     <div class="sidebar-logo-mark">
       <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M7 1L13 4.5V9.5L7 13L1 9.5V4.5L7 1Z" fill="white" fill-opacity="0.9"/>
@@ -441,7 +466,7 @@ tbody tr:hover td { background: var(--bg); }
 
   <div class="sidebar-foot">
     <div id="sidebarUser" style="font-size:11px;color:var(--text-3);margin-bottom:6px;"></div>
-    <button onclick="doLogout()" style="background:none;border:none;font-size:11px;color:var(--text-3);cursor:pointer;font-family:inherit;padding:0;">⎋ Cerrar sesión</button>
+    <button onclick="doLogout()" style="background:#FFF1F3;border:1px solid #FECDD3;border-radius:6px;font-size:11px;color:#C2003F;cursor:pointer;font-family:inherit;padding:4px 10px;font-weight:600;width:100%;">⎋ Cerrar sesión</button>
     <div style="margin-top:6px;">Occident · Agencia exclusiva</div>
   </div>
 </aside>
@@ -988,6 +1013,11 @@ async function loadUserRole() {
 }
 
 async function doLogout() {
+  if(!confirm('¿Seguro que quieres cerrar sesión?')) return;
+  // Guardar timestamp de último logout
+  if(currentUser?.id) {
+    localStorage.setItem('sm_last_seen_' + currentUser.id, new Date().toISOString());
+  }
   try { await supaFetch('/auth/v1/logout', {method:'POST'}); } catch(e) {}
   clearSession();
   accessToken = null; currentUser = null; currentRole = 'basic';
@@ -1015,9 +1045,22 @@ async function arrancarApp() {
   await cargarDatosSupabase();
   if(overlay) overlay.style.display = 'none';
   aplicarPermisos();
+  resaltarRegistrosNuevos();
   renderAll();
   poblarFiltrosDash();
   renderConfig();
+}
+
+function resaltarRegistrosNuevos() {
+  if(!currentUser?.id) return;
+  const lastSeen = localStorage.getItem('sm_last_seen_' + currentUser.id);
+  if(!lastSeen) return; // Primera vez — no destacar nada
+  const lastSeenDate = new Date(lastSeen);
+  // Marcar registros nuevos
+  window._registrosNuevosIds = new Set(
+    registros.filter(r => r.createdAt && new Date(r.createdAt) > lastSeenDate).map(r => String(r.id))
+  );
+  console.log('Registros nuevos desde último login:', window._registrosNuevosIds.size);
 }
 
 async function sbGet(path, params='') {
@@ -1071,7 +1114,8 @@ async function cargarDatosSupabase() {
       id:r.id, fecha:r.fecha, tipo:r.tipo, poliza:r.poliza,
       ramo:r.ramo, gestora:r.gestora, oficina:r.oficina,
       agente:r.agente, tomador:r.tomador||'',
-      prima:r.prima||0, primaCorregida:r.prima_corregida||0, notas:r.notas||''
+      prima:r.prima||0, primaCorregida:r.prima_corregida||0, notas:r.notas||'',
+      createdAt:r.created_at||''
     }));
   } catch(e) { console.warn('Registros no cargados:', e.message); }
   try {
@@ -1542,11 +1586,17 @@ function renderRegistros() {
       lastFecha = r.fecha;
       const [y,m,d] = (r.fecha||'').split('-');
       const label = d ? `${parseInt(d)} ${MESES_SHORT[parseInt(m)]} ${y}` : r.fecha;
-      html += `<tr><td colspan="12" style="padding:10px 8px 4px;border-bottom:2px solid var(--red);background:var(--bg);">
+      const isNuevo = window._registrosNuevosIds && window._registrosNuevosIds.has(String(r.id));
+    const tipoClassMap = {'Emisión':'new-emision','Anulación':'new-anulacion','Reemplazo':'new-reemplazo','Sin efecto':'new-sinefecto','Suspenso':'new-suspenso','Rehabilitación':'new-rehab','Inicial/Suple':'new-inicial'};
+    const blinkClass = isNuevo ? (tipoClassMap[r.tipo]||'new-emision') : '';
+    html += `<tr class="${blinkClass}"><td colspan="12" style="padding:10px 8px 4px;border-bottom:2px solid var(--red);background:var(--bg);">
         <span style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.07em;">${label}</span>
       </td></tr>`;
     }
-    html += `<tr>
+    const isNuevo = window._registrosNuevosIds && window._registrosNuevosIds.has(String(r.id));
+    const tipoClassMap = {'Emisión':'new-emision','Anulación':'new-anulacion','Reemplazo':'new-reemplazo','Sin efecto':'new-sinefecto','Suspenso':'new-suspenso','Rehabilitación':'new-rehab','Inicial/Suple':'new-inicial'};
+    const blinkClass = isNuevo ? (tipoClassMap[r.tipo]||'new-emision') : '';
+    html += `<tr class="${blinkClass}">
       <td style="font-size:12px;white-space:nowrap;font-family:'JetBrains Mono',monospace">${formatDate(r.fecha)}</td>
       <td><span class="badge ${tipoBadge[r.tipo]||''}">${r.tipo}</span></td>
       <td style="font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--text-3)">${r.poliza||'—'}</td>
@@ -2085,7 +2135,24 @@ function guardarRegistro(){
   registros.unshift(reg);
   saveData();
   closeModal();
+  goPage('registros');
   renderAll();
+  // Destacar fila nueva con color por tipo
+  const tipoClass = {
+    'Emisión':'new-emision','Anulación':'new-anulacion','Reemplazo':'new-reemplazo',
+    'Sin efecto':'new-sinefecto','Suspenso':'new-suspenso','Rehabilitación':'new-rehab','Inicial/Suple':'new-inicial'
+  };
+  const claseNueva = tipoClass[tipo] || 'new-emision';
+  setTimeout(()=>{
+    let found = false;
+    document.querySelectorAll('#bodyRegistros tr').forEach(tr => {
+      if(!found && tr.querySelector('.badge')) {
+        tr.classList.add(claseNueva);
+        found = true;
+        setTimeout(()=>tr.classList.remove(claseNueva), 10500);
+      }
+    });
+  }, 150);
   // Guardar en Supabase
   sbPost('registros', {id:reg.id,fecha:reg.fecha,tipo:reg.tipo,poliza:reg.poliza,ramo:reg.ramo,gestora:reg.gestora,oficina:reg.oficina,agente:reg.agente,tomador:reg.tomador||'',prima:reg.prima,prima_corregida:reg.primaCorregida,notas:reg.notas||''}).catch(e=>console.warn('Error guardando en Supabase:',e.message));
 }
