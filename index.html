@@ -1530,9 +1530,23 @@ function renderRegistros() {
   const data=getFilteredRegistros().sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
   document.getElementById('countRegistros').textContent=`${data.length} registros`;
   const tipoBadge={'Emisión':'badge-venta','Anulación':'badge-anulacion','Rehabilitación':'badge-rehabilitacion','Reemplazo':'badge-sustitucion','Sin efecto':'badge-sin-efecto','Suspenso':'badge-sin-efecto'};
-  document.getElementById('bodyRegistros').innerHTML=data.length===0?
-    `<tr><td colspan="12"><div class="empty-state"><div class="empty-icon">🔍</div><p>Sin resultados</p></div></td></tr>`:
-    data.map(r=>`<tr>
+  if(data.length===0){
+    document.getElementById('bodyRegistros').innerHTML=`<tr><td colspan="12"><div class="empty-state"><div class="empty-icon">🔍</div><p>Sin resultados</p></div></td></tr>`;
+    return;
+  }
+  let html = '';
+  let lastFecha = null;
+  const MESES_SHORT = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  data.forEach(r => {
+    if(r.fecha !== lastFecha) {
+      lastFecha = r.fecha;
+      const [y,m,d] = (r.fecha||'').split('-');
+      const label = d ? `${parseInt(d)} ${MESES_SHORT[parseInt(m)]} ${y}` : r.fecha;
+      html += `<tr><td colspan="12" style="padding:10px 8px 4px;border-bottom:2px solid var(--red);background:var(--bg);">
+        <span style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.07em;">${label}</span>
+      </td></tr>`;
+    }
+    html += `<tr>
       <td style="font-size:12px;white-space:nowrap;font-family:'JetBrains Mono',monospace">${formatDate(r.fecha)}</td>
       <td><span class="badge ${tipoBadge[r.tipo]||''}">${r.tipo}</span></td>
       <td style="font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--text-3)">${r.poliza||'—'}</td>
@@ -1548,7 +1562,9 @@ function renderRegistros() {
         <button class="btn btn-ghost btn-sm" data-edit-id="${r.id}" onclick="editRegistro(this.dataset.editId)">✏️</button>
         <button class="btn btn-danger btn-sm" onclick="deleteRegistro('${r.id}')">✕</button>
       </td>
-    </tr>`).join('');
+    </tr>`;
+  });
+  document.getElementById('bodyRegistros').innerHTML = html;
 }
 
 function formatDate(d){if(!d)return'—';const[y,m,day]=d.split('-');return`${day}/${m}/${y}`;}
