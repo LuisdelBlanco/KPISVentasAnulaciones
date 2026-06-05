@@ -877,6 +877,21 @@ tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
   </div>
 </div>
 
+  <!-- CHANGELOG MODAL -->
+  <div id="changelogOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:99990;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:16px;padding:32px;max-width:460px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <div>
+          <div style="font-size:18px;font-weight:800;color:#1A1A18;">Novedades en SM Seguros KPIs</div>
+          <div style="font-size:12px;color:#A3A39E;margin-top:2px;" id="changelogVersion"></div>
+        </div>
+        <span style="background:#C2003F;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;">NUEVO</span>
+      </div>
+      <div id="changelogContent"></div>
+      <button onclick="cerrarChangelog()" style="width:100%;margin-top:20px;background:#C2003F;color:#fff;border:none;border-radius:8px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Entendido ✓</button>
+    </div>
+  </div>
+
   <!-- POLLING TOAST -->
   <div id="pollingToast" style="display:none;position:fixed;bottom:24px;right:24px;background:#1A1A18;color:#fff;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.2);display:flex;align-items:center;gap:10px;transition:opacity 0.3s;">
     <span id="pollingMsg">Actualizando...</span>
@@ -1056,6 +1071,7 @@ async function arrancarApp() {
   poblarFiltrosDash();
   renderConfig();
   iniciarPolling();
+  setTimeout(mostrarChangelogSiHayNovedades, 800);
 }
 
 let pollingInterval = null;
