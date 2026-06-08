@@ -698,8 +698,8 @@ tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
         <div class="table-card" style="margin-bottom:20px;">
           <div class="table-card-header"><span class="table-card-title">Registrar actividad del mes</span></div>
           <div style="padding:18px;">
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;align-items:end;">
-              <div class="form-group" style="grid-column:span 2;">
+            <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;align-items:start;">
+              <div class="form-group">
                 <label>Semana</label>
                 <select id="acSemana" onchange="actualizarMesDesSemana()"></select>
                 <div style="font-size:11px;color:var(--text-3);margin-top:3px;" id="acSemanaInfo"></div>
@@ -712,12 +712,14 @@ tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
                 <label>Agente</label>
                 <select id="acAgente"></select>
               </div>
+            </div>
+            <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;align-items:end;margin-top:8px;">
               <div class="form-group">
                 <label>Oportunidades esta semana</label>
                 <input type="number" id="acOportunidades" placeholder="0" min="0" step="1">
               </div>
-              <div></div><div></div>
-              <div style="display:flex;align-items:flex-end;">
+              <div></div>
+              <div>
                 <button class="btn btn-primary" onclick="guardarActividad()" style="width:100%">Guardar</button>
               </div>
             </div>
