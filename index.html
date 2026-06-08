@@ -1003,15 +1003,34 @@ function detenerRenovacionToken() {
 }
 
 function mostrarSesionCaducada() {
-  // Mostrar aviso encima del dashboard sin cerrar sesión abruptamente
   const existing = document.getElementById('sessionWarning');
   if(existing) return;
   const div = document.createElement('div');
   div.id = 'sessionWarning';
   div.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#FEF3C7;border-bottom:2px solid #D97706;padding:12px 20px;z-index:99990;display:flex;align-items:center;justify-content:space-between;font-size:13px;color:#92400E;';
   div.innerHTML = '<span>⚠️ Tu sesión ha caducado. Los cambios no se guardarán hasta que vuelvas a entrar.</span>' +
-    '<button onclick="location.reload()" style="background:#D97706;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-weight:600;cursor:pointer;font-family:inherit;margin-left:12px;">Volver a entrar</button>';
+    '<button onclick="reentrarSesion()" style="background:#D97706;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-weight:600;cursor:pointer;font-family:inherit;margin-left:12px;">Volver a entrar</button>';
   document.body.appendChild(div);
+}
+
+function ocultarSesionCaducada() {
+  const el = document.getElementById('sessionWarning');
+  if(el) el.remove();
+}
+
+function reentrarSesion() {
+  clearSession();
+  accessToken = null;
+  refreshToken = null;
+  currentUser = null;
+  currentRole = 'basic';
+  detenerPolling();
+  detenerRenovacionToken();
+  ocultarSesionCaducada();
+  document.getElementById('mainLayout').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginPassword').value = '';
+  document.getElementById('loginError').textContent = '';
 }
 
 function saveSession(session) {
@@ -1084,6 +1103,7 @@ async function doLogout() {
   }
   detenerRenovacionToken();
   detenerPolling();
+  ocultarSesionCaducada();
   try { await supaFetch('/auth/v1/logout', {method:'POST'}); } catch(e) {}
   clearSession();
   accessToken = null; currentUser = null; currentRole = 'basic';
