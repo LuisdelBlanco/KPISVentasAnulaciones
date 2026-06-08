@@ -699,24 +699,10 @@ tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
           <div class="table-card-header"><span class="table-card-title">Registrar actividad del mes</span></div>
           <div style="padding:18px;">
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;align-items:end;">
-              <div class="form-group">
-                <label>Mes</label>
-                <select id="acMes">
-                  <option value="1">Enero</option><option value="2">Febrero</option>
-                  <option value="3">Marzo</option><option value="4">Abril</option>
-                  <option value="5">Mayo</option><option value="6">Junio</option>
-                  <option value="7">Julio</option><option value="8">Agosto</option>
-                  <option value="9">Septiembre</option><option value="10">Octubre</option>
-                  <option value="11">Noviembre</option><option value="12">Diciembre</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>Año</label>
-                <select id="acAnio">
-                  <option value="2024">2024</option>
-                  <option value="2025">2025</option>
-                  <option value="2026" selected>2026</option>
-                </select>
+              <div class="form-group" style="grid-column:span 2;">
+                <label>Semana</label>
+                <select id="acSemana" onchange="actualizarMesDesSemana()"></select>
+                <div style="font-size:11px;color:var(--text-3);margin-top:3px;" id="acSemanaInfo"></div>
               </div>
               <div class="form-group">
                 <label>Oficina</label>
@@ -727,7 +713,7 @@ tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
                 <select id="acAgente"></select>
               </div>
               <div class="form-group">
-                <label>Oportunidades creadas</label>
+                <label>Oportunidades esta semana</label>
                 <input type="number" id="acOportunidades" placeholder="0" min="0" step="1">
               </div>
               <div></div><div></div>
@@ -735,6 +721,8 @@ tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
                 <button class="btn btn-primary" onclick="guardarActividad()" style="width:100%">Guardar</button>
               </div>
             </div>
+            <input type="hidden" id="acMes">
+            <input type="hidden" id="acAnio">
             <div id="actividadMsg" style="margin-top:10px;font-size:12px;"></div>
           </div>
         </div>
@@ -742,7 +730,7 @@ tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
           <div class="table-card-header"><span class="table-card-title">Histórico</span></div>
           <div class="table-scroll">
             <table>
-              <thead><tr><th>Mes</th><th>Año</th><th>Oficina</th><th>Agente</th><th>Oportunidades</th><th></th></tr></thead>
+              <thead><tr><th>Semana</th><th>Mes</th><th>Año</th><th>Oficina</th><th>Agente</th><th>Oportunidades</th><th></th></tr></thead>
               <tbody id="bodyActividad"></tbody>
             </table>
           </div>
@@ -1433,6 +1421,7 @@ function renderKPIs() {
     { label:'Sin efecto', value: sinEf, accent:'var(--text-3)', delta:'' },
     { label:'Prima neta (€)', value: fmtK(totalPrima), accent:'var(--red)', delta:`Media: ${fmtK(totalPrima/(ventas||1))}€/póliza` },
     { label:'Objetivo mensual', value: obj, accent:'var(--amber)', delta:`${ventas} emisiones registradas` },
+    { label:'Oportunidades mes', value: oportunidadesMes(), accent:'#7C3AED', delta:`Objetivo: ${obj*3} (×3 ventas)` },
   ];
   document.getElementById('kpiGrid').innerHTML = kpis.map(k =>
     `<div class="kpi-card" style="--accent:${k.accent}">
@@ -2495,46 +2484,116 @@ function guardarObjetivoAgente(nombre,valor){
 // ── ACTIVIDAD COMERCIAL ───────────────────────────
 const MESES=['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
+function oportunidadesMes() {
+  const dOf = document.getElementById('dashOficina')?.value||'';
+  const dAg = document.getElementById('dashAgente')?.value||'';
+  const dAnio = parseInt(document.getElementById('yearFilter')?.value||new Date().getFullYear());
+  const dMes = parseInt(document.getElementById('monthFilter')?.value||0);
+  return actividad
+    .filter(a => {
+      if(a.anio !== dAnio) return false;
+      if(dMes && a.mes !== dMes) return false;
+      if(dOf && a.oficina !== dOf) return false;
+      if(dAg && a.agente !== dAg) return false;
+      return true;
+    })
+    .reduce((s, a) => s + (a.oportunidades||0), 0);
+}
+
+function getLunesDeHoy() {
+  const hoy = new Date();
+  const dia = hoy.getDay();
+  const diff = dia === 0 ? -6 : 1 - dia;
+  const lunes = new Date(hoy);
+  lunes.setDate(hoy.getDate() + diff);
+  lunes.setHours(0,0,0,0);
+  return lunes;
+}
+function formatSemana(val) {
+  const lunes = typeof val === 'string' ? new Date(val) : val;
+  const domingo = new Date(lunes);
+  domingo.setDate(lunes.getDate() + 6);
+  const opts = {day:'numeric', month:'short'};
+  return lunes.toLocaleDateString('es-ES', opts) + ' – ' + domingo.toLocaleDateString('es-ES', opts);
+}
+function fechaLocal(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
+function generarSemanas() {
+  const semanas = [];
+  const lunes = getLunesDeHoy();
+  for(let i = 0; i < 13; i++) {
+    const d = new Date(lunes);
+    d.setDate(lunes.getDate() - i * 7);
+    semanas.push(fechaLocal(d));
+  }
+  return semanas;
+}
+function actualizarMesDesSemana() {
+  const val = document.getElementById('acSemana')?.value;
+  if(!val) return;
+  const lunes = new Date(val);
+  const mesEl = document.getElementById('acMes');
+  const anioEl = document.getElementById('acAnio');
+  if(mesEl) mesEl.value = lunes.getMonth() + 1;
+  if(anioEl) anioEl.value = lunes.getFullYear();
+  const info = document.getElementById('acSemanaInfo');
+  if(info) info.textContent = formatSemana(val);
+}
 function preseleccionarMesActividad(){
-  const now=new Date();
-  const mes=document.getElementById('acMes');
-  const anio=document.getElementById('acAnio');
-  if(mes)mes.value=now.getMonth()+1;
-  if(anio)anio.value=now.getFullYear();
-  const acOf=document.getElementById('acOficina');
-  if(acOf){acOf.innerHTML=oficinas.map(o=>`<option value="${o}">${o}</option>`).join('');actualizarAgentesActividad();}
+  const sel = document.getElementById('acSemana');
+  if(!sel) return;
+  const semanas = generarSemanas();
+  sel.innerHTML = semanas.map((s,i) => {
+    const label = i===0 ? 'Semana actual (' + formatSemana(s) + ')' :
+                  i===1 ? 'Semana pasada (' + formatSemana(s) + ')' :
+                  formatSemana(s);
+    return `<option value="${s}"${i===1?' selected':''}>${label}</option>`;
+  }).join('');
+  actualizarMesDesSemana();
+  const acOf = document.getElementById('acOficina');
+  if(acOf){
+    acOf.innerHTML = '<option value="">Todas las oficinas</option>' + oficinas.map(o=>`<option value="${o}">${o}</option>`).join('');
+    actualizarAgentesActividad();
+  }
 }
 function actualizarAgentesActividad(){
-  const oficina=document.getElementById('acOficina')?.value;
-  const sel=document.getElementById('acAgente');
-  if(!sel)return;
-  const filtrados=comerciales.filter(c=>!oficina||c.oficina===oficina);
-  sel.innerHTML=filtrados.map(c=>`<option value="${c.nombre}">${c.nombre}</option>`).join('');
-  if(filtrados.length===0)sel.innerHTML='<option value="">(sin agentes)</option>';
+  const oficina = document.getElementById('acOficina')?.value;
+  const sel = document.getElementById('acAgente');
+  if(!sel) return;
+  const filtrados = comerciales.filter(c => !oficina || c.oficina === oficina);
+  sel.innerHTML = '<option value="">Selecciona agente</option>' + filtrados.map(c=>`<option value="${c.nombre}">${c.nombre}</option>`).join('');
 }
 function guardarActividad(){
-  const mes=parseInt(document.getElementById('acMes').value);
-  const anio=parseInt(document.getElementById('acAnio').value);
-  const oficina=document.getElementById('acOficina').value;
-  const agente=document.getElementById('acAgente').value;
-  const oportunidades=parseInt(document.getElementById('acOportunidades').value)||0;
-  const msg=document.getElementById('actividadMsg');
+  const semana = document.getElementById('acSemana')?.value;
+  const mes = parseInt(document.getElementById('acMes').value);
+  const anio = parseInt(document.getElementById('acAnio').value);
+  const oficina = document.getElementById('acOficina').value;
+  const agente = document.getElementById('acAgente').value;
+  const oportunidades = parseInt(document.getElementById('acOportunidades').value)||0;
+  const msg = document.getElementById('actividadMsg');
   if(!oficina||!agente){msg.innerHTML=`<span style="color:var(--red)">⚠️ Selecciona oficina y agente.</span>`;return;}
-  const idx=actividad.findIndex(a=>a.mes===mes&&a.anio===anio&&a.agente===agente);
+  if(!semana){msg.innerHTML=`<span style="color:var(--red)">⚠️ Selecciona una semana.</span>`;return;}
+  const idx = actividad.findIndex(a => a.semana===semana && a.agente===agente);
   let act;
   if(idx>=0){
-    actividad[idx]={...actividad[idx],mes,anio,oficina,agente,oportunidades};
-    act=actividad[idx];
-    msg.innerHTML=`<span style="color:var(--amber)">⚠️ Registro de ${agente} en ${MESES[mes]} ${anio} actualizado.</span>`;
+    actividad[idx] = {...actividad[idx], mes, anio, oficina, agente, oportunidades, semana};
+    act = actividad[idx];
+    msg.innerHTML=`<span style="color:var(--amber)">⚠️ Semana del ${formatSemana(semana)} de ${agente} actualizada.</span>`;
   } else {
-    act={uid:'uid_'+Date.now()+'_'+Math.random().toString(36).slice(2),mes,anio,oficina,agente,oportunidades};
+    act = {uid:'uid_'+Date.now()+'_'+Math.random().toString(36).slice(2), mes, anio, oficina, agente, oportunidades, semana};
     actividad.push(act);
-    msg.innerHTML=`<span style="color:var(--green)">✅ Datos de ${agente} en ${MESES[mes]} ${anio} guardados.</span>`;
+    msg.innerHTML=`<span style="color:var(--green)">✅ ${oportunidades} oportunidades de ${agente} (semana del ${formatSemana(semana)}) guardadas.</span>`;
   }
   saveData();
   renderActividad();
+  saveActividadToSupabase(act);
   document.getElementById('acOportunidades').value='';
-  setTimeout(()=>{msg.innerHTML='';},3000);
+  setTimeout(()=>{msg.innerHTML='';}, 3000);
 }
 function renderActividad(){
   const tbody=document.getElementById('bodyActividad');
@@ -2552,8 +2611,10 @@ function renderActividad(){
   let rows='';
   sorted.forEach((a,i)=>{
     const esNueva=a.oficina!==lastOf;lastOf=a.oficina;
-    if(esNueva) rows+='<tr><td colspan="6" style="background:var(--red-dim);font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.08em;padding:6px 14px;">⬡ '+a.oficina+'</td></tr>';
+    if(esNueva) rows+='<tr><td colspan="7" style="background:var(--red-dim);font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.08em;padding:6px 14px;">⬡ '+a.oficina+'</td></tr>';
+    const semanaLabel = a.semana ? formatSemana(a.semana) : (MESES[a.mes] + ' ' + a.anio);
     rows+='<tr>'
+      +'<td style="font-size:12px;color:var(--text-2);">'+semanaLabel+'</td>'
       +'<td style="font-weight:600">'+MESES[a.mes]+'</td>'
       +'<td>'+a.anio+'</td>'
       +'<td style="font-size:12px;color:var(--text-3)">'+a.oficina+'</td>'
