@@ -970,6 +970,49 @@ const SUPA_AUTH_KEY = 'sm_supa_session';
 let currentUser = null;
 let currentRole = 'basic';
 let accessToken = null;
+let refreshToken = null;
+let tokenRenewalInterval = null;
+
+async function renovarToken() {
+  if(!refreshToken) return;
+  try {
+    const data = await supaFetch('/auth/v1/token?grant_type=refresh_token', {
+      method: 'POST',
+      body: JSON.stringify({ refresh_token: refreshToken })
+    }, false);
+    if(data?.access_token) {
+      accessToken = data.access_token;
+      refreshToken = data.refresh_token || refreshToken;
+      saveSession({ access_token: data.access_token, refresh_token: data.refresh_token, user: currentUser });
+      console.log('Token renovado correctamente');
+    }
+  } catch(e) {
+    console.warn('No se pudo renovar el token:', e.message);
+    mostrarSesionCaducada();
+  }
+}
+
+function iniciarRenovacionToken() {
+  if(tokenRenewalInterval) clearInterval(tokenRenewalInterval);
+  // Renovar cada 50 minutos (token dura 1 hora)
+  tokenRenewalInterval = setInterval(renovarToken, 50 * 60 * 1000);
+}
+
+function detenerRenovacionToken() {
+  if(tokenRenewalInterval) { clearInterval(tokenRenewalInterval); tokenRenewalInterval = null; }
+}
+
+function mostrarSesionCaducada() {
+  // Mostrar aviso encima del dashboard sin cerrar sesión abruptamente
+  const existing = document.getElementById('sessionWarning');
+  if(existing) return;
+  const div = document.createElement('div');
+  div.id = 'sessionWarning';
+  div.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#FEF3C7;border-bottom:2px solid #D97706;padding:12px 20px;z-index:99990;display:flex;align-items:center;justify-content:space-between;font-size:13px;color:#92400E;';
+  div.innerHTML = '<span>⚠️ Tu sesión ha caducado. Los cambios no se guardarán hasta que vuelvas a entrar.</span>' +
+    '<button onclick="location.reload()" style="background:#D97706;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-weight:600;cursor:pointer;font-family:inherit;margin-left:12px;">Volver a entrar</button>';
+  document.body.appendChild(div);
+}
 
 function saveSession(session) {
   try { localStorage.setItem(SUPA_AUTH_KEY, JSON.stringify(session)); } catch(e) {}
@@ -993,6 +1036,10 @@ async function supaFetch(path, options={}, useAuth=true) {
   else headers['Authorization'] = 'Bearer ' + SUPA_KEY;
   const res = await fetch(url, {...options, headers});
   const text = await res.text();
+  if(res.status === 401) {
+    mostrarSesionCaducada();
+    throw new Error('Sesión caducada');
+  }
   if(!res.ok) throw new Error(res.status + ': ' + text);
   return text ? JSON.parse(text) : null;
 }
@@ -1010,9 +1057,11 @@ async function doLogin() {
       body: JSON.stringify({ email, password })
     }, false);
     accessToken = data.access_token;
+    refreshToken = data.refresh_token || null;
     currentUser = data.user;
-    saveSession({ access_token: data.access_token, user: data.user, expires_at: data.expires_at });
+    saveSession({ access_token: data.access_token, refresh_token: data.refresh_token, user: data.user });
     await loadUserRole();
+    iniciarRenovacionToken();
     await arrancarApp();
   } catch(e) {
     err.textContent = 'Email o contraseña incorrectos.';
@@ -1033,6 +1082,7 @@ async function doLogout() {
   if(currentUser?.id) {
     localStorage.setItem('sm_last_seen_' + currentUser.id, new Date().toISOString());
   }
+  detenerRenovacionToken();
   detenerPolling();
   try { await supaFetch('/auth/v1/logout', {method:'POST'}); } catch(e) {}
   clearSession();
@@ -2666,8 +2716,10 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   const session = getSession();
   if(session?.access_token) {
     accessToken = session.access_token;
+    refreshToken = session.refresh_token || null;
     currentUser = session.user;
     await loadUserRole();
+    iniciarRenovacionToken();
     await arrancarApp();
   } else {
     document.getElementById('loginScreen').style.display = 'flex';
