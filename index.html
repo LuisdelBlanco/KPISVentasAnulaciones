@@ -1219,6 +1219,21 @@ async function sbDel(table, id) {
   return await supaFetch('/rest/v1/' + table + '?id=eq.' + encodeURIComponent(id), {method:'DELETE'});
 }
 
+async function saveActividadToSupabase(act) {
+  const row = {
+    id: String(act.uid||act.id||Date.now()),
+    mes: act.mes, anio: act.anio,
+    oficina: act.oficina, agente: act.agente,
+    oportunidades: act.oportunidades||0,
+    semana: act.semana||null
+  };
+  return await sbPost('actividad', row);
+}
+
+async function deleteActividadFromSupabase(uid) {
+  return await sbDel('actividad', String(uid));
+}
+
 async function cargarDatosSupabase() {
   try {
     document.getElementById('loadingMsg').textContent = 'Cargando configuración...';
@@ -1261,10 +1276,12 @@ async function cargarDatosSupabase() {
   } catch(e) { console.warn('Registros no cargados:', e.message); }
   try {
     document.getElementById('loadingMsg').textContent = 'Cargando actividad...';
-    const data = await sbGet('actividad', 'select=*');
+    const data = await supaFetch('/rest/v1/actividad?select=*&order=anio.desc,mes.desc');
     actividad = (data||[]).map(a => ({
       uid:a.id, mes:a.mes, anio:a.anio,
-      oficina:a.oficina, agente:a.agente, oportunidades:a.oportunidades||0
+      oficina:a.oficina, agente:a.agente,
+      oportunidades:a.oportunidades||0,
+      semana:a.semana||null
     }));
   } catch(e) { console.warn('Actividad no cargada:', e.message); }
 }
