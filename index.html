@@ -2,11 +2,14 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#C2003F">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SM Seguros">
 <link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>SM Seguros · KPIs</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -47,9 +50,11 @@ body {
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
+  min-height: -webkit-fill-available;
   display: flex;
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
 }
 
 /* ── SIDEBAR ── */
@@ -333,18 +338,99 @@ tbody tr:hover td { background: var(--bg); }
 }
 .office-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--red); }
 
+/* ── BOTTOM NAV (mobile only) ── */
+.bottom-nav {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  z-index: 100;
+  padding: 0 0 env(safe-area-inset-bottom, 0);
+}
+.bottom-nav-inner {
+  display: flex; justify-content: space-around; align-items: center;
+  height: 56px;
+}
+.bottom-nav-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 3px; cursor: pointer;
+  color: var(--text-3); font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  padding: 8px 4px; min-height: 44px;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s;
+}
+.bottom-nav-item .bnav-icon { font-size: 20px; line-height: 1; }
+.bottom-nav-item.active { color: var(--red); }
+.bottom-nav-item.active .bnav-icon { transform: scale(1.1); }
+
 /* ── RESPONSIVE ── */
 @media (max-width: 768px) {
   :root { --sidebar-w: 0px; }
-  .sidebar { transform: translateX(-220px); width: 220px; }
-  .sidebar.open { transform: none; }
-  .main { margin-left: 0; }
-  .hamburger { display: flex; }
-  .charts-grid { grid-template-columns: 1fr; }
-  .form-grid { grid-template-columns: 1fr; }
+
+  /* Sidebar oculto en móvil */
+  .sidebar { display: none; }
+  .main { margin-left: 0; padding-bottom: 56px; }
+  .hamburger { display: none; }
+  .bottom-nav { display: block; }
+
+  /* Topbar compacta */
+  .topbar { padding: 0 12px; height: 48px; }
+  .topbar-sub { display: none; }
+  .topbar-sep { display: none; }
+  .topbar-title { font-size: 13px; }
+  .btn-primary { height: 36px; padding: 0 12px; font-size: 13px; }
+
+  /* Contenido */
+  .content { padding: 12px; }
+
+  /* KPI: 2 columnas */
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+  .kpi-value { font-size: 22px; }
+  .kpi-card { padding: 12px; }
+
+  /* Gráficos: 1 columna */
+  .charts-grid { grid-template-columns: 1fr; gap: 12px; }
+  .chart-wrap { height: 180px; }
+  .chart-card { padding: 14px; }
+
+  /* Oficinas grid: 1 columna */
+  .oficinas-grid { grid-template-columns: 1fr; }
+
+  /* Filtros: scroll horizontal */
+  .filters-bar { flex-wrap: nowrap; overflow-x: auto; padding: 8px 10px; gap: 6px; }
+  .filters-bar select, .filters-bar .filter-select { min-width: 120px; }
+
+  /* Tabla: scroll horizontal */
+  .table-scroll { -webkit-overflow-scrolling: touch; }
+  td, th { padding: 8px 10px; font-size: 12px; }
+
+  /* Modal: pantalla completa */
+  .modal-overlay { padding: 0; align-items: flex-end; }
+  .modal {
+    border-radius: 20px 20px 0 0; max-height: 92vh;
+    padding: 20px 16px; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0));
+    width: 100%; max-width: 100%;
+    animation: modalInMobile 0.25s cubic-bezier(0.34,1.1,0.64,1);
+  }
+  @keyframes modalInMobile { from { transform: translateY(100%); } to { transform: none; } }
+  .form-grid { grid-template-columns: 1fr; gap: 10px; }
   .form-group.span2 { grid-column: span 1; }
-  .content { padding: 16px; }
-  .topbar { padding: 0 16px; }
+  .modal-actions { gap: 8px; }
+  .modal-actions .btn { flex: 1; justify-content: center; height: 44px; }
+
+  /* Botones táctiles más grandes */
+  .btn { min-height: 36px; }
+  .btn-sm { min-height: 32px; height: 32px; }
+
+  /* Login */
+  #loginScreen > div { border-radius: 0; min-height: 100vh; padding: 40px 20px; justify-content: center; display: flex; flex-direction: column; }
+
+  /* Sidebar footer en móvil no se ve */
+  .sidebar-foot { display: none; }
+
+  /* Topbar right: solo botón nueva póliza */
+  #yearFilter, #monthFilter { display: none; }
 }
 
 /* ── SCROLLBAR ── */
@@ -887,6 +973,32 @@ tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
     </div>
   </div>
 
+  <!-- BOTTOM NAV (mobile) -->
+  <nav class="bottom-nav">
+    <div class="bottom-nav-inner">
+      <div class="bottom-nav-item active" id="bnav-dashboard" onclick="goPage('dashboard');setBottomNav('dashboard')">
+        <span class="bnav-icon">⊞</span>
+        <span>Inicio</span>
+      </div>
+      <div class="bottom-nav-item" id="bnav-registros" onclick="goPage('registros');setBottomNav('registros')">
+        <span class="bnav-icon">≡</span>
+        <span>Registros</span>
+      </div>
+      <div class="bottom-nav-item" id="bnav-nueva" onclick="openModal()">
+        <span class="bnav-icon" style="width:40px;height:40px;background:var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;margin-top:-12px;box-shadow:0 4px 12px rgba(194,0,63,0.4);">+</span>
+        <span>Nueva</span>
+      </div>
+      <div class="bottom-nav-item" id="bnav-oficina" onclick="goPage('oficina');setBottomNav('oficina')">
+        <span class="bnav-icon">⊟</span>
+        <span>Oficinas</span>
+      </div>
+      <div class="bottom-nav-item" id="bnav-agente" onclick="goPage('agente');setBottomNav('agente')">
+        <span class="bnav-icon">◎</span>
+        <span>Agentes</span>
+      </div>
+    </div>
+  </nav>
+
   <!-- POLLING TOAST -->
   <div id="pollingToast" style="display:none;position:fixed;bottom:24px;right:24px;background:#1A1A18;color:#fff;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.2);align-items:center;gap:10px;">
     <span id="pollingMsg"></span>
@@ -1398,6 +1510,13 @@ const pageNames = {
   actividad: ['Actividad comercial','Datos mensuales'],
   config: ['Ajustes','Configuración del sistema']
 };
+function setBottomNav(id) {
+  document.querySelectorAll('.bottom-nav-item').forEach(el => el.classList.remove('active'));
+  const map = {'dashboard':'bnav-dashboard','registros':'bnav-registros','oficina':'bnav-oficina','agente':'bnav-agente'};
+  const bnav = document.getElementById(map[id]);
+  if(bnav) bnav.classList.add('active');
+}
+
 function goPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
