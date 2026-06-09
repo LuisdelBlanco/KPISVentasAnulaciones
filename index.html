@@ -365,12 +365,12 @@ tbody tr:hover td { background: var(--bg); }
 .bottom-nav-item.active .bnav-icon { transform: scale(1.1); }
 
 /* ── RESPONSIVE ── */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   :root { --sidebar-w: 0px; }
 
   /* Sidebar oculto en móvil */
   .sidebar { display: none; }
-  .main { margin-left: 0; padding-bottom: 56px; }
+  .main { margin-left: 0; padding-bottom: 64px; }
   .hamburger { display: none; }
   .bottom-nav { display: block; }
 
@@ -382,55 +382,55 @@ tbody tr:hover td { background: var(--bg); }
   .btn-primary { height: 36px; padding: 0 12px; font-size: 13px; }
 
   /* Contenido */
-  .content { padding: 12px; }
+  .content { padding: 10px; }
 
-  /* KPI: 2 columnas */
-  .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
-  .kpi-value { font-size: 22px; }
-  .kpi-card { padding: 12px; }
+  /* KPI: 2 columnas compactas */
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
+  .kpi-value { font-size: 20px; }
+  .kpi-card { padding: 10px 12px; }
+  .kpi-label { font-size: 10px; }
+  .kpi-delta { font-size: 10px; }
 
   /* Gráficos: 1 columna */
-  .charts-grid { grid-template-columns: 1fr; gap: 12px; }
-  .chart-wrap { height: 180px; }
-  .chart-card { padding: 14px; }
+  .charts-grid { grid-template-columns: 1fr; gap: 10px; }
+  .chart-wrap { height: 160px; }
+  .chart-card { padding: 12px; }
+  .chart-card-title { font-size: 12px; }
 
   /* Oficinas grid: 1 columna */
   .oficinas-grid { grid-template-columns: 1fr; }
 
   /* Filtros: scroll horizontal */
-  .filters-bar { flex-wrap: nowrap; overflow-x: auto; padding: 8px 10px; gap: 6px; }
-  .filters-bar select, .filters-bar .filter-select { min-width: 120px; }
+  .filters-bar { flex-wrap: nowrap; overflow-x: auto; padding: 6px 8px; gap: 6px; }
+  .filters-bar select, .filters-bar .filter-select { min-width: 110px; font-size: 12px; height: 30px; }
 
-  /* Tabla: scroll horizontal */
+  /* Tabla */
   .table-scroll { -webkit-overflow-scrolling: touch; }
-  td, th { padding: 8px 10px; font-size: 12px; }
+  td, th { padding: 7px 8px; font-size: 11px; }
 
-  /* Modal: pantalla completa */
+  /* Modal: sube desde abajo */
   .modal-overlay { padding: 0; align-items: flex-end; }
   .modal {
     border-radius: 20px 20px 0 0; max-height: 92vh;
-    padding: 20px 16px; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0));
+    padding: 20px 16px;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0));
     width: 100%; max-width: 100%;
     animation: modalInMobile 0.25s cubic-bezier(0.34,1.1,0.64,1);
   }
   @keyframes modalInMobile { from { transform: translateY(100%); } to { transform: none; } }
   .form-grid { grid-template-columns: 1fr; gap: 10px; }
   .form-group.span2 { grid-column: span 1; }
-  .modal-actions { gap: 8px; }
   .modal-actions .btn { flex: 1; justify-content: center; height: 44px; }
 
-  /* Botones táctiles más grandes */
+  /* Inputs más grandes para dedos */
+  .filter-select, input[type=text], input[type=number], input[type=date], select { height: 38px; font-size: 14px; }
   .btn { min-height: 36px; }
-  .btn-sm { min-height: 32px; height: 32px; }
 
-  /* Login */
+  /* Login pantalla completa */
   #loginScreen > div { border-radius: 0; min-height: 100vh; padding: 40px 20px; justify-content: center; display: flex; flex-direction: column; }
 
-  /* Sidebar footer en móvil no se ve */
-  .sidebar-foot { display: none; }
-
-  /* Topbar right: solo botón nueva póliza */
-  #yearFilter, #monthFilter { display: none; }
+  /* Ocultar filtros año/mes en topbar — están en el contenido */
+  #yearFilter, #monthFilter { font-size: 12px; height: 30px; }
 }
 
 /* ── SCROLLBAR ── */
