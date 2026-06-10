@@ -703,6 +703,10 @@ tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
         <button class="btn btn-ghost btn-sm" onclick="resetFiltros()">✕ Limpiar</button>
         <span style="margin-left:auto;font-size:12px;color:var(--text-3);" id="countRegistros"></span>
       </div>
+
+      <!-- CONTADORES POR TIPO (mes en curso, brutos) -->
+      <div id="contadoresTipo" style="display:flex;flex-wrap:wrap;gap:6px;padding:10px 0 4px;"></div>
+
       <div class="table-card">
         <div class="table-card-header">
           <span class="table-card-title">Movimientos</span>
@@ -1849,42 +1853,131 @@ function populateFilterSelects() {
   fRa.innerHTML='<option value="">Todos los ramos</option>'+ramos.map(r=>`<option value="${r}"${r===pRa?' selected':''}>${r}</option>`).join('');
 }
 
+function renderContadoresTipo() {
+  const el = document.getElementById('contadoresTipo');
+  if(!el) return;
+  const now = new Date();
+  const mesActual = now.getMonth() + 1;
+  const anioActual = now.getFullYear();
+
+  // Filtrar solo mes en curso, brutos (sin filtros de tabla)
+  const delMes = registros.filter(r => {
+    if(!r.fecha) return false;
+    const [y, m] = r.fecha.split('-').map(Number);
+    return y === anioActual && m === mesActual;
+  });
+
+  const colores = {
+    'Emisión':    {bg:'#F0FDF4', color:'#16A34A', border:'#BBF7D0'},
+    'Anulación':  {bg:'#FFF1F3', color:'#C2003F', border:'#FECDD3'},
+    'Sin efecto': {bg:'#EFF6FF', color:'#2563EB', border:'#BFDBFE'},
+    'Reemplazo':  {bg:'#FFFBEB', color:'#D97706', border:'#FDE68A'},
+    'Suspenso':   {bg:'#F5F3FF', color:'#7C3AED', border:'#DDD6FE'},
+    'Rehabilitación': {bg:'#F0FDF4', color:'#059669', border:'#A7F3D0'},
+    'Inicial/Suple':  {bg:'#FFF7ED', color:'#EA580C', border:'#FED7AA'},
+  };
+
+  const tipos = ['Emisión','Anulación','Sin efecto','Reemplazo','Suspenso','Rehabilitación','Inicial/Suple'];
+  let html = '';
+  tipos.forEach(tipo => {
+    const count = delMes.filter(r => r.tipo === tipo).length;
+    if(count === 0) return;
+    const c = colores[tipo] || {bg:'#F7F7F6', color:'#52524E', border:'#E8E8E4'};
+    html += `<div style="display:inline-flex;align-items:center;gap:5px;background:${c.bg};border:1px solid ${c.border};border-radius:20px;padding:4px 10px;">
+      <span style="font-size:11px;font-weight:600;color:${c.color};">${tipo}</span>
+      <span style="font-size:13px;font-weight:800;color:${c.color};">${count}</span>
+    </div>`;
+  });
+
+  if(!html) {
+    el.innerHTML = '<span style="font-size:12px;color:var(--text-3);">Sin movimientos este mes</span>';
+  } else {
+    const total = delMes.length;
+    el.innerHTML = html + `<div style="display:inline-flex;align-items:center;gap:5px;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:4px 10px;margin-left:4px;">
+      <span style="font-size:11px;font-weight:600;color:var(--text-2);">Total mes</span>
+      <span style="font-size:13px;font-weight:800;color:var(--text);">${total}</span>
+    </div>`;
+  }
+}
+
 function renderRegistros() {
+  renderContadoresTipo();
   const data=getFilteredRegistros().sort((a,b)=>{
-    // Primero por fecha de póliza descendente, luego por hora de introducción
     const fechaComp = (b.fecha||'').localeCompare(a.fecha||'');
     if(fechaComp !== 0) return fechaComp;
-    const ca = a.createdAt || '';
-    const cb = b.createdAt || '';
-    return cb.localeCompare(ca);
+    return (b.createdAt||'').localeCompare(a.createdAt||'');
   });
   document.getElementById('countRegistros').textContent=`${data.length} registros`;
-  const tipoBadge={'Emisión':'badge-venta','Anulación':'badge-anulacion','Rehabilitación':'badge-rehabilitacion','Reemplazo':'badge-sustitucion','Sin efecto':'badge-sin-efecto','Suspenso':'badge-sin-efecto'};
+
+  const now = new Date();
+  const mesActual = now.getMonth() + 1;
+  const anioActual = now.getFullYear();
+
+  const grupoTipo = r => {
+    if(r.tipo==='Emisión'||r.tipo==='Inicial/Suple') return 'Emisión';
+    if(r.tipo==='Anulación'||r.tipo==='Suspenso') return 'Anulación';
+    if(r.tipo==='Sin efecto') return 'Sin efecto';
+    if(r.tipo==='Reemplazo') return 'Reemplazo';
+    if(r.tipo==='Rehabilitación') return 'Rehabilitación';
+    return null;
+  };
+
+  const delMes = registros
+    .filter(r => {
+      if(!r.fecha) return false;
+      const [y,m] = r.fecha.split('-').map(Number);
+      return y===anioActual && m===mesActual && grupoTipo(r);
+    })
+    .sort((a,b) => {
+      const fc = (a.fecha||'').localeCompare(b.fecha||'');
+      if(fc!==0) return fc;
+      return (a.createdAt||'').localeCompare(b.createdAt||'');
+    });
+
+  const contadores = {};
+  const numeroPorId = {};
+  delMes.forEach(r => {
+    const grupo = grupoTipo(r);
+    if(!contadores[grupo]) contadores[grupo] = 0;
+    contadores[grupo]++;
+    numeroPorId[String(r.id)] = { n: contadores[grupo], grupo };
+  });
+
+  const coloresContador = {
+    'Emisión':       {bg:'#F0FDF4',color:'#16A34A',border:'#BBF7D0'},
+    'Anulación':     {bg:'#FFF1F3',color:'#C2003F',border:'#FECDD3'},
+    'Sin efecto':    {bg:'#EFF6FF',color:'#2563EB',border:'#BFDBFE'},
+    'Reemplazo':     {bg:'#FFFBEB',color:'#D97706',border:'#FDE68A'},
+    'Rehabilitación':{bg:'#F5F3FF',color:'#7C3AED',border:'#DDD6FE'},
+  };
+
+  const tipoBadge={'Emisión':'badge-venta','Anulación':'badge-anulacion','Rehabilitación':'badge-rehabilitacion','Reemplazo':'badge-sustitucion','Sin efecto':'badge-sin-efecto','Suspenso':'badge-sin-efecto','Inicial/Suple':'badge-venta'};
   if(data.length===0){
     document.getElementById('bodyRegistros').innerHTML=`<tr><td colspan="12"><div class="empty-state"><div class="empty-icon">🔍</div><p>Sin resultados</p></div></td></tr>`;
     return;
   }
-  let html = '';
-  let lastFecha = null;
-  const MESES_SHORT = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-  data.forEach(r => {
-    if(r.fecha !== lastFecha) {
-      lastFecha = r.fecha;
-      const [y,m,d] = (r.fecha||'').split('-');
-      const label = d ? `${parseInt(d)} ${MESES_SHORT[parseInt(m)]} ${y}` : r.fecha;
-      const isNuevo = window._registrosNuevosIds && window._registrosNuevosIds.has(String(r.id));
-    const tipoClassMap = {'Emisión':'new-emision','Anulación':'new-anulacion','Reemplazo':'new-reemplazo','Sin efecto':'new-sinefecto','Suspenso':'new-suspenso','Rehabilitación':'new-rehab','Inicial/Suple':'new-inicial'};
-    const blinkClass = isNuevo ? (tipoClassMap[r.tipo]||'new-emision') : '';
-    html += `<tr class="${blinkClass}"><td colspan="12" style="padding:10px 8px 4px;border-bottom:2px solid var(--red);background:var(--bg);">
-        <span style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.07em;">${label}</span>
-      </td></tr>`;
+  let html='';
+  let lastFecha=null;
+  const MESES_SHORT=['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  data.forEach(r=>{
+    if(r.fecha!==lastFecha){
+      lastFecha=r.fecha;
+      const [y,m,d]=(r.fecha||'').split('-');
+      const label=d?`${parseInt(d)} ${MESES_SHORT[parseInt(m)]} ${y}`:r.fecha;
+      html+=`<tr><td colspan="12" style="padding:10px 8px 4px;border-bottom:2px solid var(--red);background:var(--bg);"><span style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.07em;">${label}</span></td></tr>`;
     }
-    const isNuevo = window._registrosNuevosIds && window._registrosNuevosIds.has(String(r.id));
-    const tipoClassMap = {'Emisión':'new-emision','Anulación':'new-anulacion','Reemplazo':'new-reemplazo','Sin efecto':'new-sinefecto','Suspenso':'new-suspenso','Rehabilitación':'new-rehab','Inicial/Suple':'new-inicial'};
-    const blinkClass = isNuevo ? (tipoClassMap[r.tipo]||'new-emision') : '';
-    html += `<tr class="${blinkClass}">
+    const info=numeroPorId[String(r.id)];
+    let contadorHtml='';
+    if(info){
+      const c=coloresContador[info.grupo]||{};
+      contadorHtml=`<span style="display:inline-block;min-width:26px;text-align:center;background:${c.bg};color:${c.color};border:1px solid ${c.border};border-radius:10px;font-size:10px;font-weight:800;padding:1px 5px;margin-left:4px;">#${info.n}</span>`;
+    }
+    const isNuevo=window._registrosNuevosIds&&window._registrosNuevosIds.has(String(r.id));
+    const tipoClassMap={'Emisión':'new-emision','Anulación':'new-anulacion','Reemplazo':'new-reemplazo','Sin efecto':'new-sinefecto','Suspenso':'new-suspenso','Rehabilitación':'new-rehab','Inicial/Suple':'new-inicial'};
+    const blinkClass=isNuevo?(tipoClassMap[r.tipo]||'new-emision'):'';
+    html+=`<tr class="${blinkClass}">
       <td style="font-size:12px;white-space:nowrap;font-family:'JetBrains Mono',monospace">${formatDate(r.fecha)}</td>
-      <td><span class="badge ${tipoBadge[r.tipo]||''}">${r.tipo}</span></td>
+      <td><span class="badge ${tipoBadge[r.tipo]||''}">${r.tipo}</span>${contadorHtml}</td>
       <td style="font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--text-3)">${r.poliza||'—'}</td>
       <td style="font-size:12px">${r.ramo}</td>
       <td style="font-size:12px;font-family:'JetBrains Mono',monospace">${r.gestora||'—'}</td>
@@ -1900,7 +1993,7 @@ function renderRegistros() {
       </td>
     </tr>`;
   });
-  document.getElementById('bodyRegistros').innerHTML = html;
+  document.getElementById('bodyRegistros').innerHTML=html;
 }
 
 function formatDate(d){if(!d)return'—';const[y,m,day]=d.split('-');return`${day}/${m}/${y}`;}
