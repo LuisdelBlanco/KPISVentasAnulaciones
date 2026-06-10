@@ -1944,11 +1944,11 @@ function renderRegistros() {
   });
 
   const coloresContador = {
-    'Emisión':       {bg:'#F0FDF4',color:'#16A34A',border:'#BBF7D0'},
-    'Anulación':     {bg:'#FFF1F3',color:'#C2003F',border:'#FECDD3'},
-    'Sin efecto':    {bg:'#EFF6FF',color:'#2563EB',border:'#BFDBFE'},
-    'Reemplazo':     {bg:'#FFFBEB',color:'#D97706',border:'#FDE68A'},
-    'Rehabilitación':{bg:'#F5F3FF',color:'#7C3AED',border:'#DDD6FE'},
+    'Emisión':       {bg:'var(--green-bg)',  color:'var(--green)',  border:'#BBF7D0'},
+    'Anulación':     {bg:'#FFF1F3',          color:'#BE123C',       border:'#FECDD3'},
+    'Sin efecto':    {bg:'var(--gray-bg)',   color:'var(--text-3)', border:'#E2E8F0'},
+    'Reemplazo':     {bg:'var(--amber-bg)',  color:'var(--amber)',  border:'#FDE68A'},
+    'Rehabilitación':{bg:'var(--blue-bg)',   color:'var(--blue)',   border:'#BFDBFE'},
   };
 
   const tipoBadge={'Emisión':'badge-venta','Anulación':'badge-anulacion','Rehabilitación':'badge-rehabilitacion','Reemplazo':'badge-sustitucion','Sin efecto':'badge-sin-efecto','Suspenso':'badge-sin-efecto','Inicial/Suple':'badge-venta'};
