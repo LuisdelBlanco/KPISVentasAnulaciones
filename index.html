@@ -1605,7 +1605,8 @@ function renderAll() { renderKPIs(); renderCharts(); renderOficinas(); renderCom
 // ── KPI CARDS ─────────────────────────────────────
 function renderKPIs() {
   const data = getFiltered();
-  const ventas = data.filter(r => r.tipo==='Emisión').length;
+  const ventas = data.filter(r => r.tipo==='Emisión' || r.tipo==='Inicial/Suple').length;
+  const suple  = data.filter(r => r.tipo==='Inicial/Suple').length;
   const anulan = data.filter(r => r.tipo==='Anulación').length;
   const rehab  = data.filter(r => r.tipo==='Rehabilitación').length;
   const sust   = data.filter(r => r.tipo==='Reemplazo').length;
@@ -1613,7 +1614,7 @@ function renderKPIs() {
   const suspenso = data.filter(r => r.tipo==='Suspenso').length;
   const neto = ventas - anulan - sinEf - suspenso + rehab;
   const retRate = ventas > 0 ? Math.round((1-anulan/ventas)*100) : 100;
-  const totalPrima = data.filter(r=>r.tipo==='Emisión').reduce((s,r)=>s+(parseFloat(r.prima)||0),0);
+  const totalPrima = data.filter(r=>r.tipo==='Emisión'||r.tipo==='Inicial/Suple').reduce((s,r)=>s+(parseFloat(r.prima)||0),0);
   const dOf = document.getElementById('dashOficina')?.value||'';
   const dAg = document.getElementById('dashAgente')?.value||'';
   let obj;
@@ -1626,7 +1627,7 @@ function renderKPIs() {
   const progColor = progPct >= 100 ? 'var(--green)' : progPct >= 70 ? 'var(--amber)' : 'var(--red)';
 
   const kpis = [
-    { label:'Emisiones', value: emisNetas, accent:'var(--green)', delta:`Brutas: ${ventas} · Sin efecto: ${sinEf}`, progress: { pct: progPct, color: progColor, label: `${emisNetas} de ${obj} · ${progPct}%` } },
+    { label:'Emisiones', value: emisNetas, accent:'var(--green)', delta:`Brutas: ${ventas} · Sin efecto: ${sinEf}${suple>0?' · Suples: '+suple:''}`, progress: { pct: progPct, color: progColor, label: `${emisNetas} de ${obj} · ${progPct}%` } },
     { label:'Anulaciones', value: anulan, accent:'#BE123C', delta:`${Math.round(anulan/(ventas||1)*100)}% sobre emisiones` },
     { label:'Neto pólizas', value: neto>0?'+'+neto:neto, accent:'var(--blue)', delta:`Rehab: ${rehab} · Reempl: ${sust} · Susp: ${suspenso}` },
     { label:'Sin efecto', value: sinEf, accent:'var(--text-3)', delta:'' },
@@ -1877,7 +1878,7 @@ function renderContadoresTipo() {
     'Inicial/Suple':  {bg:'#F0FDF4', color:'#16A34A', border:'#BBF7D0'},
   };
 
-  const tipos = ['Emisión','Anulación','Sin efecto','Reemplazo','Suspenso','Rehabilitación','Inicial/Suple'];
+  const tipos = ['Emisión','Anulación','Sin efecto','Reemplazo','Rehabilitación','Inicial/Suple'];
   let html = '';
   tipos.forEach(tipo => {
     const count = delMes.filter(r => r.tipo === tipo).length;
