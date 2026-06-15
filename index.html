@@ -1615,6 +1615,7 @@ function renderKPIs() {
   const neto = ventas - anulan - sinEf - suspenso + rehab;
   const retRate = ventas > 0 ? Math.round((1-anulan/ventas)*100) : 100;
   const totalPrima = data.filter(r=>r.tipo==='Emisión'||r.tipo==='Inicial/Suple').reduce((s,r)=>s+(parseFloat(r.prima)||0),0);
+  const totalPrimaCorregida = data.filter(r=>r.tipo==='Emisión'||r.tipo==='Inicial/Suple').reduce((s,r)=>s+(parseFloat(r.primaCorregida)||0),0);
   const dOf = document.getElementById('dashOficina')?.value||'';
   const dAg = document.getElementById('dashAgente')?.value||'';
   let obj;
@@ -1632,6 +1633,7 @@ function renderKPIs() {
     { label:'Neto pólizas', value: neto>0?'+'+neto:neto, accent:'var(--blue)', delta:`Rehab: ${rehab} · Reempl: ${sust} · Susp: ${suspenso}` },
     { label:'Sin efecto', value: sinEf, accent:'var(--text-3)', delta:'' },
     { label:'Prima neta (€)', value: fmtK(totalPrima), accent:'var(--red)', delta:`Media: ${fmtK(totalPrima/(ventas||1))}€/póliza` },
+    { label:'Prima corregida (€)', value: fmtK(totalPrimaCorregida), accent:'#7C3AED', delta:`Media: ${fmtK(totalPrimaCorregida/(ventas||1))}€/póliza` },
     { label:'Objetivo mensual', value: obj, accent:'var(--amber)', delta:`${ventas} emisiones registradas` },
     { label:'Oportunidades mes', value: oportunidadesMes(), accent:'#7C3AED', delta:`Objetivo: ${obj*3} (×3 ventas)` },
   ];
