@@ -1402,7 +1402,7 @@ async function cargarDatosSupabase() {
       ramo:r.ramo, gestora:r.gestora, oficina:r.oficina,
       agente:r.agente, tomador:r.tomador||'',
       prima:r.prima||0, primaCorregida:r.prima_corregida||0, notas:r.notas||'',
-      createdAt:r.created_at||''
+      createdAt:r.created_at||'', rehabOrigen:r.rehab_origen||''
     }));
   } catch(e) { console.warn('Registros no cargados:', e.message); }
   try {
@@ -2045,6 +2045,13 @@ function editRegistro(id) {
   const mTipo = document.getElementById('mTipo');
   if(mTipo) mTipo.value = r.tipo || 'Emisión';
   actualizarMotivos();
+  // Cargar origen rehabilitación si aplica
+  if(r.tipo === 'Rehabilitación' && r.rehabOrigen) {
+    const radio = document.querySelector(`input[name="rehabOrigen"][value="${r.rehabOrigen}"]`);
+    if(radio) radio.checked = true;
+  } else {
+    document.querySelectorAll('input[name="rehabOrigen"]').forEach(rd => rd.checked = false);
+  }
   // Searchable selects
   updateOficinaSelect();
   ssPopulate('mAgente', [{value:'',label:'(sin asignar)'}].concat(comerciales.map(c=>({value:c.nombre,label:c.nombre+' — '+c.oficina}))));
@@ -2539,12 +2546,12 @@ function guardarRegistro(){
     const idx = registros.findIndex(r => String(r.id) === editingRegistroId);
     if(idx >= 0) {
       registros[idx] = {...registros[idx], fecha, tipo, poliza, ramo, gestora, oficina,
-        prima:parseFloat(prima)||0, primaCorregida:parseFloat(primaCorregida)||0, tomador, agente, notas:notasCompleto};
+        prima:parseFloat(prima)||0, primaCorregida:parseFloat(primaCorregida)||0, tomador, agente, notas:notasCompleto, rehabOrigen};
       const reg = registros[idx];
       saveData(); closeModal(); renderAll();
       sbPost('registros', {id:String(reg.id),fecha:reg.fecha,tipo:reg.tipo,poliza:reg.poliza,ramo:reg.ramo,
         gestora:reg.gestora,oficina:reg.oficina,agente:reg.agente,tomador:reg.tomador||'',
-        prima:reg.prima,prima_corregida:reg.primaCorregida,notas:reg.notas||''}).catch(e=>console.warn(e));
+        prima:reg.prima,prima_corregida:reg.primaCorregida,notas:reg.notas||'',rehab_origen:reg.rehabOrigen||''}).catch(e=>console.warn(e));
     }
     editingRegistroId = null;
     return;
@@ -2572,7 +2579,7 @@ function guardarRegistro(){
     });
   }, 150);
   // Guardar en Supabase
-  sbPost('registros', {id:reg.id,fecha:reg.fecha,tipo:reg.tipo,poliza:reg.poliza,ramo:reg.ramo,gestora:reg.gestora,oficina:reg.oficina,agente:reg.agente,tomador:reg.tomador||'',prima:reg.prima,prima_corregida:reg.primaCorregida,notas:reg.notas||''}).catch(e=>console.warn('Error guardando en Supabase:',e.message));
+  sbPost('registros', {id:reg.id,fecha:reg.fecha,tipo:reg.tipo,poliza:reg.poliza,ramo:reg.ramo,gestora:reg.gestora,oficina:reg.oficina,agente:reg.agente,tomador:reg.tomador||'',prima:reg.prima,prima_corregida:reg.primaCorregida,notas:reg.notas||'',rehab_origen:reg.rehabOrigen||''}).catch(e=>console.warn('Error guardando en Supabase:',e.message));
 }
 
 // ── IMPORT CSV ────────────────────────────────────
