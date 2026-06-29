@@ -1629,10 +1629,6 @@ function renderKPIs() {
   const sust   = data.filter(r => r.tipo==='Reemplazo').length;
   const sinEf  = data.filter(r => r.tipo==='Sin efecto').length;
   const suspenso = data.filter(r => r.tipo==='Suspenso').length;
-  const neto = emisNetas - anulNetas;
-  const retRate = ventas > 0 ? Math.round((1-anulan/ventas)*100) : 100;
-  const totalPrima = data.filter(r=>r.tipo==='Emisión'||r.tipo==='Inicial/Suple').reduce((s,r)=>s+(parseFloat(r.prima)||0),0);
-  const totalPrimaCorregida = data.filter(r=>r.tipo==='Emisión'||r.tipo==='Inicial/Suple').reduce((s,r)=>s+(parseFloat(r.primaCorregida)||0),0);
   const dOf = document.getElementById('dashOficina')?.value||'';
   const dAg = document.getElementById('dashAgente')?.value||'';
   let obj;
@@ -1642,6 +1638,10 @@ function renderKPIs() {
 
   const emisNetas = ventas - sinEf + rehabDeSinEf;
   const anulNetas = anulan - rehabDeAnul;
+  const neto = emisNetas - anulNetas;
+  const retRate = ventas > 0 ? Math.round((1-anulan/ventas)*100) : 100;
+  const totalPrima = data.filter(r=>r.tipo==='Emisión'||r.tipo==='Inicial/Suple').reduce((s,r)=>s+(parseFloat(r.prima)||0),0);
+  const totalPrimaCorregida = data.filter(r=>r.tipo==='Emisión'||r.tipo==='Inicial/Suple').reduce((s,r)=>s+(parseFloat(r.primaCorregida)||0),0);
   const progPct = obj > 0 ? Math.min(Math.round((emisNetas / obj) * 100), 100) : 0;
   const progColor = progPct >= 100 ? 'var(--green)' : progPct >= 70 ? 'var(--amber)' : 'var(--red)';
 
