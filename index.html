@@ -953,6 +953,20 @@ tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
       <div class="form-group span2">
         <label>Motivo</label>
         <select id="mMotivo" style="margin-bottom:8px;" onchange=""></select>
+        <!-- Origen rehabilitación -->
+        <div id="rehabOrigenWrap" style="display:none;margin-bottom:8px;">
+          <label style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;display:block;">Origen de la rehabilitación</label>
+          <div style="display:flex;gap:16px;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+              <input type="radio" name="rehabOrigen" value="sinefecto" style="accent-color:var(--red);">
+              <span>Viene de <strong>Sin efecto</strong> <span style="font-size:11px;color:var(--green);">(suma emisión)</span></span>
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+              <input type="radio" name="rehabOrigen" value="anulacion" style="accent-color:var(--red);">
+              <span>Viene de <strong>Anulación</strong> <span style="font-size:11px;color:var(--text-3);">(resta anulación)</span></span>
+            </label>
+          </div>
+        </div>
         <textarea id="mNotas" placeholder="Explicación adicional (opcional)..." style="margin-top:6px;"></textarea>
       </div>
     </div>
@@ -1608,11 +1622,14 @@ function renderKPIs() {
   const ventas = data.filter(r => r.tipo==='Emisión' || r.tipo==='Inicial/Suple').length;
   const suple  = data.filter(r => r.tipo==='Inicial/Suple').length;
   const anulan = data.filter(r => r.tipo==='Anulación' || r.tipo==='Suspenso').length;
-  const rehab  = data.filter(r => r.tipo==='Rehabilitación').length;
+  const rehab     = data.filter(r => r.tipo==='Rehabilitación').length;
+  const rehabDeSinEf  = data.filter(r => r.tipo==='Rehabilitación' && r.rehabOrigen==='sinefecto').length;
+  const rehabDeAnul   = data.filter(r => r.tipo==='Rehabilitación' && r.rehabOrigen==='anulacion').length;
+  const rehabSinOrigen = data.filter(r => r.tipo==='Rehabilitación' && !r.rehabOrigen).length;
   const sust   = data.filter(r => r.tipo==='Reemplazo').length;
   const sinEf  = data.filter(r => r.tipo==='Sin efecto').length;
   const suspenso = data.filter(r => r.tipo==='Suspenso').length;
-  const neto = ventas - sinEf + rehab - anulan;
+  const neto = emisNetas - anulNetas;
   const retRate = ventas > 0 ? Math.round((1-anulan/ventas)*100) : 100;
   const totalPrima = data.filter(r=>r.tipo==='Emisión'||r.tipo==='Inicial/Suple').reduce((s,r)=>s+(parseFloat(r.prima)||0),0);
   const totalPrimaCorregida = data.filter(r=>r.tipo==='Emisión'||r.tipo==='Inicial/Suple').reduce((s,r)=>s+(parseFloat(r.primaCorregida)||0),0);
@@ -1623,7 +1640,8 @@ function renderKPIs() {
   else if (dAg) { const c = comerciales.find(c=>c.nombre===dAg); obj = c&&objetivosAgentes[dAg]?objetivosAgentes[dAg]:(c&&objetivosPorOficina[c.oficina]?objetivosPorOficina[c.oficina]:objetivo); }
   else { obj = objetivo; }
 
-  const emisNetas = ventas - sinEf + rehab;
+  const emisNetas = ventas - sinEf + rehabDeSinEf;
+  const anulNetas = anulan - rehabDeAnul;
   const progPct = obj > 0 ? Math.min(Math.round((emisNetas / obj) * 100), 100) : 0;
   const progColor = progPct >= 100 ? 'var(--green)' : progPct >= 70 ? 'var(--amber)' : 'var(--red)';
 
@@ -2323,6 +2341,7 @@ const MOTIVOS_POR_TIPO = {
 function actualizarMotivos() {
   const tipo = document.getElementById('mTipo')?.value || '';
   const sel = document.getElementById('mMotivo');
+  const rehabWrap = document.getElementById('rehabOrigenWrap');
   if(!sel) return;
   const motivos = MOTIVOS_POR_TIPO[tipo] || [];
   if(motivos.length === 0) {
@@ -2332,6 +2351,13 @@ function actualizarMotivos() {
     sel.style.display = '';
     sel.innerHTML = '<option value="">Selecciona motivo...</option>' +
       motivos.map(m => `<option value="${m}">${m}</option>`).join('');
+  }
+  // Mostrar origen rehab solo para Rehabilitación
+  if(rehabWrap) {
+    rehabWrap.style.display = tipo === 'Rehabilitación' ? 'block' : 'none';
+    if(tipo !== 'Rehabilitación') {
+      document.querySelectorAll('input[name="rehabOrigen"]').forEach(r => r.checked = false);
+    }
   }
   calcularPrimaCorregida();
 }
@@ -2444,6 +2470,8 @@ function guardarRegistro(){
   const motivo=document.getElementById('mMotivo')?.value||'';
   const notas=document.getElementById('mNotas').value;
   const notasCompleto = motivo && notas ? motivo + ' — ' + notas : motivo || notas;
+  const rehabOrigenEl = document.querySelector('input[name="rehabOrigen"]:checked');
+  const rehabOrigen = tipo === 'Rehabilitación' ? (rehabOrigenEl?.value || '') : '';
   if(!fecha||!tipo||!polizaRaw||!ramo||!gestora||!oficina){alert('Completa los campos obligatorios: fecha, tipo, nº póliza, ramo, gestora y oficina.');return;}
   if(tipo==='Inicial/Suple'){
     const primaVal=parseFloat(document.getElementById('mPrima').value)||0;
@@ -2521,7 +2549,7 @@ function guardarRegistro(){
     editingRegistroId = null;
     return;
   }
-  const reg = {id:String(Date.now()+Math.random()),fecha,tipo,poliza,ramo,gestora,oficina,prima:parseFloat(prima)||0,primaCorregida:parseFloat(primaCorregida)||0,tomador,agente,notas:notasCompleto};
+  const reg = {id:String(Date.now()+Math.random()),fecha,tipo,poliza,ramo,gestora,oficina,prima:parseFloat(prima)||0,primaCorregida:parseFloat(primaCorregida)||0,tomador,agente,notas:notasCompleto,rehabOrigen};
   registros.unshift(reg);
   saveData();
   closeModal();
