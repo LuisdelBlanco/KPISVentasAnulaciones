@@ -1607,12 +1607,12 @@ function renderKPIs() {
   const data = getFiltered();
   const ventas = data.filter(r => r.tipo==='Emisión' || r.tipo==='Inicial/Suple').length;
   const suple  = data.filter(r => r.tipo==='Inicial/Suple').length;
-  const anulan = data.filter(r => r.tipo==='Anulación').length;
+  const anulan = data.filter(r => r.tipo==='Anulación' || r.tipo==='Suspenso').length;
   const rehab  = data.filter(r => r.tipo==='Rehabilitación').length;
   const sust   = data.filter(r => r.tipo==='Reemplazo').length;
   const sinEf  = data.filter(r => r.tipo==='Sin efecto').length;
   const suspenso = data.filter(r => r.tipo==='Suspenso').length;
-  const neto = ventas - anulan - sinEf - suspenso + rehab;
+  const neto = ventas - sinEf + rehab - anulan;
   const retRate = ventas > 0 ? Math.round((1-anulan/ventas)*100) : 100;
   const totalPrima = data.filter(r=>r.tipo==='Emisión'||r.tipo==='Inicial/Suple').reduce((s,r)=>s+(parseFloat(r.prima)||0),0);
   const totalPrimaCorregida = data.filter(r=>r.tipo==='Emisión'||r.tipo==='Inicial/Suple').reduce((s,r)=>s+(parseFloat(r.primaCorregida)||0),0);
@@ -1629,7 +1629,7 @@ function renderKPIs() {
 
   const kpis = [
     { label:'Emisiones', value: emisNetas, accent:'var(--green)', delta:`Brutas: ${ventas} · Sin efecto: ${sinEf}${rehab>0?' · Rehab: +'+rehab:''}${suple>0?' · Suples: '+suple:''}`, progress: { pct: progPct, color: progColor, label: `${emisNetas} de ${obj} · ${progPct}%` } },
-    { label:'Anulaciones', value: anulan, accent:'#BE123C', delta:`${Math.round(anulan/(ventas||1)*100)}% sobre emisiones` },
+    { label:'Anulaciones', value: anulan, accent:'#BE123C', delta:`${Math.round(anulan/(ventas||1)*100)}% sobre emisiones${suspenso>0?' · Suspensos: '+suspenso:''}` },
     { label:'Neto pólizas', value: neto>0?'+'+neto:neto, accent:'var(--blue)', delta:`Rehab: ${rehab} · Reempl: ${sust} · Susp: ${suspenso}` },
     { label:'Sin efecto', value: sinEf, accent:'var(--text-3)', delta:'' },
     { label:'Prima neta (€)', value: fmtK(totalPrima), accent:'var(--red)', delta:`Media: ${fmtK(totalPrima/(ventas||1))}€/póliza` },
