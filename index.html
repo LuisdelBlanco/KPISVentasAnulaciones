@@ -1623,12 +1623,12 @@ function renderKPIs() {
   else if (dAg) { const c = comerciales.find(c=>c.nombre===dAg); obj = c&&objetivosAgentes[dAg]?objetivosAgentes[dAg]:(c&&objetivosPorOficina[c.oficina]?objetivosPorOficina[c.oficina]:objetivo); }
   else { obj = objetivo; }
 
-  const emisNetas = ventas - sinEf;
+  const emisNetas = ventas - sinEf + rehab;
   const progPct = obj > 0 ? Math.min(Math.round((emisNetas / obj) * 100), 100) : 0;
   const progColor = progPct >= 100 ? 'var(--green)' : progPct >= 70 ? 'var(--amber)' : 'var(--red)';
 
   const kpis = [
-    { label:'Emisiones', value: emisNetas, accent:'var(--green)', delta:`Brutas: ${ventas} · Sin efecto: ${sinEf}${suple>0?' · Suples: '+suple:''}`, progress: { pct: progPct, color: progColor, label: `${emisNetas} de ${obj} · ${progPct}%` } },
+    { label:'Emisiones', value: emisNetas, accent:'var(--green)', delta:`Brutas: ${ventas} · Sin efecto: ${sinEf}${rehab>0?' · Rehab: +'+rehab:''}${suple>0?' · Suples: '+suple:''}`, progress: { pct: progPct, color: progColor, label: `${emisNetas} de ${obj} · ${progPct}%` } },
     { label:'Anulaciones', value: anulan, accent:'#BE123C', delta:`${Math.round(anulan/(ventas||1)*100)}% sobre emisiones` },
     { label:'Neto pólizas', value: neto>0?'+'+neto:neto, accent:'var(--blue)', delta:`Rehab: ${rehab} · Reempl: ${sust} · Susp: ${suspenso}` },
     { label:'Sin efecto', value: sinEf, accent:'var(--text-3)', delta:'' },
