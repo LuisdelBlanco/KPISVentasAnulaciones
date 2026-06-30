@@ -1977,43 +1977,71 @@ function renderRegistros() {
     document.getElementById('bodyRegistros').innerHTML=`<tr><td colspan="12"><div class="empty-state"><div class="empty-icon">🔍</div><p>Sin resultados</p></div></td></tr>`;
     return;
   }
+
+  // Signo para el totalizador de prima corregida por día
+  const signoTipo = (r) => {
+    if(r.tipo==='Emisión' || r.tipo==='Inicial/Suple') return 1;
+    if(r.tipo==='Rehabilitación') return 1; // ambos orígenes suman
+    if(r.tipo==='Anulación' || r.tipo==='Suspenso') return -1;
+    if(r.tipo==='Sin efecto') return -1;
+    return 0; // Reemplazo: neutro
+  };
+
+  // Agrupar registros consecutivos por fecha para poder calcular el total de cada grupo
+  const grupos = [];
+  data.forEach(r => {
+    const last = grupos[grupos.length-1];
+    if(last && last.fecha === r.fecha) last.items.push(r);
+    else grupos.push({ fecha: r.fecha, items: [r] });
+  });
+
   let html='';
-  let lastFecha=null;
   const MESES_SHORT=['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-  data.forEach(r=>{
-    if(r.fecha!==lastFecha){
-      lastFecha=r.fecha;
-      const [y,m,d]=(r.fecha||'').split('-');
-      const label=d?`${parseInt(d)} ${MESES_SHORT[parseInt(m)]} ${y}`:r.fecha;
-      html+=`<tr><td colspan="12" style="padding:10px 8px 4px;border-bottom:2px solid var(--red);background:var(--bg);"><span style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.07em;">${label}</span></td></tr>`;
-    }
-    const info=numeroPorId[String(r.id)];
-    let contadorHtml='';
-    if(info){
-      const c=coloresContador[info.grupo]||{};
-      contadorHtml=`<span style="display:inline-block;min-width:26px;text-align:center;background:${c.bg};color:${c.color};border:1px solid ${c.border};border-radius:10px;font-size:10px;font-weight:800;padding:1px 5px;margin-left:4px;">#${info.n}</span>`;
-    }
-    const isNuevo=window._registrosNuevosIds&&window._registrosNuevosIds.has(String(r.id));
-    const tipoClassMap={'Emisión':'new-emision','Anulación':'new-anulacion','Reemplazo':'new-reemplazo','Sin efecto':'new-sinefecto','Suspenso':'new-suspenso','Rehabilitación':'new-rehab','Inicial/Suple':'new-inicial'};
-    const blinkClass=isNuevo?(tipoClassMap[r.tipo]||'new-emision'):'';
-    html+=`<tr class="${blinkClass}">
-      <td style="font-size:12px;white-space:nowrap;font-family:'JetBrains Mono',monospace">${formatDate(r.fecha)}</td>
-      <td><span class="badge ${tipoBadge[r.tipo]||''}">${r.tipo}</span>${contadorHtml}</td>
-      <td style="font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--text-3)">${r.poliza||'—'}</td>
-      <td style="font-size:12px">${r.ramo}</td>
-      <td style="font-size:12px;font-family:'JetBrains Mono',monospace">${r.gestora||'—'}</td>
-      <td style="font-size:12px">${r.oficina}</td>
-      <td style="font-weight:600">${r.prima?parseFloat(r.prima).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €':'—'}</td>
-      <td style="font-weight:600">${r.primaCorregida?parseFloat(r.primaCorregida).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €':'—'}</td>
-      <td style="font-size:12px">${r.tomador||'—'}</td>
-      <td style="font-weight:500">${r.agente||r.comercial||'—'}</td>
-      <td style="font-size:12px;color:var(--text-3);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.notas||''}</td>
-      <td style="white-space:nowrap;display:flex;gap:4px;">
-        <button class="btn btn-ghost btn-sm" data-edit-id="${r.id}" onclick="editRegistro(this.dataset.editId)">✏️</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteRegistro('${r.id}')">✕</button>
-      </td>
+
+  grupos.forEach(grupo => {
+    const [y,m,d]=(grupo.fecha||'').split('-');
+    const label=d?`${parseInt(d)} ${MESES_SHORT[parseInt(m)]} ${y}`:grupo.fecha;
+    html+=`<tr><td colspan="12" style="padding:10px 8px 4px;border-bottom:2px solid var(--red);background:var(--bg);"><span style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.07em;">${label}</span></td></tr>`;
+
+    grupo.items.forEach(r => {
+      const info=numeroPorId[String(r.id)];
+      let contadorHtml='';
+      if(info){
+        const c=coloresContador[info.grupo]||{};
+        contadorHtml=`<span style="display:inline-block;min-width:26px;text-align:center;background:${c.bg};color:${c.color};border:1px solid ${c.border};border-radius:10px;font-size:10px;font-weight:800;padding:1px 5px;margin-left:4px;">#${info.n}</span>`;
+      }
+      const isNuevo=window._registrosNuevosIds&&window._registrosNuevosIds.has(String(r.id));
+      const tipoClassMap={'Emisión':'new-emision','Anulación':'new-anulacion','Reemplazo':'new-reemplazo','Sin efecto':'new-sinefecto','Suspenso':'new-suspenso','Rehabilitación':'new-rehab','Inicial/Suple':'new-inicial'};
+      const blinkClass=isNuevo?(tipoClassMap[r.tipo]||'new-emision'):'';
+      html+=`<tr class="${blinkClass}">
+        <td style="font-size:12px;white-space:nowrap;font-family:'JetBrains Mono',monospace">${formatDate(r.fecha)}</td>
+        <td><span class="badge ${tipoBadge[r.tipo]||''}">${r.tipo}</span>${contadorHtml}</td>
+        <td style="font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--text-3)">${r.poliza||'—'}</td>
+        <td style="font-size:12px">${r.ramo}</td>
+        <td style="font-size:12px;font-family:'JetBrains Mono',monospace">${r.gestora||'—'}</td>
+        <td style="font-size:12px">${r.oficina}</td>
+        <td style="font-weight:600">${r.prima?parseFloat(r.prima).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €':'—'}</td>
+        <td style="font-weight:600">${r.primaCorregida?parseFloat(r.primaCorregida).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €':'—'}</td>
+        <td style="font-size:12px">${r.tomador||'—'}</td>
+        <td style="font-weight:500">${r.agente||r.comercial||'—'}</td>
+        <td style="font-size:12px;color:var(--text-3);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.notas||''}</td>
+        <td style="white-space:nowrap;display:flex;gap:4px;">
+          <button class="btn btn-ghost btn-sm" data-edit-id="${r.id}" onclick="editRegistro(this.dataset.editId)">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteRegistro('${r.id}')">✕</button>
+        </td>
+      </tr>`;
+    });
+
+    // Totalizador del día
+    const totalDia = grupo.items.reduce((s,r) => s + signoTipo(r) * (parseFloat(r.primaCorregida)||0), 0);
+    const colorTotal = totalDia >= 0 ? 'var(--green)' : 'var(--red)';
+    const signoStr = totalDia >= 0 ? '+' : '';
+    html += `<tr style="background:var(--surface-2);">
+      <td colspan="7" style="padding:6px 8px;font-size:11px;color:var(--text-3);text-align:right;font-weight:600;">Total prima corregida del día</td>
+      <td colspan="5" style="padding:6px 8px;font-size:13px;font-weight:800;color:${colorTotal};">${signoStr}${totalDia.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})} €</td>
     </tr>`;
   });
+
   document.getElementById('bodyRegistros').innerHTML=html;
 }
 
