@@ -608,7 +608,7 @@ tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
         <select class="filter-select" id="dashAgente" onchange="renderAll()" style="width:150px">
           <option value="">Todos los agentes</option>
         </select>
-        <button class="btn btn-ghost btn-sm" onclick="resetFiltrosDash()">✕ Limpiar</button>
+        <button onclick="resetFiltrosDash()" style="display:inline-flex;align-items:center;gap:5px;background:#FFF1F3;color:#BE123C;border:1px solid #FECDD3;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;"><span style="font-size:14px;">⌫</span> Limpiar</button>
       </div>
 
       <div class="kpi-grid" id="kpiGrid"></div>
@@ -679,7 +679,7 @@ tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
 
     <!-- PAGE: REGISTROS -->
     <div class="page" id="page-registros">
-      <div class="filters-bar">
+      <div class="filters-bar" id="filtrosRegistrosNormal">
         <span class="filters-label">Filtrar</span>
         <select class="filter-select" id="fOficina" onchange="renderRegistros()" style="width:150px">
           <option value="">Todas las oficinas</option>
@@ -700,27 +700,76 @@ tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
         <select class="filter-select" id="fRamo" onchange="renderRegistros()" style="width:130px">
           <option value="">Todos los ramos</option>
         </select>
-        <button class="btn btn-ghost btn-sm" onclick="resetFiltros()">✕ Limpiar</button>
+        <button onclick="resetFiltros()" style="display:inline-flex;align-items:center;gap:5px;background:#FFF1F3;color:#BE123C;border:1px solid #FECDD3;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">
+          <span style="font-size:14px;">⌫</span> Limpiar
+        </button>
         <span style="margin-left:auto;font-size:12px;color:var(--text-3);" id="countRegistros"></span>
       </div>
+      <!-- Tabs Registros / Pendientes -->
+      <div id="tabsBarRegistros" style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:12px;transition:border-color 0.2s;">
+        <button id="tabRegistros" onclick="switchRegistrosTab('registros')" style="background:none;border:none;border-bottom:3px solid var(--red);margin-bottom:-2px;padding:8px 18px;font-size:13px;font-weight:700;color:var(--red);cursor:pointer;font-family:inherit;">Registros</button>
+        <button id="tabPendientes" onclick="switchRegistrosTab('pendientes')" style="background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;padding:8px 18px;font-size:13px;font-weight:600;color:var(--text-3);cursor:pointer;font-family:inherit;">⏰ Pte. Anular <span id="countPendientes" style="font-size:11px;background:#FEF3C7;color:#D97706;padding:1px 6px;border-radius:10px;margin-left:4px;"></span></button>
+      </div>
 
-      <!-- CONTADORES POR TIPO (mes en curso, brutos) -->
-      <div id="contadoresTipo" style="display:flex;flex-wrap:wrap;gap:6px;padding:10px 0 4px;"></div>
-
-      <div class="table-card">
-        <div class="table-card-header">
-          <span class="table-card-title">Movimientos</span>
-          <button class="btn btn-primary btn-sm" onclick="openModal()">+ Añadir</button>
+      <!-- VISTA PENDIENTES DE ANULAR -->
+      <div id="vistaPendientes" style="display:none;">
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center;">
+          <select id="pteOficina" onchange="renderPendientesAnular()" style="height:32px;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:0 8px;background:var(--surface);">
+            <option value="">Todas las oficinas</option>
+          </select>
+          <select id="pteAgente" onchange="renderPendientesAnular()" style="height:32px;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:0 8px;background:var(--surface);">
+            <option value="">Todos los agentes</option>
+          </select>
+          <select id="pteRamo" onchange="renderPendientesAnular()" style="height:32px;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:0 8px;background:var(--surface);">
+            <option value="">Todos los ramos</option>
+          </select>
+          <select id="pteRecibo" onchange="renderPendientesAnular()" style="height:32px;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:0 8px;background:var(--surface);">
+            <option value="">Estado recibo: todos</option>
+            <option value="pendiente">Recibo pendiente</option>
+            <option value="devuelto">Recibo devuelto</option>
+          </select>
+          <select id="pteOrden" onchange="renderPendientesAnular()" style="height:32px;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:0 8px;background:var(--surface);">
+            <option value="caida_asc">↑ Urgencia (caída próxima primero)</option>
+            <option value="caida_desc">↓ Urgencia (caída lejana primero)</option>
+            <option value="fecha_desc">↓ Fecha registro (más reciente)</option>
+            <option value="fecha_asc">↑ Fecha registro (más antigua)</option>
+          </select>
+          <button onclick="limpiarFiltrosPte()" style="display:inline-flex;align-items:center;gap:5px;background:#FFF1F3;color:#BE123C;border:1px solid #FECDD3;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;"><span style="font-size:14px;">⌫</span> Limpiar</button>
         </div>
-        <div class="table-scroll">
-          <table>
-            <thead><tr>
-              <th>Fecha</th><th>Tipo</th><th>Nº Póliza</th><th>Ramo</th>
-              <th>Gestora</th><th>Oficina</th><th>Prima neta</th><th>Prima corregida</th>
-              <th>Tomador</th><th>Agente</th><th>Observaciones</th><th></th>
-            </tr></thead>
-            <tbody id="bodyRegistros"></tbody>
-          </table>
+        <div class="table-card">
+          <div class="table-scroll">
+            <table>
+              <thead><tr>
+                <th>Fecha registro</th><th>Urgencia</th><th>Póliza</th><th>Ramo</th>
+                <th>Agente</th><th>Tomador</th><th>Oficina</th><th>Vencimiento</th>
+                <th>Días restantes</th><th>Recibo</th><th>Motivo/Notas</th><th></th>
+              </tr></thead>
+              <tbody id="tablaPendientes"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- VISTA REGISTROS NORMALES -->
+      <div id="vistaRegistrosNormal">
+        <!-- CONTADORES POR TIPO (mes en curso, brutos) -->
+        <div id="contadoresTipo" style="display:flex;flex-wrap:wrap;gap:6px;padding:10px 0 4px;"></div>
+
+        <div class="table-card">
+          <div class="table-card-header">
+            <span class="table-card-title">Movimientos</span>
+            <button class="btn btn-primary btn-sm" onclick="openModal()">+ Añadir</button>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead><tr>
+                <th>Fecha</th><th>Tipo</th><th>Nº Póliza</th><th>Ramo</th>
+                <th>Gestora</th><th>Oficina</th><th>Prima neta</th><th>Prima corregida</th>
+                <th>Tomador</th><th>Agente</th><th>Observaciones</th><th></th>
+              </tr></thead>
+              <tbody id="bodyRegistros"></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -915,6 +964,7 @@ tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
           <option value="Suspenso">Suspenso</option>
           <option value="Rehabilitación">Rehabilitación</option>
           <option value="Inicial/Suple">Inicial/Suple</option>
+          <option value="Pte. Anular">Pte. Anular</option>
         </select>
       </div>
       <div class="form-group">
@@ -966,6 +1016,28 @@ tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
               <span>Viene de <strong>Anulación</strong> <span style="font-size:11px;color:var(--text-3);">(resta anulación)</span></span>
             </label>
           </div>
+        </div>
+        <!-- Fecha vencimiento: solo para Pte. Anular -->
+        <div id="pteAnularWrap" style="display:none;margin-bottom:8px;padding:12px;background:#FFF8F0;border:1px solid #FED7AA;border-radius:8px;">
+          <label style="font-size:12px;font-weight:600;color:#D97706;display:block;margin-bottom:8px;">⏰ Póliza pendiente de anular</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div>
+              <label style="font-size:11px;color:var(--text-2);">Fecha de vencimiento del recibo</label>
+              <input type="date" id="mFechaVencimiento" oninput="calcularFechaCaida()" style="width:100%;">
+            </div>
+            <div>
+              <label style="font-size:11px;color:var(--text-2);">Fecha de caída (vcto. +45 días)</label>
+              <input type="date" id="mFechaCaida" style="width:100%;background:var(--surface-2);" readonly>
+            </div>
+          </div>
+          <div style="margin-top:10px;">
+            <label style="font-size:11px;color:var(--text-2);">Estado del recibo</label>
+            <select id="mEstadoRecibo" style="width:100%;margin-top:4px;height:36px;border:1px solid var(--border);border-radius:6px;padding:0 8px;font-size:13px;font-family:inherit;">
+              <option value="pendiente">Pendiente de cobro</option>
+              <option value="devuelto">Devuelto</option>
+            </select>
+          </div>
+          <div style="font-size:11px;color:#D97706;margin-top:6px;">El recibo caduca 45 días tras el vencimiento. Ordena por urgencia.</div>
         </div>
         <textarea id="mNotas" placeholder="Explicación adicional (opcional)..." style="margin-top:6px;"></textarea>
       </div>
@@ -1402,7 +1474,8 @@ async function cargarDatosSupabase() {
       ramo:r.ramo, gestora:r.gestora, oficina:r.oficina,
       agente:r.agente, tomador:r.tomador||'',
       prima:r.prima||0, primaCorregida:r.prima_corregida||0, notas:r.notas||'',
-      createdAt:r.created_at||'', rehabOrigen:r.rehab_origen||''
+      createdAt:r.created_at||'', rehabOrigen:r.rehab_origen||'',
+      fechaVencimiento:r.fecha_vencimiento||'', fechaCaida:r.fecha_vencimiento?calcFechaCaidaStatic(r.fecha_vencimiento):'', estadoPte:r.estado_pte||'', estadoRecibo:r.estado_recibo||'pendiente'
     }));
   } catch(e) { console.warn('Registros no cargados:', e.message); }
   try {
@@ -1498,6 +1571,7 @@ function getFiltered() {
   const dAg = document.getElementById('dashAgente')?.value || '';
   return registros.filter(r => {
     if (!r.fecha) return false;
+    if (r.tipo === 'Pte. Anular') return false; // nunca en KPIs ni gráficos
     const d = new Date(r.fecha);
     if (year !== 'todos' && d.getFullYear() != year) return false;
     if (month !== 'todos' && (d.getMonth()+1) != month) return false;
@@ -1508,6 +1582,8 @@ function getFiltered() {
 }
 function getFilteredRegistros() {
   let data = getFiltered();
+  // Excluir siempre Pte. Anular de la tabla normal — solo van a su pestaña
+  data = data.filter(r => r.tipo !== 'Pte. Anular');
   const fOf = document.getElementById('fOficina')?.value||'';
   const fAg = document.getElementById('fAgente')?.value||'';
   const fTi = document.getElementById('fTipo')?.value||'';
@@ -1529,6 +1605,43 @@ const pageNames = {
   actividad: ['Actividad comercial','Datos mensuales'],
   config: ['Ajustes','Configuración del sistema']
 };
+let currentRegistrosTab = 'registros';
+
+function switchRegistrosTab(tab) {
+  currentRegistrosTab = tab;
+  aplicarTabRegistros();
+}
+
+function aplicarTabRegistros() {
+  const tab = currentRegistrosTab;
+  const vistaNormal  = document.getElementById('vistaRegistrosNormal');
+  const vistaPte     = document.getElementById('vistaPendientes');
+  const filtrosNorm  = document.getElementById('filtrosRegistrosNormal');
+  const tabBar       = document.getElementById('tabsBarRegistros');
+  const tabR         = document.getElementById('tabRegistros');
+  const tabP         = document.getElementById('tabPendientes');
+  const pageReg      = document.getElementById('page-registros');
+
+  if(tab === 'pendientes') {
+    if(vistaNormal)  vistaNormal.style.display  = 'none';
+    if(vistaPte)     vistaPte.style.display     = '';
+    if(filtrosNorm)  filtrosNorm.style.display  = 'none';
+    if(tabBar) tabBar.style.borderBottomColor = '#D97706';
+    if(tabR)  { tabR.style.borderBottomColor='transparent'; tabR.style.color='var(--text-3)'; tabR.style.fontWeight='600'; }
+    if(tabP)  { tabP.style.borderBottomColor='#D97706'; tabP.style.color='#D97706'; tabP.style.fontWeight='700'; }
+    if(pageReg) pageReg.style.background = '#FFFBF0';
+    renderPendientesAnular();
+  } else {
+    if(vistaNormal)  vistaNormal.style.display  = '';
+    if(vistaPte)     vistaPte.style.display     = 'none';
+    if(filtrosNorm)  filtrosNorm.style.display  = '';
+    if(tabBar) tabBar.style.borderBottomColor = 'var(--border)';
+    if(tabR)  { tabR.style.borderBottomColor='var(--red)'; tabR.style.color='var(--red)'; tabR.style.fontWeight='700'; }
+    if(tabP)  { tabP.style.borderBottomColor='transparent'; tabP.style.color='var(--text-3)'; tabP.style.fontWeight='600'; }
+    if(pageReg) pageReg.style.background = '';
+  }
+}
+
 function setBottomNav(id) {
   document.querySelectorAll('.bottom-nav-item').forEach(el => el.classList.remove('active'));
   const map = {'dashboard':'bnav-dashboard','registros':'bnav-registros','oficina':'bnav-oficina','agente':'bnav-agente'};
@@ -2043,6 +2156,8 @@ function renderRegistros() {
   });
 
   document.getElementById('bodyRegistros').innerHTML=html;
+  // Mantener pestaña activa tras re-render
+  aplicarTabRegistros();
 }
 
 function formatDate(d){if(!d)return'—';const[y,m,day]=d.split('-');return`${day}/${m}/${y}`;}
@@ -2394,6 +2509,9 @@ function actualizarMotivos() {
       document.querySelectorAll('input[name="rehabOrigen"]').forEach(r => r.checked = false);
     }
   }
+  // Mostrar campos Pte. Anular
+  const pteWrap = document.getElementById('pteAnularWrap');
+  if(pteWrap) pteWrap.style.display = tipo === 'Pte. Anular' ? 'block' : 'none';
   calcularPrimaCorregida();
 }
 
@@ -2584,7 +2702,10 @@ function guardarRegistro(){
     editingRegistroId = null;
     return;
   }
-  const reg = {id:String(Date.now()+Math.random()),fecha,tipo,poliza,ramo,gestora,oficina,prima:parseFloat(prima)||0,primaCorregida:parseFloat(primaCorregida)||0,tomador,agente,notas:notasCompleto,rehabOrigen};
+  const fechaVencimiento = document.getElementById('mFechaVencimiento')?.value || '';
+  const fechaCaida = document.getElementById('mFechaCaida')?.value || '';
+  const estadoRecibo = tipo==='Pte. Anular' ? (document.getElementById('mEstadoRecibo')?.value||'pendiente') : '';
+  const reg = {id:String(Date.now()+Math.random()),fecha,tipo,poliza,ramo,gestora,oficina,prima:parseFloat(prima)||0,primaCorregida:parseFloat(primaCorregida)||0,tomador,agente,notas:notasCompleto,rehabOrigen,fechaVencimiento,fechaCaida,estadoPte:tipo==='Pte. Anular'?'pendiente':'',estadoRecibo};
   registros.unshift(reg);
   saveData();
   closeModal();
@@ -2607,7 +2728,7 @@ function guardarRegistro(){
     });
   }, 150);
   // Guardar en Supabase
-  sbPost('registros', {id:reg.id,fecha:reg.fecha,tipo:reg.tipo,poliza:reg.poliza,ramo:reg.ramo,gestora:reg.gestora,oficina:reg.oficina,agente:reg.agente,tomador:reg.tomador||'',prima:reg.prima,prima_corregida:reg.primaCorregida,notas:reg.notas||'',rehab_origen:reg.rehabOrigen||''}).catch(e=>console.warn('Error guardando en Supabase:',e.message));
+  sbPost('registros', {id:reg.id,fecha:reg.fecha,tipo:reg.tipo,poliza:reg.poliza,ramo:reg.ramo,gestora:reg.gestora,oficina:reg.oficina,agente:reg.agente,tomador:reg.tomador||'',prima:reg.prima,prima_corregida:reg.primaCorregida,notas:reg.notas||'',rehab_origen:reg.rehabOrigen||'',fecha_vencimiento:reg.fechaVencimiento||'',estado_pte:reg.estadoPte||'',estado_recibo:reg.estadoRecibo||''}).catch(e=>console.warn('Error guardando en Supabase:',e.message));
 }
 
 // ── IMPORT CSV ────────────────────────────────────
@@ -2864,6 +2985,178 @@ function oportunidadesMes() {
       return true;
     })
     .reduce((s, a) => s + (a.oportunidades||0), 0);
+}
+
+function calcFechaCaidaStatic(vcto) {
+  if(!vcto) return '';
+  // Parsear como fecha local para evitar offset UTC
+  const [y,m,d] = vcto.split('-').map(Number);
+  const fecha = new Date(y, m-1, d);
+  fecha.setDate(fecha.getDate() + 45);
+  return fechaLocal(fecha);
+}
+
+function calcularFechaCaida() {
+  const vcto = document.getElementById('mFechaVencimiento')?.value;
+  const caida = document.getElementById('mFechaCaida');
+  if(!vcto || !caida) return;
+  const [y,m,d] = vcto.split('-').map(Number);
+  const fecha = new Date(y, m-1, d);
+  fecha.setDate(fecha.getDate() + 45);
+  caida.value = fechaLocal(fecha);
+}
+
+function diasHastaCaida(fechaCaida) {
+  if(!fechaCaida) return 999;
+  const [y,m,d] = fechaCaida.split('-').map(Number);
+  const caida = new Date(y, m-1, d);
+  const hoy = new Date();
+  hoy.setHours(0,0,0,0);
+  return Math.round((caida - hoy) / (1000*60*60*24));
+}
+
+function urgenciaCaida(dias) {
+  if(dias <= 7) return { color:'#BE123C', bg:'#FFF1F3', label:'🔴 Urgente' };
+  if(dias <= 15) return { color:'#D97706', bg:'#FFFBEB', label:'🟡 Próxima' };
+  return { color:'#16A34A', bg:'#F0FDF4', label:'🟢 En plazo' };
+}
+
+function renderPendientesAnular() {
+  // Poblar filtros
+  const ofSel = document.getElementById('pteOficina');
+  const agSel = document.getElementById('pteAgente');
+  const raSel = document.getElementById('pteRamo');
+  if(ofSel && ofSel.options.length <= 1) {
+    oficinas.forEach(o => { const opt=document.createElement('option'); opt.value=o; opt.textContent=o; ofSel.appendChild(opt); });
+  }
+  const ofVal = document.getElementById('pteOficina')?.value||'';
+  if(agSel && (agSel.options.length <= 1 || ofVal)) {
+    while(agSel.options.length > 1) agSel.remove(1);
+    const agentes = ofVal ? comerciales.filter(c=>c.oficina===ofVal) : comerciales;
+    agentes.forEach(c => { const opt=document.createElement('option'); opt.value=c.nombre; opt.textContent=c.nombre; agSel.appendChild(opt); });
+  }
+  if(raSel && raSel.options.length <= 1) {
+    ramos.forEach(r => { const opt=document.createElement('option'); opt.value=r; opt.textContent=r; raSel.appendChild(opt); });
+  }
+
+  const el = document.getElementById('tablaPendientes');
+  if(!el) return;
+
+  const fOf = ofVal;
+  const fAg = document.getElementById('pteAgente')?.value||'';
+  const fRa = document.getElementById('pteRamo')?.value||'';
+  const fRe = document.getElementById('pteRecibo')?.value||'';
+  const orden = document.getElementById('pteOrden')?.value||'caida_asc';
+
+  let pendientes = registros.filter(r => r.tipo === 'Pte. Anular' && r.estadoPte !== 'anulado');
+  if(fOf) pendientes = pendientes.filter(r => r.oficina === fOf);
+  if(fAg) pendientes = pendientes.filter(r => r.agente === fAg);
+  if(fRa) pendientes = pendientes.filter(r => r.ramo === fRa);
+  if(fRe) pendientes = pendientes.filter(r => (r.estadoRecibo||'pendiente') === fRe);
+
+  pendientes.sort((a,b) => {
+    if(orden==='caida_asc') return (a.fechaCaida||'9999').localeCompare(b.fechaCaida||'9999');
+    if(orden==='caida_desc') return (b.fechaCaida||'0000').localeCompare(a.fechaCaida||'0000');
+    if(orden==='fecha_desc') return (b.fecha||'').localeCompare(a.fecha||'');
+    if(orden==='fecha_asc') return (a.fecha||'').localeCompare(b.fecha||'');
+    return 0;
+  });
+
+  document.getElementById('countPendientes').textContent = pendientes.length + ' pendientes';
+
+  if(pendientes.length === 0) {
+    el.innerHTML = '<tr><td colspan="12"><div class="empty-state"><div class="empty-icon">✅</div><p>No hay pólizas pendientes de anular</p></div></td></tr>';
+    return;
+  }
+
+  el.innerHTML = pendientes.map(r => {
+    const dias = diasHastaCaida(r.fechaCaida);
+    const urg = urgenciaCaida(dias);
+    const diasStr = !r.fechaCaida ? '—' : dias <= 0 ? '<span style="color:#BE123C;font-weight:700;">VENCIDA</span>' : dias + ' días';
+    const recibo = r.estadoRecibo||'pendiente';
+    const reciboHtml = recibo==='devuelto'
+      ? '<span style="background:#FFF1F3;color:#BE123C;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;">Devuelto</span>'
+      : '<span style="background:#FEF3C7;color:#D97706;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">Pendiente</span>';
+    return `<tr>
+      <td style="font-size:12px;white-space:nowrap;">${formatDate(r.fecha)}</td>
+      <td><span style="background:${urg.bg};color:${urg.color};padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;">${urg.label}</span></td>
+      <td style="font-size:12px;font-family:'JetBrains Mono',monospace;">${r.poliza||'—'}</td>
+      <td style="font-size:12px;">${r.ramo||'—'}</td>
+      <td style="font-size:12px;">${r.agente||'—'}</td>
+      <td style="font-size:12px;">${r.tomador||'—'}</td>
+      <td style="font-size:12px;">${r.oficina||'—'}</td>
+      <td style="font-size:12px;white-space:nowrap;">${formatDate(r.fechaVencimiento)||'—'}</td>
+      <td style="font-size:12px;font-weight:700;">${diasStr}</td>
+      <td>${reciboHtml}</td>
+      <td style="font-size:12px;color:var(--text-3);">${r.notas||'—'}</td>
+      <td style="white-space:nowrap;display:flex;gap:4px;">
+        <button class="btn btn-primary btn-sm" onclick="convertirAAnulacion('${r.id}')" style="font-size:11px;padding:4px 8px;">Anular</button>
+        <button class="btn btn-ghost btn-sm" data-edit-id="${r.id}" onclick="editRegistro(this.dataset.editId)">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteRegistro('${r.id}')">✕</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function limpiarFiltrosPte() {
+  ['pteOficina','pteAgente','pteRamo','pteRecibo'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
+  const orden = document.getElementById('pteOrden');
+  if(orden) orden.value = 'caida_asc';
+  renderPendientesAnular();
+}
+
+
+function convertirAAnulacion(id) {
+  const r = registros.find(r => String(r.id) === String(id));
+  if(!r) return;
+  const fechaHoy = fechaLocal(new Date());
+  const fechaInput = prompt('Fecha de anulación:', fechaHoy);
+  if(!fechaInput) return;
+  if(!confirm('¿Confirmar anulación de la póliza ' + r.poliza + '?')) return;
+
+  // Crear nueva anulación heredando todos los datos
+  const nuevaAnulacion = {
+    id: String(Date.now() + Math.random()),
+    fecha: fechaInput,
+    tipo: 'Anulación',
+    poliza: r.poliza,
+    ramo: r.ramo,
+    gestora: r.gestora,
+    oficina: r.oficina,
+    agente: r.agente,
+    tomador: r.tomador||'',
+    prima: r.prima||0,
+    primaCorregida: r.primaCorregida||0,
+    notas: r.notas||'',
+    rehabOrigen: '',
+    origenPteAnular: true,
+    createdAt: new Date().toISOString()
+  };
+
+  // Marcar el pendiente como anulado
+  const idx = registros.findIndex(r2 => String(r2.id) === String(id));
+  if(idx >= 0) registros[idx].estadoPte = 'anulado';
+
+  registros.unshift(nuevaAnulacion);
+  saveData();
+  renderAll();
+  renderPendientesAnular();
+
+  // Guardar en Supabase
+  sbPost('registros', {
+    id: nuevaAnulacion.id, fecha: nuevaAnulacion.fecha, tipo: 'Anulación',
+    poliza: nuevaAnulacion.poliza, ramo: nuevaAnulacion.ramo, gestora: nuevaAnulacion.gestora,
+    oficina: nuevaAnulacion.oficina, agente: nuevaAnulacion.agente, tomador: nuevaAnulacion.tomador,
+    prima: nuevaAnulacion.prima, prima_corregida: nuevaAnulacion.primaCorregida,
+    notas: nuevaAnulacion.notas, rehab_origen: '', origen_pte_anular: true
+  }).catch(e => console.warn(e));
+
+  supaFetch('/rest/v1/registros?id=eq.' + encodeURIComponent(id), {
+    method: 'PATCH',
+    body: JSON.stringify({ estado_pte: 'anulado' })
+  }).catch(e => console.warn(e));
 }
 
 function getLunesDeHoy() {
