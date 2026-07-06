@@ -2188,13 +2188,22 @@ function editRegistro(id) {
   const mTipo = document.getElementById('mTipo');
   if(mTipo) mTipo.value = r.tipo || 'Emisión';
   actualizarMotivos();
-  // Cargar origen rehabilitación si aplica
+
+  // Cargar origen rehabilitación
   if(r.tipo === 'Rehabilitación' && r.rehabOrigen) {
     const radio = document.querySelector(`input[name="rehabOrigen"][value="${r.rehabOrigen}"]`);
     if(radio) radio.checked = true;
   } else {
     document.querySelectorAll('input[name="rehabOrigen"]').forEach(rd => rd.checked = false);
   }
+
+  // Cargar campos Pte. Anular
+  const mFechaV = document.getElementById('mFechaVencimiento');
+  const mFechaC = document.getElementById('mFechaCaida');
+  const mEstRec = document.getElementById('mEstadoRecibo');
+  if(mFechaV) mFechaV.value = r.fechaVencimiento || '';
+  if(mFechaC) mFechaC.value = r.fechaCaida || (r.fechaVencimiento ? calcFechaCaidaStatic(r.fechaVencimiento) : '');
+  if(mEstRec) mEstRec.value = r.estadoRecibo || 'pendiente';
   // Searchable selects
   updateOficinaSelect();
   ssPopulate('mAgente', [{value:'',label:'(sin asignar)'}].concat(comerciales.map(c=>({value:c.nombre,label:c.nombre+' — '+c.oficina}))));
@@ -2691,13 +2700,20 @@ function guardarRegistro(){
     // Editar registro existente
     const idx = registros.findIndex(r => String(r.id) === editingRegistroId);
     if(idx >= 0) {
+      const fechaVencimiento = document.getElementById('mFechaVencimiento')?.value || '';
+      const fechaCaida = document.getElementById('mFechaCaida')?.value || (fechaVencimiento ? calcFechaCaidaStatic(fechaVencimiento) : '');
+      const estadoRecibo = tipo==='Pte. Anular' ? (document.getElementById('mEstadoRecibo')?.value||'pendiente') : (registros[idx].estadoRecibo||'');
+      const estadoPte = tipo==='Pte. Anular' ? 'pendiente' : '';
       registros[idx] = {...registros[idx], fecha, tipo, poliza, ramo, gestora, oficina,
-        prima:parseFloat(prima)||0, primaCorregida:parseFloat(primaCorregida)||0, tomador, agente, notas:notasCompleto, rehabOrigen};
+        prima:parseFloat(prima)||0, primaCorregida:parseFloat(primaCorregida)||0,
+        tomador, agente, notas:notasCompleto, rehabOrigen,
+        fechaVencimiento, fechaCaida, estadoPte, estadoRecibo};
       const reg = registros[idx];
       saveData(); closeModal(); renderAll();
       sbPost('registros', {id:String(reg.id),fecha:reg.fecha,tipo:reg.tipo,poliza:reg.poliza,ramo:reg.ramo,
         gestora:reg.gestora,oficina:reg.oficina,agente:reg.agente,tomador:reg.tomador||'',
-        prima:reg.prima,prima_corregida:reg.primaCorregida,notas:reg.notas||'',rehab_origen:reg.rehabOrigen||''}).catch(e=>console.warn(e));
+        prima:reg.prima,prima_corregida:reg.primaCorregida,notas:reg.notas||'',rehab_origen:reg.rehabOrigen||'',
+        fecha_vencimiento:reg.fechaVencimiento||'',estado_pte:reg.estadoPte||'',estado_recibo:reg.estadoRecibo||''}).catch(e=>console.warn(e));
     }
     editingRegistroId = null;
     return;
