@@ -732,6 +732,20 @@ tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
             <option value="caida_asc">↑ Urgencia (caída próxima primero)</option>
             <option value="caida_desc">↓ Urgencia (caída lejana primero)</option>
           </select>
+          <!-- Filtro vencimiento -->
+          <select id="pteVctoRango" onchange="toggleFechasLibresPte();renderPendientesAnular()" style="height:32px;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:0 8px;background:var(--surface);">
+            <option value="">Todos los vencimientos</option>
+            <option value="vencidas">Ya vencidas</option>
+            <option value="7">Próximos 7 días</option>
+            <option value="15">Próximos 15 días</option>
+            <option value="30">Próximos 30 días</option>
+            <option value="personalizado">Personalizado...</option>
+          </select>
+          <div id="pteFechasLibres" style="display:none;display:flex;gap:4px;align-items:center;">
+            <input type="date" id="pteVctoDesde" onchange="renderPendientesAnular()" style="height:32px;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:0 6px;background:var(--surface);">
+            <span style="font-size:11px;color:var(--text-3);">→</span>
+            <input type="date" id="pteVctoHasta" onchange="renderPendientesAnular()" style="height:32px;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:0 6px;background:var(--surface);">
+          </div>
           <button onclick="limpiarFiltrosPte()" style="display:inline-flex;align-items:center;gap:5px;background:#FFF1F3;color:#BE123C;border:1px solid #FECDD3;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;"><span style="font-size:14px;">⌫</span> Limpiar</button>
           <!-- Selección parcial -->
           <div id="pteSeleccionInfo" style="display:none;margin-left:auto;background:#F5F3FF;border:1px solid #DDD6FE;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;color:#7C3AED;white-space:nowrap;">
@@ -2193,11 +2207,30 @@ function editRegistro(id) {
   document.getElementById('mPrima').value = r.prima || '';
   document.getElementById('mPrimaCorregida').value = r.primaCorregida || '';
   document.getElementById('mTomador').value = r.tomador || '';
-  document.getElementById('mNotas').value = r.notas || '';
   // Tipo
   const mTipo = document.getElementById('mTipo');
   if(mTipo) mTipo.value = r.tipo || 'Emisión';
   actualizarMotivos();
+
+  // Separar motivo de notas (se guardan como "Motivo — Notas")
+  const mMotivoSel = document.getElementById('mMotivo');
+  const mNotasEl = document.getElementById('mNotas');
+  const notasCompleto = r.notas || '';
+  const motivosPosibles = MOTIVOS_POR_TIPO[r.tipo] || [];
+  let motivoCargado = '';
+  let notasCargadas = notasCompleto;
+  if(motivosPosibles.length > 0) {
+    // Buscar si el texto empieza por algún motivo conocido
+    const encontrado = motivosPosibles.find(m => notasCompleto === m || notasCompleto.startsWith(m + ' — '));
+    if(encontrado) {
+      motivoCargado = encontrado;
+      notasCargadas = notasCompleto.startsWith(encontrado + ' — ')
+        ? notasCompleto.slice(encontrado.length + 3)
+        : '';
+    }
+  }
+  if(mMotivoSel) mMotivoSel.value = motivoCargado;
+  if(mNotasEl) mNotasEl.value = notasCargadas;
 
   // Cargar origen rehabilitación
   if(r.tipo === 'Rehabilitación' && r.rehabOrigen) {
@@ -3073,13 +3106,31 @@ function renderPendientesAnular() {
   const fAg = document.getElementById('pteAgente')?.value||'';
   const fRa = document.getElementById('pteRamo')?.value||'';
   const fRe = document.getElementById('pteRecibo')?.value||'';
+  const fVctoRango = document.getElementById('pteVctoRango')?.value||'';
+  const fVctoDesde = document.getElementById('pteVctoDesde')?.value||'';
+  const fVctoHasta = document.getElementById('pteVctoHasta')?.value||'';
   const orden = document.getElementById('pteOrden')?.value||'caida_asc';
+
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
 
   let pendientes = registros.filter(r => r.tipo === 'Pte. Anular' && r.estadoPte !== 'anulado');
   if(fOf) pendientes = pendientes.filter(r => r.oficina === fOf);
   if(fAg) pendientes = pendientes.filter(r => r.agente === fAg);
   if(fRa) pendientes = pendientes.filter(r => r.ramo === fRa);
   if(fRe) pendientes = pendientes.filter(r => (r.estadoRecibo||'pendiente') === fRe);
+
+  // Filtro por vencimiento
+  if(fVctoRango && fVctoRango !== 'personalizado') {
+    pendientes = pendientes.filter(r => {
+      if(!r.fechaCaida) return false;
+      const dias = diasHastaCaida(r.fechaCaida);
+      if(fVctoRango === 'vencidas') return dias < 0;
+      return dias >= 0 && dias <= parseInt(fVctoRango);
+    });
+  } else if(fVctoRango === 'personalizado') {
+    if(fVctoDesde) pendientes = pendientes.filter(r => (r.fechaVencimiento||'') >= fVctoDesde);
+    if(fVctoHasta) pendientes = pendientes.filter(r => (r.fechaVencimiento||'') <= fVctoHasta);
+  }
 
   pendientes.sort((a,b) => {
     if(orden==='caida_asc') return (a.fechaCaida||'9999').localeCompare(b.fechaCaida||'9999');
@@ -3163,8 +3214,14 @@ function toggleCheckAllPte(checkbox) {
 }
 
 
+function toggleFechasLibresPte() {
+  const rango = document.getElementById('pteVctoRango')?.value;
+  const libres = document.getElementById('pteFechasLibres');
+  if(libres) libres.style.display = rango === 'personalizado' ? 'flex' : 'none';
+}
+
 function limpiarFiltrosPte() {
-  ['pteOficina','pteAgente','pteRamo','pteRecibo'].forEach(id => {
+  ['pteOficina','pteAgente','pteRamo','pteRecibo','pteVctoRango','pteVctoDesde','pteVctoHasta'].forEach(id => {
     const el = document.getElementById(id); if(el) el.value = '';
   });
   const orden = document.getElementById('pteOrden');
