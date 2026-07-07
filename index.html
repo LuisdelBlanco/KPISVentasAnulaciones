@@ -1043,7 +1043,12 @@ tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
         </div>
         <!-- Fecha vencimiento: solo para Pte. Anular -->
         <div id="pteAnularWrap" style="display:none;margin-bottom:8px;padding:12px;background:#FFF8F0;border:1px solid #FED7AA;border-radius:8px;">
-          <label style="font-size:12px;font-weight:600;color:#D97706;display:block;margin-bottom:8px;">⏰ Póliza pendiente de anular</label>
+          <label style="font-size:12px;font-weight:600;color:#D97706;display:block;margin-bottom:10px;">⏰ Póliza pendiente de anular</label>
+          <!-- Toggle sin efecto -->
+          <label id="pteEsSinEfectoWrap" style="display:flex;align-items:center;gap:8px;margin-bottom:12px;cursor:pointer;padding:8px 10px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;">
+            <input type="checkbox" id="pteEsSinEfecto" onchange="togglePteSinEfecto()" style="width:16px;height:16px;cursor:pointer;accent-color:#2563EB;">
+            <span style="font-size:13px;color:#1D4ED8;font-weight:600;">Sin efecto</span>
+          </label>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
             <div>
               <label style="font-size:11px;color:var(--text-2);">Fecha de vencimiento del recibo</label>
@@ -2249,6 +2254,12 @@ function editRegistro(id) {
   if(mFechaV) mFechaV.value = r.fechaVencimiento || '';
   if(mFechaC) mFechaC.value = r.fechaCaida || (r.fechaVencimiento ? calcFechaCaidaStatic(r.fechaVencimiento) : '');
   if(mEstRec) mEstRec.value = r.estadoRecibo || 'pendiente';
+  // Cargar esSinEfecto
+  const chkSinEfecto = document.getElementById('pteEsSinEfecto');
+  if(chkSinEfecto) {
+    chkSinEfecto.checked = r.esSinEfecto || false;
+    if(r.tipo === 'Pte. Anular') togglePteSinEfecto();
+  }
   // Searchable selects
   updateOficinaSelect();
   ssPopulate('mAgente', [{value:'',label:'(sin asignar)'}].concat(comerciales.map(c=>({value:c.nombre,label:c.nombre+' — '+c.oficina}))));
@@ -2291,7 +2302,8 @@ function openModal(){
   });
   updateOficinaSelect();
   editingRegistroId = null;
-  const title = document.querySelector('#modalOverlay .modal-title');
+  const chkSE = document.getElementById('pteEsSinEfecto');
+  if(chkSE) chkSE.checked = false;
   if(title) title.textContent = 'Nueva póliza';
   const saveBtn = document.querySelector('#modalOverlay .btn-primary');
   if(saveBtn) saveBtn.textContent = 'Guardar';
@@ -2543,6 +2555,18 @@ const MOTIVOS_POR_TIPO = {
   'Rehabilitación':['Recibo liquidado','Vigilancia de cartera']
 };
 
+function togglePteSinEfecto() {
+  const esSinEfecto = document.getElementById('pteEsSinEfecto')?.checked;
+  const sel = document.getElementById('mMotivo');
+  if(!sel) return;
+  const motivos = esSinEfecto
+    ? MOTIVOS_POR_TIPO['Sin efecto']
+    : MOTIVOS_POR_TIPO['Pte. Anular'];
+  sel.innerHTML = '<option value="">Selecciona motivo...</option>' +
+    (motivos||[]).map(m => `<option value="${m}">${m}</option>`).join('');
+  sel.style.display = '';
+}
+
 function actualizarMotivos() {
   const tipo = document.getElementById('mTipo')?.value || '';
   const sel = document.getElementById('mMotivo');
@@ -2767,7 +2791,8 @@ function guardarRegistro(){
   const fechaVencimiento = document.getElementById('mFechaVencimiento')?.value || '';
   const fechaCaida = document.getElementById('mFechaCaida')?.value || '';
   const estadoRecibo = tipo==='Pte. Anular' ? (document.getElementById('mEstadoRecibo')?.value||'pendiente') : '';
-  const reg = {id:String(Date.now()+Math.random()),fecha,tipo,poliza,ramo,gestora,oficina,prima:parseFloat(prima)||0,primaCorregida:parseFloat(primaCorregida)||0,tomador,agente,motivo,notas:notasCompleto,rehabOrigen,fechaVencimiento,fechaCaida,estadoPte:tipo==='Pte. Anular'?'pendiente':'',estadoRecibo};
+  const esSinEfecto = tipo==='Pte. Anular' ? (document.getElementById('pteEsSinEfecto')?.checked||false) : false;
+  const reg = {id:String(Date.now()+Math.random()),fecha,tipo,poliza,ramo,gestora,oficina,prima:parseFloat(prima)||0,primaCorregida:parseFloat(primaCorregida)||0,tomador,agente,motivo,notas:notasCompleto,rehabOrigen,fechaVencimiento,fechaCaida,estadoPte:tipo==='Pte. Anular'?'pendiente':'',estadoRecibo,esSinEfecto};
   registros.unshift(reg);
   saveData();
   closeModal();
@@ -3167,12 +3192,15 @@ function renderPendientesAnular() {
     const reciboHtml = recibo==='devuelto'
       ? '<span style="background:#FFF1F3;color:#BE123C;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:700;">Dev.</span>'
       : '<span style="background:#FEF3C7;color:#D97706;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">Pte.</span>';
+    const sinEfectoTag = r.esSinEfecto
+      ? '<span style="background:#EFF6FF;color:#2563EB;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:700;margin-left:4px;">Sin efecto</span>'
+      : '';
     const prima = parseFloat(r.primaCorregida)||0;
     const primaStr = prima > 0 ? prima.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €' : '—';
     return `<tr>
       <td style="text-align:center;"><input type="checkbox" class="pte-check" data-id="${r.id}" data-prima="${prima}" onchange="actualizarSeleccionPte()" style="cursor:pointer;accent-color:#D97706;width:15px;height:15px;"></td>
       <td style="font-size:11px;white-space:nowrap;">${formatDate(r.fecha)}</td>
-      <td><span style="background:${urg.bg};color:${urg.color};padding:1px 6px;border-radius:8px;font-size:10px;font-weight:700;">${urg.label}</span></td>
+      <td><span style="background:${urg.bg};color:${urg.color};padding:1px 6px;border-radius:8px;font-size:10px;font-weight:700;">${urg.label}</span>${sinEfectoTag}</td>
       <td style="font-size:12px;font-family:'JetBrains Mono',monospace;">${r.poliza||'—'}</td>
       <td style="font-size:11px;">${r.ramo||'—'}</td>
       <td style="font-size:12px;">${r.agente||'—'}</td>
@@ -3241,10 +3269,11 @@ function convertirAAnulacion(id) {
   if(!confirm('¿Confirmar anulación de la póliza ' + r.poliza + '?')) return;
 
   // Crear nueva anulación heredando todos los datos
+  const tipoFinal = r.esSinEfecto ? 'Sin efecto' : 'Anulación';
   const nuevaAnulacion = {
     id: String(Date.now() + Math.random()),
     fecha: fechaInput,
-    tipo: 'Anulación',
+    tipo: tipoFinal,
     poliza: r.poliza,
     ramo: r.ramo,
     gestora: r.gestora,
