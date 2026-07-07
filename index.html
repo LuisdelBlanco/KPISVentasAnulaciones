@@ -2728,8 +2728,9 @@ function guardarRegistro(){
   try {
     const polizaNorm = poliza.replace(/[\.\-\s]/g,'').toUpperCase();
 
-    // 1. Duplicado exacto: misma póliza + mismo tipo + misma fecha
+    // 1. Duplicado exacto (excluir el propio registro si estamos editando)
     const exacto = registros.find(r =>
+      String(r.id) !== String(editingRegistroId||'') &&
       r.poliza && r.poliza.replace(/[\.\-\s]/g,'').toUpperCase() === polizaNorm &&
       r.tipo === tipo &&
       r.fecha === fecha
@@ -2747,9 +2748,10 @@ function guardarRegistro(){
       if(!ok) return;
     }
 
-    // 2. Mismo movimiento: misma póliza + mismo tipo (fecha diferente)
+    // 2. Mismo movimiento: misma póliza + mismo tipo (fecha diferente, excluir el propio registro)
     if(!exacto) {
       const similar = registros.find(r =>
+        String(r.id) !== String(editingRegistroId||'') &&
         r.poliza && r.poliza.replace(/[\.\-\s]/g,'').toUpperCase() === polizaNorm &&
         r.tipo === tipo &&
         r.fecha !== fecha
