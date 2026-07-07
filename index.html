@@ -1373,6 +1373,48 @@ async function arrancarApp() {
   setTimeout(mostrarChangelogSiHayNovedades, 800);
 }
 
+// ── CHANGELOG ────────────────────────────────────────────
+const CHANGELOG = [
+  {
+    version: 'v1.3 · Julio 2026',
+    items: [
+      { icon: '⏰', title: 'Pte. Anular', desc: 'Nueva pestaña en Registros para gestionar pólizas pendientes de anular. Con fecha de caída, días restantes, estado del recibo y conversión a anulación con un clic.' },
+      { icon: '🔵', title: 'Sin efecto desde Pte. Anular', desc: 'Al registrar un pendiente de anular puedes marcarlo como "Sin efecto". Al anularlo, se creará automáticamente como Sin efecto en vez de Anulación.' },
+      { icon: '📋', title: 'Motivo en edición', desc: 'Al editar un registro, el campo Motivo ahora se carga correctamente con el valor guardado.' },
+      { icon: '🔢', title: 'Contadores por tipo en Registros', desc: 'Encima de la tabla aparecen las emisiones, anulaciones y demás tipos del mes en curso con su contador.' },
+      { icon: '💰', title: 'Total prima corregida por día', desc: 'Al final de cada grupo de día en Registros aparece el total de prima corregida neta.' },
+    ]
+  }
+];
+
+function mostrarChangelogSiHayNovedades() {
+  if(!currentUser?.id) return;
+  const key = 'sm_changelog_seen_' + currentUser.id;
+  const lastSeen = localStorage.getItem(key);
+  const latest = CHANGELOG[0].version;
+  if(lastSeen === latest) return;
+  const overlay = document.getElementById('changelogOverlay');
+  if(!overlay) return;
+  document.getElementById('changelogVersion').textContent = CHANGELOG[0].version;
+  document.getElementById('changelogContent').innerHTML = CHANGELOG[0].items.map(item =>
+    `<div style="display:flex;gap:12px;margin-bottom:16px;">
+      <div style="font-size:22px;flex-shrink:0;">${item.icon}</div>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:#1A1A18;margin-bottom:2px;">${item.title}</div>
+        <div style="font-size:12px;color:#52524E;line-height:1.5;">${item.desc}</div>
+      </div>
+    </div>`
+  ).join('');
+  overlay.style.display = 'flex';
+}
+
+function cerrarChangelog() {
+  if(!currentUser?.id) return;
+  localStorage.setItem('sm_changelog_seen_' + currentUser.id, CHANGELOG[0].version);
+  const overlay = document.getElementById('changelogOverlay');
+  if(overlay) overlay.style.display = 'none';
+}
+
 let pollingInterval = null;
 let lastPollingCheck = new Date().toISOString();
 
@@ -2801,17 +2843,33 @@ function guardarRegistro(){
         fechaVencimiento, fechaCaida, estadoPte, estadoRecibo:estadoReciboPrev, esSinEfecto};
       const reg = registros[idx];
       saveData(); closeModal(); renderAll();
-      sbPatch('registros', String(reg.id), {
+      // Log para diagnóstico
+      console.log('Guardando edición:', {
+        id: String(reg.id),
+        tipo: reg.tipo,
+        motivo: reg.motivo,
+        esSinEfecto: reg.esSinEfecto,
+        es_sin_efecto: reg.esSinEfecto||false
+      });
+      const patchData = {
         fecha:reg.fecha, tipo:reg.tipo, poliza:reg.poliza, ramo:reg.ramo,
         gestora:reg.gestora, oficina:reg.oficina, agente:reg.agente, tomador:reg.tomador||'',
         prima:reg.prima, prima_corregida:reg.primaCorregida, motivo:reg.motivo||'',
         notas:reg.notas||'', rehab_origen:reg.rehabOrigen||'',
         fecha_vencimiento:reg.fechaVencimiento||'', estado_pte:reg.estadoPte||'',
-        estado_recibo:reg.estadoRecibo||'', es_sin_efecto:reg.esSinEfecto||false
-      }).catch(e => {
-        console.error('Error actualizando registro en Supabase:', e.message);
-        alert('⚠️ Los cambios se guardaron localmente pero hubo un problema al sincronizar con la nube. Recarga la página e inténtalo de nuevo.');
-      });
+        estado_recibo:reg.estadoRecibo||'', es_sin_efecto:reg.esSinEfecto===true
+      };
+      sbPatch('registros', String(reg.id), patchData)
+        .then(() => console.log('✅ Registro actualizado en Supabase'))
+        .catch(e => {
+          console.error('❌ sbPatch falló:', e.message, '— intentando con sbPost...');
+          return sbPost('registros', {id:String(reg.id), ...patchData});
+        })
+        .then(() => console.log('✅ Registro sincronizado'))
+        .catch(e => {
+          console.error('❌ Error definitivo al guardar en Supabase:', e.message);
+          alert('⚠️ Los cambios se guardaron localmente pero hubo un problema al sincronizar con la nube. Recarga e inténtalo de nuevo.');
+        });
     }
     editingRegistroId = null;
     return;
