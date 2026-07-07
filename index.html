@@ -990,6 +990,13 @@ tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
           <option value="Inicial/Suple">Inicial/Suple</option>
           <option value="Pte. Anular">Pte. Anular</option>
         </select>
+        <!-- Toggle Sin efecto para Pte. Anular -->
+        <div id="pteToggleSinEfecto" style="display:none;margin-top:8px;">
+          <label style="display:inline-flex;align-items:center;gap:7px;cursor:pointer;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:20px;padding:5px 12px;">
+            <input type="checkbox" id="pteEsSinEfecto" onchange="togglePteSinEfecto()" style="width:15px;height:15px;cursor:pointer;accent-color:#2563EB;">
+            <span style="font-size:12px;font-weight:700;color:#1D4ED8;">Sin efecto</span>
+          </label>
+        </div>
       </div>
       <div class="form-group">
         <label>Número de póliza *</label>
@@ -1044,11 +1051,6 @@ tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
         <!-- Fecha vencimiento: solo para Pte. Anular -->
         <div id="pteAnularWrap" style="display:none;margin-bottom:8px;padding:12px;background:#FFF8F0;border:1px solid #FED7AA;border-radius:8px;">
           <label style="font-size:12px;font-weight:600;color:#D97706;display:block;margin-bottom:10px;">⏰ Póliza pendiente de anular</label>
-          <!-- Toggle sin efecto -->
-          <label id="pteEsSinEfectoWrap" style="display:flex;align-items:center;gap:8px;margin-bottom:12px;cursor:pointer;padding:8px 10px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;">
-            <input type="checkbox" id="pteEsSinEfecto" onchange="togglePteSinEfecto()" style="width:16px;height:16px;cursor:pointer;accent-color:#2563EB;">
-            <span style="font-size:13px;color:#1D4ED8;font-weight:600;">Sin efecto</span>
-          </label>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
             <div>
               <label style="font-size:11px;color:var(--text-2);">Fecha de vencimiento del recibo</label>
@@ -2258,7 +2260,11 @@ function editRegistro(id) {
   const chkSinEfecto = document.getElementById('pteEsSinEfecto');
   if(chkSinEfecto) {
     chkSinEfecto.checked = r.esSinEfecto || false;
-    if(r.tipo === 'Pte. Anular') togglePteSinEfecto();
+    if(r.tipo === 'Pte. Anular') {
+      togglePteSinEfecto();
+      // Re-aplicar motivo después del toggle (que repobla el select)
+      if(mMotivoSel) mMotivoSel.value = motivoFinal;
+    }
   }
   // Searchable selects
   updateOficinaSelect();
@@ -2588,9 +2594,11 @@ function actualizarMotivos() {
       document.querySelectorAll('input[name="rehabOrigen"]').forEach(r => r.checked = false);
     }
   }
-  // Mostrar campos Pte. Anular
+  // Mostrar campos Pte. Anular y pill Sin efecto
   const pteWrap = document.getElementById('pteAnularWrap');
+  const ptePill = document.getElementById('pteToggleSinEfecto');
   if(pteWrap) pteWrap.style.display = tipo === 'Pte. Anular' ? 'block' : 'none';
+  if(ptePill) ptePill.style.display = tipo === 'Pte. Anular' ? 'block' : 'none';
   calcularPrimaCorregida();
 }
 
