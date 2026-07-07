@@ -1453,6 +1453,14 @@ async function sbDel(table, id) {
   return await supaFetch('/rest/v1/' + table + '?id=eq.' + encodeURIComponent(id), {method:'DELETE'});
 }
 
+async function sbPatch(table, id, data) {
+  return await supaFetch('/rest/v1/' + table + '?id=eq.' + encodeURIComponent(id), {
+    method: 'PATCH',
+    headers: {'Prefer': 'return=minimal'},
+    body: JSON.stringify(data)
+  });
+}
+
 async function saveActividadToSupabase(act) {
   const row = {
     id: String(act.uid||act.id||Date.now()),
@@ -2793,10 +2801,17 @@ function guardarRegistro(){
         fechaVencimiento, fechaCaida, estadoPte, estadoRecibo:estadoReciboPrev, esSinEfecto};
       const reg = registros[idx];
       saveData(); closeModal(); renderAll();
-      sbPost('registros', {id:String(reg.id),fecha:reg.fecha,tipo:reg.tipo,poliza:reg.poliza,ramo:reg.ramo,
-        gestora:reg.gestora,oficina:reg.oficina,agente:reg.agente,tomador:reg.tomador||'',
-        prima:reg.prima,prima_corregida:reg.primaCorregida,motivo:reg.motivo||'',notas:reg.notas||'',rehab_origen:reg.rehabOrigen||'',
-        fecha_vencimiento:reg.fechaVencimiento||'',estado_pte:reg.estadoPte||'',estado_recibo:reg.estadoRecibo||'',es_sin_efecto:reg.esSinEfecto||false}).catch(e=>console.warn(e));
+      sbPatch('registros', String(reg.id), {
+        fecha:reg.fecha, tipo:reg.tipo, poliza:reg.poliza, ramo:reg.ramo,
+        gestora:reg.gestora, oficina:reg.oficina, agente:reg.agente, tomador:reg.tomador||'',
+        prima:reg.prima, prima_corregida:reg.primaCorregida, motivo:reg.motivo||'',
+        notas:reg.notas||'', rehab_origen:reg.rehabOrigen||'',
+        fecha_vencimiento:reg.fechaVencimiento||'', estado_pte:reg.estadoPte||'',
+        estado_recibo:reg.estadoRecibo||'', es_sin_efecto:reg.esSinEfecto||false
+      }).catch(e => {
+        console.error('Error actualizando registro en Supabase:', e.message);
+        alert('⚠️ Los cambios se guardaron localmente pero hubo un problema al sincronizar con la nube. Recarga la página e inténtalo de nuevo.');
+      });
     }
     editingRegistroId = null;
     return;
