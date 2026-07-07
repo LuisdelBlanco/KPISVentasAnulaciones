@@ -2310,9 +2310,9 @@ function editRegistro(id) {
   const chkSinEfecto = document.getElementById('pteEsSinEfecto');
   if(chkSinEfecto) {
     chkSinEfecto.checked = r.esSinEfecto || false;
+    _esSinEfecto = r.esSinEfecto || false;
     if(r.tipo === 'Pte. Anular') {
       togglePteSinEfecto();
-      // Re-aplicar motivo después del toggle (que repobla el select)
       if(mMotivoSel) mMotivoSel.value = motivoFinal;
     }
   }
@@ -2360,6 +2360,7 @@ function openModal(){
   editingRegistroId = null;
   const chkSE = document.getElementById('pteEsSinEfecto');
   if(chkSE) chkSE.checked = false;
+  _esSinEfecto = false;
   if(title) title.textContent = 'Nueva póliza';
   const saveBtn = document.querySelector('#modalOverlay .btn-primary');
   if(saveBtn) saveBtn.textContent = 'Guardar';
@@ -2611,11 +2612,14 @@ const MOTIVOS_POR_TIPO = {
   'Rehabilitación':['Recibo liquidado','Vigilancia de cartera']
 };
 
+let _esSinEfecto = false; // Variable de estado para el toggle Sin efecto
+
 function togglePteSinEfecto() {
-  const esSinEfecto = document.getElementById('pteEsSinEfecto')?.checked;
+  const chk = document.getElementById('pteEsSinEfecto');
+  _esSinEfecto = chk ? chk.checked : false;
   const sel = document.getElementById('mMotivo');
   if(!sel) return;
-  const motivos = esSinEfecto
+  const motivos = _esSinEfecto
     ? MOTIVOS_POR_TIPO['Sin efecto']
     : MOTIVOS_POR_TIPO['Pte. Anular'];
   sel.innerHTML = '<option value="">Selecciona motivo...</option>' +
@@ -2830,7 +2834,7 @@ async function guardarRegistro(){
   const fechaVencimiento = document.getElementById('mFechaVencimiento')?.value || '';
   const fechaCaida = document.getElementById('mFechaCaida')?.value || (fechaVencimiento ? calcFechaCaidaStatic(fechaVencimiento) : '');
   const estadoRecibo = tipo==='Pte. Anular' ? (document.getElementById('mEstadoRecibo')?.value||'pendiente') : '';
-  const esSinEfecto = tipo==='Pte. Anular' ? (document.getElementById('pteEsSinEfecto')?.checked||false) : false;
+  const esSinEfecto = tipo==='Pte. Anular' ? _esSinEfecto : false;
 
   if(editingRegistroId) {
     const idx = registros.findIndex(r => String(r.id) === editingRegistroId);
