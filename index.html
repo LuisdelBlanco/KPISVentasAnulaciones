@@ -2854,6 +2854,8 @@ async function guardarRegistro(){
         fecha_vencimiento:reg.fechaVencimiento||'', estado_pte:reg.estadoPte||'',
         estado_recibo:reg.estadoRecibo||'', es_sin_efecto:reg.esSinEfecto===true
       };
+      // DIAGNÓSTICO TEMPORAL
+      alert('DEBUG GUARDAR:\nmotivo: ' + reg.motivo + '\nesSinEfecto: ' + reg.esSinEfecto + '\nes_sin_efecto: ' + (reg.esSinEfecto===true) + '\n_esSinEfecto global: ' + _esSinEfecto);
       // Guardar en Supabase ANTES de cerrar el modal
       try {
         await sbPatch('registros', String(reg.id), patchData);
