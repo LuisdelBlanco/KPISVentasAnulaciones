@@ -2746,7 +2746,7 @@ function normalizarPoliza(raw) {
   };
 }
 
-function guardarRegistro(){
+async function guardarRegistro(){
   const fecha=document.getElementById('mFecha').value;
   const tipo=document.getElementById('mTipo').value;
   const polizaRaw=document.getElementById('mPoliza').value.trim();
@@ -2842,15 +2842,6 @@ function guardarRegistro(){
         tomador, agente, motivo, notas:notasCompleto, rehabOrigen,
         fechaVencimiento, fechaCaida, estadoPte, estadoRecibo:estadoReciboPrev, esSinEfecto};
       const reg = registros[idx];
-      saveData(); closeModal(); renderAll();
-      // Log para diagnóstico
-      console.log('Guardando edición:', {
-        id: String(reg.id),
-        tipo: reg.tipo,
-        motivo: reg.motivo,
-        esSinEfecto: reg.esSinEfecto,
-        es_sin_efecto: reg.esSinEfecto||false
-      });
       const patchData = {
         fecha:reg.fecha, tipo:reg.tipo, poliza:reg.poliza, ramo:reg.ramo,
         gestora:reg.gestora, oficina:reg.oficina, agente:reg.agente, tomador:reg.tomador||'',
@@ -2859,17 +2850,20 @@ function guardarRegistro(){
         fecha_vencimiento:reg.fechaVencimiento||'', estado_pte:reg.estadoPte||'',
         estado_recibo:reg.estadoRecibo||'', es_sin_efecto:reg.esSinEfecto===true
       };
-      sbPatch('registros', String(reg.id), patchData)
-        .then(() => console.log('✅ Registro actualizado en Supabase'))
-        .catch(e => {
-          console.error('❌ sbPatch falló:', e.message, '— intentando con sbPost...');
-          return sbPost('registros', {id:String(reg.id), ...patchData});
-        })
-        .then(() => console.log('✅ Registro sincronizado'))
-        .catch(e => {
-          console.error('❌ Error definitivo al guardar en Supabase:', e.message);
-          alert('⚠️ Los cambios se guardaron localmente pero hubo un problema al sincronizar con la nube. Recarga e inténtalo de nuevo.');
-        });
+      // Guardar en Supabase ANTES de cerrar el modal
+      try {
+        await sbPatch('registros', String(reg.id), patchData);
+        saveData(); closeModal(); renderAll();
+      } catch(e1) {
+        console.warn('sbPatch falló, intentando sbPost:', e1.message);
+        try {
+          await sbPost('registros', {id:String(reg.id), ...patchData});
+          saveData(); closeModal(); renderAll();
+        } catch(e2) {
+          console.error('Error guardando en Supabase:', e2.message);
+          alert('⚠️ No se pudo guardar en la nube: ' + e2.message + '\n\nVerifica tu conexión o vuelve a iniciar sesión.');
+        }
+      }
     }
     editingRegistroId = null;
     return;
