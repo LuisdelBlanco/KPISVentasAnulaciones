@@ -1007,13 +1007,6 @@ tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
           <option value="Inicial/Suple">Inicial/Suple</option>
           <option value="Pte. Anular">Pte. Anular</option>
         </select>
-        <!-- Toggle Sin efecto para Pte. Anular -->
-        <div id="pteToggleSinEfecto" style="display:none;margin-top:8px;">
-          <label style="display:inline-flex;align-items:center;gap:7px;cursor:pointer;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:20px;padding:5px 12px;">
-            <input type="checkbox" id="pteEsSinEfecto" onchange="togglePteSinEfecto()" style="width:15px;height:15px;cursor:pointer;accent-color:#2563EB;">
-            <span style="font-size:12px;font-weight:700;color:#1D4ED8;">Sin efecto</span>
-          </label>
-        </div>
       </div>
       <div class="form-group">
         <label>Número de póliza *</label>
@@ -2323,16 +2316,6 @@ function editRegistro(id) {
   if(mFechaV) mFechaV.value = r.fechaVencimiento || '';
   if(mFechaC) mFechaC.value = r.fechaCaida || (r.fechaVencimiento ? calcFechaCaidaStatic(r.fechaVencimiento) : '');
   if(mEstRec) mEstRec.value = r.estadoRecibo || 'pendiente';
-  // Cargar esSinEfecto
-  const chkSinEfecto = document.getElementById('pteEsSinEfecto');
-  if(chkSinEfecto) {
-    chkSinEfecto.checked = r.esSinEfecto || false;
-    _esSinEfecto = r.esSinEfecto || false;
-    if(r.tipo === 'Pte. Anular') {
-      togglePteSinEfecto();
-      if(mMotivoSel) mMotivoSel.value = motivoFinal;
-    }
-  }
   // Searchable selects
   updateOficinaSelect();
   ssPopulate('mAgente', [{value:'',label:'(sin asignar)'}].concat(comerciales.map(c=>({value:c.nombre,label:c.nombre+' — '+c.oficina}))));
@@ -2377,7 +2360,6 @@ function openModal(){
   editingRegistroId = null;
   const chkSE = document.getElementById('pteEsSinEfecto');
   if(chkSE) chkSE.checked = false;
-  _esSinEfecto = false;
   const modalTitle = document.querySelector('#modalOverlay .modal-title span:last-child') || document.querySelector('#modalOverlay .modal-title');
   if(modalTitle) modalTitle.textContent = 'Nueva póliza';
   const saveBtn = document.querySelector('#modalOverlay .btn-primary');
@@ -2630,21 +2612,6 @@ const MOTIVOS_POR_TIPO = {
   'Rehabilitación':['Recibo liquidado','Vigilancia de cartera']
 };
 
-let _esSinEfecto = false; // Variable de estado para el toggle Sin efecto
-
-function togglePteSinEfecto() {
-  const chk = document.getElementById('pteEsSinEfecto');
-  _esSinEfecto = chk ? chk.checked : false;
-  const sel = document.getElementById('mMotivo');
-  if(!sel) return;
-  const motivos = _esSinEfecto
-    ? MOTIVOS_POR_TIPO['Sin efecto']
-    : MOTIVOS_POR_TIPO['Pte. Anular'];
-  sel.innerHTML = '<option value="">Selecciona motivo...</option>' +
-    (motivos||[]).map(m => `<option value="${m}">${m}</option>`).join('');
-  sel.style.display = '';
-}
-
 function actualizarMotivos() {
   const tipo = document.getElementById('mTipo')?.value || '';
   const sel = document.getElementById('mMotivo');
@@ -2668,7 +2635,6 @@ function actualizarMotivos() {
   }
   // Mostrar campos Pte. Anular y pill Sin efecto
   const pteWrap = document.getElementById('pteAnularWrap');
-  const ptePill = document.getElementById('pteToggleSinEfecto');
   if(pteWrap) pteWrap.style.display = tipo === 'Pte. Anular' ? 'block' : 'none';
   if(ptePill) ptePill.style.display = tipo === 'Pte. Anular' ? 'block' : 'none';
   calcularPrimaCorregida();
@@ -2852,7 +2818,6 @@ async function guardarRegistro(){
   const fechaVencimiento = document.getElementById('mFechaVencimiento')?.value || '';
   const fechaCaida = document.getElementById('mFechaCaida')?.value || (fechaVencimiento ? calcFechaCaidaStatic(fechaVencimiento) : '');
   const estadoRecibo = tipo==='Pte. Anular' ? (document.getElementById('mEstadoRecibo')?.value||'pendiente') : '';
-  const esSinEfecto = tipo==='Pte. Anular' ? _esSinEfecto : false;
 
   if(editingRegistroId) {
     const idx = registros.findIndex(r => String(r.id) === editingRegistroId);
@@ -2862,7 +2827,7 @@ async function guardarRegistro(){
       registros[idx] = {...registros[idx], fecha, tipo, poliza, ramo, gestora, oficina,
         prima:parseFloat(prima)||0, primaCorregida:parseFloat(primaCorregida)||0,
         tomador, agente, motivo, notas:notasCompleto, rehabOrigen,
-        fechaVencimiento, fechaCaida, estadoPte, estadoRecibo:estadoReciboPrev, esSinEfecto};
+        fechaVencimiento, fechaCaida, estadoPte, estadoRecibo:estadoReciboPrev};
       const reg = registros[idx];
       const patchData = {
         fecha:reg.fecha, tipo:reg.tipo, poliza:reg.poliza, ramo:reg.ramo,
@@ -2870,10 +2835,8 @@ async function guardarRegistro(){
         prima:reg.prima, prima_corregida:reg.primaCorregida, motivo:reg.motivo||'',
         notas:reg.notas||'', rehab_origen:reg.rehabOrigen||'',
         fecha_vencimiento:reg.fechaVencimiento||'', estado_pte:reg.estadoPte||'',
-        estado_recibo:reg.estadoRecibo||'', es_sin_efecto:reg.esSinEfecto===true
+        estado_recibo:reg.estadoRecibo||''
       };
-      // DIAGNÓSTICO TEMPORAL
-      alert('DEBUG GUARDAR:\nmotivo: ' + reg.motivo + '\nesSinEfecto: ' + reg.esSinEfecto + '\nes_sin_efecto: ' + (reg.esSinEfecto===true) + '\n_esSinEfecto global: ' + _esSinEfecto);
       // Guardar en Supabase ANTES de cerrar el modal
       try {
         await sbPatch('registros', String(reg.id), patchData);
@@ -2893,7 +2856,7 @@ async function guardarRegistro(){
     return;
   }
   const estadoPteNuevo = tipo==='Pte. Anular' ? 'pendiente' : '';
-  const reg = {id:String(Date.now()+Math.random()),fecha,tipo,poliza,ramo,gestora,oficina,prima:parseFloat(prima)||0,primaCorregida:parseFloat(primaCorregida)||0,tomador,agente,motivo,notas:notasCompleto,rehabOrigen,fechaVencimiento,fechaCaida,estadoPte:estadoPteNuevo,estadoRecibo,esSinEfecto};
+  const reg = {id:String(Date.now()+Math.random()),fecha,tipo,poliza,ramo,gestora,oficina,prima:parseFloat(prima)||0,primaCorregida:parseFloat(primaCorregida)||0,tomador,agente,motivo,notas:notasCompleto,rehabOrigen,fechaVencimiento,fechaCaida,estadoPte:estadoPteNuevo,estadoRecibo};
   registros.unshift(reg);
   saveData();
   closeModal();
@@ -2916,7 +2879,7 @@ async function guardarRegistro(){
     });
   }, 150);
   // Guardar en Supabase
-  sbPost('registros', {id:reg.id,fecha:reg.fecha,tipo:reg.tipo,poliza:reg.poliza,ramo:reg.ramo,gestora:reg.gestora,oficina:reg.oficina,agente:reg.agente,tomador:reg.tomador||'',prima:reg.prima,prima_corregida:reg.primaCorregida,motivo:reg.motivo||'',notas:reg.notas||'',rehab_origen:reg.rehabOrigen||'',fecha_vencimiento:reg.fechaVencimiento||'',estado_pte:reg.estadoPte||'',estado_recibo:reg.estadoRecibo||'',es_sin_efecto:reg.esSinEfecto||false}).catch(e=>console.warn('Error guardando en Supabase:',e.message));
+  sbPost('registros', {id:reg.id,fecha:reg.fecha,tipo:reg.tipo,poliza:reg.poliza,ramo:reg.ramo,gestora:reg.gestora,oficina:reg.oficina,agente:reg.agente,tomador:reg.tomador||'',prima:reg.prima,prima_corregida:reg.primaCorregida,motivo:reg.motivo||'',notas:reg.notas||'',rehab_origen:reg.rehabOrigen||'',fecha_vencimiento:reg.fechaVencimiento||'',estado_pte:reg.estadoPte||'',estado_recibo:reg.estadoRecibo||''}).catch(e=>console.warn('Error guardando en Supabase:',e.message));
 }
 
 // ── IMPORT CSV ────────────────────────────────────
@@ -3293,15 +3256,8 @@ function renderPendientesAnular() {
     const reciboHtml = recibo==='devuelto'
       ? '<span style="background:#FFF1F3;color:#BE123C;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:700;">Dev.</span>'
       : '<span style="background:#FEF3C7;color:#D97706;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">Pte.</span>';
-    const sinEfectoTag = r.esSinEfecto
-      ? '<span style="background:#EFF6FF;color:#2563EB;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:700;margin-left:4px;">Sin efecto</span>'
-      : '';
     const prima = parseFloat(r.primaCorregida)||0;
     const primaStr = prima > 0 ? prima.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €' : '—';
-    // Botón toggle Sin efecto directo en la fila
-    const sinEfectoBtn = r.esSinEfecto
-      ? `<button onclick="toggleSinEfectoPte('${r.id}', false)" style="background:#EFF6FF;color:#2563EB;border:1px solid #BFDBFE;border-radius:6px;font-size:10px;font-weight:700;padding:2px 7px;cursor:pointer;font-family:inherit;white-space:nowrap;">✓ Sin efecto</button>`
-      : `<button onclick="toggleSinEfectoPte('${r.id}', true)" style="background:#F7F7F6;color:#A3A39E;border:1px solid #E8E8E4;border-radius:6px;font-size:10px;font-weight:600;padding:2px 7px;cursor:pointer;font-family:inherit;white-space:nowrap;">Sin efecto</button>`;
     return `<tr>
       <td style="text-align:center;"><input type="checkbox" class="pte-check" data-id="${r.id}" data-prima="${prima}" onchange="actualizarSeleccionPte()" style="cursor:pointer;accent-color:#D97706;width:15px;height:15px;"></td>
       <td style="font-size:11px;white-space:nowrap;">${formatDate(r.fecha)}</td>
@@ -3317,7 +3273,6 @@ function renderPendientesAnular() {
       <td style="font-size:12px;font-weight:700;text-align:right;color:#BE123C;">${primaStr}</td>
       <td style="font-size:11px;color:var(--text-3);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.notas||'—'}</td>
       <td style="white-space:nowrap;display:flex;gap:3px;align-items:center;">
-        ${sinEfectoBtn}
         <button class="btn btn-primary btn-sm" onclick="convertirAAnulacion('${r.id}')" style="font-size:11px;padding:3px 7px;">Anular</button>
         <button class="btn btn-ghost btn-sm" data-edit-id="${r.id}" onclick="editRegistro(this.dataset.editId)">✏️</button>
         <button class="btn btn-danger btn-sm" onclick="deleteRegistro('${r.id}')">✕</button>
@@ -3356,41 +3311,6 @@ function toggleFechasLibresPte() {
   if(libres) libres.style.display = rango === 'personalizado' ? 'flex' : 'none';
 }
 
-async function toggleSinEfectoPte(id, valor) {
-  // Actualizar en memoria
-  const idx = registros.findIndex(r => String(r.id) === String(id));
-  if(idx < 0) return;
-  registros[idx].esSinEfecto = valor;
-  saveData();
-  renderPendientesAnular();
-  // Guardar directamente en Supabase
-  try {
-    await sbPatch('registros', String(id), { es_sin_efecto: valor });
-    console.log('✅ es_sin_efecto actualizado a', valor);
-  } catch(e) {
-    console.error('❌ Error actualizando sin efecto:', e.message);
-    // Intentar con sbPost upsert
-    try {
-      const reg = registros[idx];
-      await sbPost('registros', {
-        id: String(reg.id), fecha: reg.fecha, tipo: reg.tipo,
-        poliza: reg.poliza, ramo: reg.ramo, gestora: reg.gestora,
-        oficina: reg.oficina, agente: reg.agente, tomador: reg.tomador||'',
-        prima: reg.prima, prima_corregida: reg.primaCorregida,
-        motivo: reg.motivo||'', notas: reg.notas||'',
-        rehab_origen: reg.rehabOrigen||'',
-        fecha_vencimiento: reg.fechaVencimiento||'',
-        estado_pte: reg.estadoPte||'',
-        estado_recibo: reg.estadoRecibo||'',
-        es_sin_efecto: valor
-      });
-      console.log('✅ es_sin_efecto guardado via upsert');
-    } catch(e2) {
-      alert('⚠️ No se pudo guardar en Supabase: ' + e2.message);
-    }
-  }
-}
-
 function limpiarFiltrosPte() {
   ['pteOficina','pteAgente','pteRamo','pteRecibo','pteVctoRango','pteVctoDesde','pteVctoHasta'].forEach(id => {
     const el = document.getElementById(id); if(el) el.value = '';
@@ -3410,11 +3330,10 @@ function convertirAAnulacion(id) {
   if(!confirm('¿Confirmar anulación de la póliza ' + r.poliza + '?')) return;
 
   // Crear nueva anulación heredando todos los datos
-  const tipoFinal = r.esSinEfecto ? 'Sin efecto' : 'Anulación';
   const nuevaAnulacion = {
     id: String(Date.now() + Math.random()),
     fecha: fechaInput,
-    tipo: tipoFinal,
+    tipo: 'Anulación',
     poliza: r.poliza,
     ramo: r.ramo,
     gestora: r.gestora,
