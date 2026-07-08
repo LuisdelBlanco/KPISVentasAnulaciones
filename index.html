@@ -593,13 +593,13 @@ tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
       </div>
     </div>
     <div class="topbar-right">
-      <select class="filter-select" id="yearFilter" onchange="renderAll()" style="width:90px">
+      <select class="filter-select" id="yearFilter" onchange="renderAll();guardarFiltros()" style="width:90px">
         <option value="todos">Todos</option>
         <option value="2024">2024</option>
         <option value="2025">2025</option>
         <option value="2026" selected>2026</option>
       </select>
-      <select class="filter-select" id="monthFilter" onchange="renderAll()" style="width:110px">
+      <select class="filter-select" id="monthFilter" onchange="renderAll();guardarFiltros()" style="width:110px">
         <option value="todos">Todos meses</option>
         <option value="1">Enero</option><option value="2">Febrero</option>
         <option value="3">Marzo</option><option value="4">Abril</option>
@@ -622,7 +622,7 @@ tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
         <select class="filter-select" id="dashOficina" onchange="actualizarAgenteDash();renderAll();" style="width:160px">
           <option value="">Todas las oficinas</option>
         </select>
-        <select class="filter-select" id="dashAgente" onchange="renderAll()" style="width:150px">
+        <select class="filter-select" id="dashAgente" onchange="renderAll();guardarFiltros()" style="width:150px">
           <option value="">Todos los agentes</option>
         </select>
         <button onclick="resetFiltrosDash()" style="display:inline-flex;align-items:center;gap:5px;background:#FFF1F3;color:#BE123C;border:1px solid #FECDD3;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;"><span style="font-size:14px;">⌫</span> Limpiar</button>
@@ -698,13 +698,13 @@ tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
     <div class="page" id="page-registros">
       <div class="filters-bar" id="filtrosRegistrosNormal">
         <span class="filters-label">Filtrar</span>
-        <select class="filter-select" id="fOficina" onchange="renderRegistros()" style="width:150px">
+        <select class="filter-select" id="fOficina" onchange="renderRegistros();guardarFiltros()" style="width:150px">
           <option value="">Todas las oficinas</option>
         </select>
-        <select class="filter-select" id="fAgente" onchange="renderRegistros()" style="width:140px">
+        <select class="filter-select" id="fAgente" onchange="renderRegistros();guardarFiltros()" style="width:140px">
           <option value="">Todos los agentes</option>
         </select>
-        <select class="filter-select" id="fTipo" onchange="renderRegistros()" style="width:130px">
+        <select class="filter-select" id="fTipo" onchange="renderRegistros();guardarFiltros()" style="width:130px">
           <option value="">Todos los tipos</option>
           <option value="Emisión">Emisión</option>
           <option value="Anulación">Anulación</option>
@@ -714,7 +714,7 @@ tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
           <option value="Rehabilitación">Rehabilitación</option>
           <option value="Inicial/Suple">Inicial/Suple</option>
         </select>
-        <select class="filter-select" id="fRamo" onchange="renderRegistros()" style="width:130px">
+        <select class="filter-select" id="fRamo" onchange="renderRegistros();guardarFiltros()" style="width:130px">
           <option value="">Todos los ramos</option>
         </select>
         <button onclick="resetFiltros()" style="display:inline-flex;align-items:center;gap:5px;background:#FFF1F3;color:#BE123C;border:1px solid #FECDD3;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">
@@ -731,16 +731,16 @@ tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
       <!-- VISTA PENDIENTES DE ANULAR -->
       <div id="vistaPendientes" style="display:none;">
         <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center;">
-          <select id="pteOficina" onchange="renderPendientesAnular()" style="height:32px;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:0 8px;background:var(--surface);">
+          <select id="pteOficina" onchange="renderPendientesAnular();guardarFiltros()" style="height:32px;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:0 8px;background:var(--surface);">
             <option value="">Todas las oficinas</option>
           </select>
-          <select id="pteAgente" onchange="renderPendientesAnular()" style="height:32px;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:0 8px;background:var(--surface);">
+          <select id="pteAgente" onchange="renderPendientesAnular();guardarFiltros()" style="height:32px;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:0 8px;background:var(--surface);">
             <option value="">Todos los agentes</option>
           </select>
-          <select id="pteRamo" onchange="renderPendientesAnular()" style="height:32px;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:0 8px;background:var(--surface);">
+          <select id="pteRamo" onchange="renderPendientesAnular();guardarFiltros()" style="height:32px;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:0 8px;background:var(--surface);">
             <option value="">Todos los ramos</option>
           </select>
-          <select id="pteRecibo" onchange="renderPendientesAnular()" style="height:32px;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:0 8px;background:var(--surface);">
+          <select id="pteRecibo" onchange="renderPendientesAnular();guardarFiltros()" style="height:32px;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:0 8px;background:var(--surface);">
             <option value="">Estado recibo: todos</option>
             <option value="pendiente">Recibo pendiente</option>
             <option value="devuelto">Recibo devuelto</option>
@@ -1379,6 +1379,8 @@ async function arrancarApp() {
   renderAll();
   poblarFiltrosDash();
   renderConfig();
+  restaurarFiltros();
+  renderAll();
   iniciarPolling();
   setTimeout(mostrarChangelogSiHayNovedades, 800);
 }
@@ -2311,7 +2313,7 @@ function renderRegistros() {
 }
 
 function formatDate(d){if(!d)return'—';const[y,m,day]=d.split('-');return`${day}/${m}/${y}`;}
-function resetFiltros(){['fOficina','fAgente','fTipo','fRamo'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});renderRegistros();}
+function resetFiltros(){['fOficina','fAgente','fTipo','fRamo'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});guardarFiltros();renderRegistros();}
 function deleteRegistro(id){
   if(!confirm('¿Eliminar este registro?')) return;
   registros = registros.filter(r => String(r.id) !== String(id));
@@ -3423,6 +3425,52 @@ function convertirAAnulacion(id) {
   }).catch(e => console.warn(e));
 }
 
+
+// ── FILTROS PERSISTENTES ──────────────────────────────────
+function guardarFiltros() {
+  if(!currentUser?.id) return;
+  const filtros = {
+    // Dashboard
+    dashOficina: document.getElementById('dashOficina')?.value || '',
+    dashAgente:  document.getElementById('dashAgente')?.value  || '',
+    yearFilter:  document.getElementById('yearFilter')?.value  || '',
+    monthFilter: document.getElementById('monthFilter')?.value || '',
+    // Registros
+    fOficina: document.getElementById('fOficina')?.value || '',
+    fAgente:  document.getElementById('fAgente')?.value  || '',
+    fTipo:    document.getElementById('fTipo')?.value    || '',
+    fRamo:    document.getElementById('fRamo')?.value    || '',
+    // Pendientes
+    pteOficina: document.getElementById('pteOficina')?.value || '',
+    pteAgente:  document.getElementById('pteAgente')?.value  || '',
+    pteRamo:    document.getElementById('pteRamo')?.value    || '',
+    pteRecibo:  document.getElementById('pteRecibo')?.value  || '',
+  };
+  localStorage.setItem('sm_filtros_' + currentUser.id, JSON.stringify(filtros));
+}
+
+function restaurarFiltros() {
+  if(!currentUser?.id) return;
+  try {
+    const raw = localStorage.getItem('sm_filtros_' + currentUser.id);
+    if(!raw) return;
+    const f = JSON.parse(raw);
+    const set = (id, val) => { const el = document.getElementById(id); if(el && val) el.value = val; };
+    set('dashOficina', f.dashOficina);
+    set('dashAgente',  f.dashAgente);
+    set('yearFilter',  f.yearFilter);
+    set('monthFilter', f.monthFilter);
+    set('fOficina', f.fOficina);
+    set('fAgente',  f.fAgente);
+    set('fTipo',    f.fTipo);
+    set('fRamo',    f.fRamo);
+    set('pteOficina', f.pteOficina);
+    set('pteAgente',  f.pteAgente);
+    set('pteRamo',    f.pteRamo);
+    set('pteRecibo',  f.pteRecibo);
+  } catch(e) {}
+}
+
 function getLunesDeHoy() {
   const hoy = new Date();
   const dia = hoy.getDay();
@@ -3569,7 +3617,7 @@ function resetFiltrosDash(){
   const selOf=document.getElementById('dashOficina');
   const selAg=document.getElementById('dashAgente');
   if(selOf)selOf.value='';if(selAg)selAg.value='';
-  actualizarAgenteDash();renderAll();
+  actualizarAgenteDash();guardarFiltros();renderAll();
 }
 
 // ── INIT ──────────────────────────────────────────
