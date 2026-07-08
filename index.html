@@ -2358,8 +2358,6 @@ function openModal(){
   });
   updateOficinaSelect();
   editingRegistroId = null;
-  const chkSE = document.getElementById('pteEsSinEfecto');
-  if(chkSE) chkSE.checked = false;
   const modalTitle = document.querySelector('#modalOverlay .modal-title span:last-child') || document.querySelector('#modalOverlay .modal-title');
   if(modalTitle) modalTitle.textContent = 'Nueva póliza';
   const saveBtn = document.querySelector('#modalOverlay .btn-primary');
