@@ -3298,10 +3298,14 @@ function renderPendientesAnular() {
       : '';
     const prima = parseFloat(r.primaCorregida)||0;
     const primaStr = prima > 0 ? prima.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €' : '—';
+    // Botón toggle Sin efecto directo en la fila
+    const sinEfectoBtn = r.esSinEfecto
+      ? `<button onclick="toggleSinEfectoPte('${r.id}', false)" style="background:#EFF6FF;color:#2563EB;border:1px solid #BFDBFE;border-radius:6px;font-size:10px;font-weight:700;padding:2px 7px;cursor:pointer;font-family:inherit;white-space:nowrap;">✓ Sin efecto</button>`
+      : `<button onclick="toggleSinEfectoPte('${r.id}', true)" style="background:#F7F7F6;color:#A3A39E;border:1px solid #E8E8E4;border-radius:6px;font-size:10px;font-weight:600;padding:2px 7px;cursor:pointer;font-family:inherit;white-space:nowrap;">Sin efecto</button>`;
     return `<tr>
       <td style="text-align:center;"><input type="checkbox" class="pte-check" data-id="${r.id}" data-prima="${prima}" onchange="actualizarSeleccionPte()" style="cursor:pointer;accent-color:#D97706;width:15px;height:15px;"></td>
       <td style="font-size:11px;white-space:nowrap;">${formatDate(r.fecha)}</td>
-      <td><span style="background:${urg.bg};color:${urg.color};padding:1px 6px;border-radius:8px;font-size:10px;font-weight:700;">${urg.label}</span>${sinEfectoTag}</td>
+      <td><span style="background:${urg.bg};color:${urg.color};padding:1px 6px;border-radius:8px;font-size:10px;font-weight:700;">${urg.label}</span></td>
       <td style="font-size:12px;font-family:'JetBrains Mono',monospace;">${r.poliza||'—'}</td>
       <td style="font-size:11px;">${r.ramo||'—'}</td>
       <td style="font-size:12px;">${r.agente||'—'}</td>
@@ -3312,7 +3316,8 @@ function renderPendientesAnular() {
       <td>${reciboHtml}</td>
       <td style="font-size:12px;font-weight:700;text-align:right;color:#BE123C;">${primaStr}</td>
       <td style="font-size:11px;color:var(--text-3);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.notas||'—'}</td>
-      <td style="white-space:nowrap;display:flex;gap:3px;">
+      <td style="white-space:nowrap;display:flex;gap:3px;align-items:center;">
+        ${sinEfectoBtn}
         <button class="btn btn-primary btn-sm" onclick="convertirAAnulacion('${r.id}')" style="font-size:11px;padding:3px 7px;">Anular</button>
         <button class="btn btn-ghost btn-sm" data-edit-id="${r.id}" onclick="editRegistro(this.dataset.editId)">✏️</button>
         <button class="btn btn-danger btn-sm" onclick="deleteRegistro('${r.id}')">✕</button>
@@ -3349,6 +3354,41 @@ function toggleFechasLibresPte() {
   const rango = document.getElementById('pteVctoRango')?.value;
   const libres = document.getElementById('pteFechasLibres');
   if(libres) libres.style.display = rango === 'personalizado' ? 'flex' : 'none';
+}
+
+async function toggleSinEfectoPte(id, valor) {
+  // Actualizar en memoria
+  const idx = registros.findIndex(r => String(r.id) === String(id));
+  if(idx < 0) return;
+  registros[idx].esSinEfecto = valor;
+  saveData();
+  renderPendientesAnular();
+  // Guardar directamente en Supabase
+  try {
+    await sbPatch('registros', String(id), { es_sin_efecto: valor });
+    console.log('✅ es_sin_efecto actualizado a', valor);
+  } catch(e) {
+    console.error('❌ Error actualizando sin efecto:', e.message);
+    // Intentar con sbPost upsert
+    try {
+      const reg = registros[idx];
+      await sbPost('registros', {
+        id: String(reg.id), fecha: reg.fecha, tipo: reg.tipo,
+        poliza: reg.poliza, ramo: reg.ramo, gestora: reg.gestora,
+        oficina: reg.oficina, agente: reg.agente, tomador: reg.tomador||'',
+        prima: reg.prima, prima_corregida: reg.primaCorregida,
+        motivo: reg.motivo||'', notas: reg.notas||'',
+        rehab_origen: reg.rehabOrigen||'',
+        fecha_vencimiento: reg.fechaVencimiento||'',
+        estado_pte: reg.estadoPte||'',
+        estado_recibo: reg.estadoRecibo||'',
+        es_sin_efecto: valor
+      });
+      console.log('✅ es_sin_efecto guardado via upsert');
+    } catch(e2) {
+      alert('⚠️ No se pudo guardar en Supabase: ' + e2.message);
+    }
+  }
 }
 
 function limpiarFiltrosPte() {
