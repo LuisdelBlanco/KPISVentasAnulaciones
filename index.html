@@ -1504,13 +1504,72 @@ async function sbPost(table, data) {
 async function sbDel(table, id) {
   return await supaFetch('/rest/v1/' + table + '?id=eq.' + encodeURIComponent(id), {method:'DELETE'});
 }
-
 async function sbPatch(table, id, data) {
   return await supaFetch('/rest/v1/' + table + '?id=eq.' + encodeURIComponent(id), {
     method: 'PATCH',
-    headers: {'Prefer': 'return=minimal'},
+    headers: {'Prefer': 'return=representation'},
     body: JSON.stringify(data)
   });
+}
+
+// ── WRITE CENTRALIZADO CON VERIFICACIÓN ──────────────────
+async function supaWrite(reg) {
+  const id = String(reg.id);
+  const payload = {
+    id,
+    fecha: reg.fecha,
+    tipo: reg.tipo,
+    poliza: reg.poliza,
+    ramo: reg.ramo,
+    gestora: reg.gestora,
+    oficina: reg.oficina,
+    agente: reg.agente,
+    tomador: reg.tomador||'',
+    prima: reg.prima||0,
+    prima_corregida: reg.primaCorregida||0,
+    motivo: reg.motivo||'',
+    notas: reg.notas||'',
+    rehab_origen: reg.rehabOrigen||'',
+    fecha_vencimiento: reg.fechaVencimiento||'',
+    estado_pte: reg.estadoPte||'',
+    estado_recibo: reg.estadoRecibo||''
+  };
+
+  // 1. Intentar PATCH (actualizar si existe)
+  try {
+    const res = await sbPatch('registros', id, payload);
+    // PATCH con return=representation devuelve el registro actualizado
+    if(Array.isArray(res) && res.length > 0) return { ok: true };
+    // Si devuelve array vacío → no encontró el registro → hacer INSERT
+  } catch(e) {
+    console.warn('PATCH falló, intentando INSERT:', e.message);
+  }
+
+  // 2. INSERT (registro nuevo o PATCH sin match)
+  try {
+    await supaFetch('/rest/v1/registros', {
+      method: 'POST',
+      headers: {'Prefer': 'return=minimal'},
+      body: JSON.stringify([payload])
+    });
+    return { ok: true };
+  } catch(e) {
+    throw new Error('No se pudo guardar: ' + e.message);
+  }
+}
+
+// Feedback visual en el botón de guardar
+function setBtnGuardar(loading) {
+  const btn = document.querySelector('#modalOverlay .btn-primary');
+  if(!btn) return;
+  if(loading) {
+    btn.disabled = true;
+    btn.dataset.originalText = btn.textContent;
+    btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.4);border-top-color:white;border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle;margin-right:6px;"></span>Guardando...';
+  } else {
+    btn.disabled = false;
+    btn.textContent = btn.dataset.originalText || 'Guardar';
+  }
 }
 
 async function saveActividadToSupabase(act) {
@@ -2826,57 +2885,52 @@ async function guardarRegistro(){
         tomador, agente, motivo, notas:notasCompleto, rehabOrigen,
         fechaVencimiento, fechaCaida, estadoPte, estadoRecibo:estadoReciboPrev};
       const reg = registros[idx];
-      const patchData = {
-        fecha:reg.fecha, tipo:reg.tipo, poliza:reg.poliza, ramo:reg.ramo,
-        gestora:reg.gestora, oficina:reg.oficina, agente:reg.agente, tomador:reg.tomador||'',
-        prima:reg.prima, prima_corregida:reg.primaCorregida, motivo:reg.motivo||'',
-        notas:reg.notas||'', rehab_origen:reg.rehabOrigen||'',
-        fecha_vencimiento:reg.fechaVencimiento||'', estado_pte:reg.estadoPte||'',
-        estado_recibo:reg.estadoRecibo||''
-      };
-      // Guardar en Supabase ANTES de cerrar el modal
+      setBtnGuardar(true);
       try {
-        await sbPatch('registros', String(reg.id), patchData);
+        await supaWrite(reg);
         saveData(); closeModal(); renderAll();
-      } catch(e1) {
-        console.warn('sbPatch falló, intentando sbPost:', e1.message);
-        try {
-          await sbPost('registros', {id:String(reg.id), ...patchData});
-          saveData(); closeModal(); renderAll();
-        } catch(e2) {
-          console.error('Error guardando en Supabase:', e2.message);
-          alert('⚠️ No se pudo guardar en la nube: ' + e2.message + '\n\nVerifica tu conexión o vuelve a iniciar sesión.');
-        }
+      } catch(e) {
+        setBtnGuardar(false);
+        alert('⚠️ No se pudo guardar en Supabase:\n' + e.message + '\n\nVerifica tu conexión o vuelve a iniciar sesión.');
+        return;
       }
     }
     editingRegistroId = null;
     return;
   }
+
+  // NUEVO REGISTRO
   const estadoPteNuevo = tipo==='Pte. Anular' ? 'pendiente' : '';
   const reg = {id:String(Date.now()+Math.random()),fecha,tipo,poliza,ramo,gestora,oficina,prima:parseFloat(prima)||0,primaCorregida:parseFloat(primaCorregida)||0,tomador,agente,motivo,notas:notasCompleto,rehabOrigen,fechaVencimiento,fechaCaida,estadoPte:estadoPteNuevo,estadoRecibo};
-  registros.unshift(reg);
-  saveData();
-  closeModal();
-  goPage('registros');
-  renderAll();
-  // Destacar fila nueva con color por tipo
-  const tipoClass = {
-    'Emisión':'new-emision','Anulación':'new-anulacion','Reemplazo':'new-reemplazo',
-    'Sin efecto':'new-sinefecto','Suspenso':'new-suspenso','Rehabilitación':'new-rehab','Inicial/Suple':'new-inicial'
-  };
-  const claseNueva = tipoClass[tipo] || 'new-emision';
-  setTimeout(()=>{
-    let found = false;
-    document.querySelectorAll('#bodyRegistros tr').forEach(tr => {
-      if(!found && tr.querySelector('.badge')) {
-        tr.classList.add(claseNueva);
-        found = true;
-        setTimeout(()=>tr.classList.remove(claseNueva), 10500);
-      }
-    });
-  }, 150);
-  // Guardar en Supabase
-  sbPost('registros', {id:reg.id,fecha:reg.fecha,tipo:reg.tipo,poliza:reg.poliza,ramo:reg.ramo,gestora:reg.gestora,oficina:reg.oficina,agente:reg.agente,tomador:reg.tomador||'',prima:reg.prima,prima_corregida:reg.primaCorregida,motivo:reg.motivo||'',notas:reg.notas||'',rehab_origen:reg.rehabOrigen||'',fecha_vencimiento:reg.fechaVencimiento||'',estado_pte:reg.estadoPte||'',estado_recibo:reg.estadoRecibo||''}).catch(e=>console.warn('Error guardando en Supabase:',e.message));
+
+  setBtnGuardar(true);
+  try {
+    await supaWrite(reg);
+    registros.unshift(reg);
+    saveData();
+    closeModal();
+    goPage('registros');
+    renderAll();
+    // Destacar fila nueva
+    const tipoClass = {
+      'Emisión':'new-emision','Anulación':'new-anulacion','Reemplazo':'new-reemplazo',
+      'Sin efecto':'new-sinefecto','Suspenso':'new-suspenso','Rehabilitación':'new-rehab','Inicial/Suple':'new-inicial'
+    };
+    const claseNueva = tipoClass[tipo] || 'new-emision';
+    setTimeout(()=>{
+      let found = false;
+      document.querySelectorAll('#bodyRegistros tr').forEach(tr => {
+        if(!found && tr.querySelector('.badge')) {
+          tr.classList.add(claseNueva);
+          found = true;
+          setTimeout(()=>tr.classList.remove(claseNueva), 10500);
+        }
+      });
+    }, 150);
+  } catch(e) {
+    setBtnGuardar(false);
+    alert('⚠️ No se pudo guardar en Supabase:\n' + e.message + '\n\nVerifica tu conexión o vuelve a iniciar sesión.');
+  }
 }
 
 // ── IMPORT CSV ────────────────────────────────────
