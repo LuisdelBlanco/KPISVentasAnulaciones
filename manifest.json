@@ -1,6 +1,6 @@
 {
-  "name": "SM Seguros KPIs",
-  "short_name": "SM Seguros",
+  "name": "Kompass · SM Seguros",
+  "short_name": "Kompass",
   "description": "Dashboard de KPIs · SM Seguros · Agencia exclusiva Occident",
   "start_url": "/KPISVentasAnulaciones/",
   "scope": "/KPISVentasAnulaciones/",
