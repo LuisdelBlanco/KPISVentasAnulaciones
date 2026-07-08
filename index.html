@@ -2631,10 +2631,9 @@ function actualizarMotivos() {
       document.querySelectorAll('input[name="rehabOrigen"]').forEach(r => r.checked = false);
     }
   }
-  // Mostrar campos Pte. Anular y pill Sin efecto
+  // Mostrar campos Pte. Anular
   const pteWrap = document.getElementById('pteAnularWrap');
   if(pteWrap) pteWrap.style.display = tipo === 'Pte. Anular' ? 'block' : 'none';
-  if(ptePill) ptePill.style.display = tipo === 'Pte. Anular' ? 'block' : 'none';
   calcularPrimaCorregida();
 }
 
