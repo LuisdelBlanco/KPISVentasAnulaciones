@@ -1453,8 +1453,20 @@ async function doLogin() {
 
 async function loadUserRole() {
   try {
-    const data = await supaFetch('/rest/v1/user_roles?select=role&user_id=eq.' + currentUser.id);
+    const data = await supaFetch('/rest/v1/user_roles?select=role,foto&user_id=eq.' + currentUser.id);
     currentRole = data?.[0]?.role || 'basic';
+    _userFoto = data?.[0]?.foto || '';
+    // Registrar el nombre del usuario en el mapa de fotos
+    const nombreSidebar = document.getElementById('sidebarUserName')?.textContent;
+    if(nombreSidebar && _userFoto) _fotosAgentes[nombreSidebar.toLowerCase()] = _userFoto;
+    actualizarAvatarSidebar();
+    // Mostrar foto en preview de Ajustes si ya existe
+    if(_userFoto) {
+      const prev = document.getElementById('fotoPreview');
+      const ini = document.getElementById('fotoPreviewIni');
+      if(prev) { prev.src = _userFoto; prev.style.display = 'block'; }
+      if(ini) ini.style.display = 'none';
+    }
   } catch(e) { currentRole = 'basic'; }
 }
 
@@ -1500,6 +1512,7 @@ async function arrancarApp() {
   renderAll();
   poblarFiltrosDash();
   renderConfig();
+  await cargarFotosAgentes();
   pedirPermisoNotificaciones();
   restaurarFiltros();
   renderAll();
@@ -3765,12 +3778,15 @@ function mostrarWaNotif(reg) {
   // Iniciales del agente
   const agente = reg.agente || 'Desconocido';
   const partes = agente.split(' ');
-  // Usar foto si es el usuario actual
-  if(agente && currentUser && _userFoto && agente === (currentUser.email?.split('@')[0] || '')) {
-    avatar.innerHTML = `<img src="${_userFoto}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;">`;
+  // Usar foto del agente si está disponible
+  const fotoAgente = _fotosAgentes[(agente||'').toLowerCase()] || (_userFoto && agente && currentUser && agente.toLowerCase().includes(currentUser.email?.split('@')[0]?.toLowerCase()||'__') ? _userFoto : '');
+  if(fotoAgente) {
+    avatar.innerHTML = `<img src="${fotoAgente}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border-radius:50%;">`;
     avatar.style.background = 'none';
+    avatar.style.padding = '0';
   } else {
     avatar.textContent = ((partes[0]?.[0]||'') + (partes[1]?.[0]||'')).toUpperCase() || '?';
+    avatar.style.background = cfg.color;
   }
 
   // Contenido
@@ -3824,30 +3840,36 @@ function mostrarNotificacionSistema(reg) {
 
 
 // ── AVATAR DE USUARIO ────────────────────────────────────
+
+let _fotosAgentes = {}; // nombre agente → base64 foto
+
+async function cargarFotosAgentes() {
+  try {
+    const data = await supaFetch('/rest/v1/user_roles?select=nombre,foto');
+    if(Array.isArray(data)) {
+      data.forEach(r => {
+        if(r.nombre && r.foto) _fotosAgentes[r.nombre.toLowerCase()] = r.foto;
+      });
+    }
+  } catch(e) { console.warn('Error cargando fotos:', e.message); }
+}
+
 function actualizarAvatarSidebar() {
   const el = document.getElementById('sidebarAvatar');
   if(!el) return;
-  if(_userFoto) {
-    el.innerHTML = `<img src="${_userFoto}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;display:block;">`;
-  } else {
-    const nombre = currentUser?.email?.split('@')[0] || '?';
-    const partes = nombre.split('.');
-    const ini = ((partes[0]?.[0]||'') + (partes[1]?.[0]||'')).toUpperCase() || '?';
-    const c1 = hashColor(nombre, 0);
-    const c2 = hashColor(nombre, 3);
-    el.innerHTML = `<div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;">${ini}</div>`;
-  }
+  el.innerHTML = getAvatarHtml(currentUser?.user_metadata?.full_name || currentUser?.email?.split('@')[0] || '?', 32);
 }
 
 function getAvatarHtml(agente, size=28) {
-  // Busca si el agente tiene foto guardada (en futuro podría venir de un mapa)
   const c1 = hashColor(agente||'?', 0);
   const c2 = hashColor(agente||'?', 3);
   const partes = (agente||'?').trim().split(' ');
   const ini = ((partes[0]?.[0]||'') + (partes[1]?.[0]||'')).toUpperCase();
-  // Si es el usuario actual y tiene foto
-  if(agente && currentUser && (agente === currentUser.email?.split('@')[0] || agente.toLowerCase().includes(currentUser.email?.split('@')[0]?.toLowerCase()||'__')) && _userFoto) {
-    return `<img src="${_userFoto}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;display:inline-block;vertical-align:middle;">`;
+  // Buscar foto en el mapa global
+  const foto = _fotosAgentes[(agente||'').toLowerCase()] || (_userFoto && agente && currentUser &&
+    (agente === currentUser.email?.split('@')[0] || agente.toLowerCase().includes(currentUser.email?.split('@')[0]?.toLowerCase()||'__')) ? _userFoto : '');
+  if(foto) {
+    return `<img src="${foto}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;display:inline-block;vertical-align:middle;flex-shrink:0;">`;
   }
   return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});display:inline-flex;align-items:center;justify-content:center;font-size:${Math.round(size*0.36)}px;font-weight:800;color:#fff;vertical-align:middle;flex-shrink:0;">${ini}</div>`;
 }
@@ -3855,12 +3877,15 @@ function getAvatarHtml(agente, size=28) {
 async function guardarFotoUsuario(base64) {
   if(!currentUser?.id) return;
   _userFoto = base64;
+  // Actualizar mapa global con la foto del usuario actual
+  const nombreUsuario = document.getElementById('sidebarUserName')?.textContent || currentUser.email?.split('@')[0] || '';
+  if(nombreUsuario) _fotosAgentes[nombreUsuario.toLowerCase()] = base64;
   actualizarAvatarSidebar();
   try {
     await supaFetch('/rest/v1/user_roles?user_id=eq.' + currentUser.id, {
       method: 'PATCH',
       headers: {'Prefer': 'return=minimal'},
-      body: JSON.stringify({ foto: base64 })
+      body: JSON.stringify({ foto: base64, nombre: nombreUsuario })
     });
     mostrarToast('✅ Foto guardada correctamente');
   } catch(e) {
