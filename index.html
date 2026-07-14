@@ -1313,6 +1313,7 @@ const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const SUPA_AUTH_KEY = 'sm_supa_session';
 
 let currentUser = null;
+let _userFoto = ''; // base64 foto del usuario actual
 let currentRole = 'basic';
 let accessToken = null;
 let refreshToken = null;
@@ -3745,7 +3746,13 @@ function mostrarWaNotif(reg) {
   // Iniciales del agente
   const agente = reg.agente || 'Desconocido';
   const partes = agente.split(' ');
-  avatar.textContent = ((partes[0]?.[0]||'') + (partes[1]?.[0]||'')).toUpperCase() || '?';
+  // Usar foto si es el usuario actual
+  if(agente && currentUser && _userFoto && agente === (currentUser.email?.split('@')[0] || '')) {
+    avatar.innerHTML = `<img src="${_userFoto}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;">`;
+    avatar.style.background = 'none';
+  } else {
+    avatar.textContent = ((partes[0]?.[0]||'') + (partes[1]?.[0]||'')).toUpperCase() || '?';
+  }
 
   // Contenido
   document.getElementById('waNotifTipo').textContent = cfg.label;
@@ -3794,6 +3801,77 @@ function mostrarNotificacionSistema(reg) {
     n.onclick = () => { window.focus(); n.close(); };
     setTimeout(() => n.close(), 8000);
   } catch(e) { console.warn('Notificación:', e.message); }
+}
+
+
+// ── AVATAR DE USUARIO ────────────────────────────────────
+function actualizarAvatarSidebar() {
+  const el = document.getElementById('sidebarAvatar');
+  if(!el) return;
+  if(_userFoto) {
+    el.innerHTML = `<img src="${_userFoto}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;display:block;">`;
+  } else {
+    const nombre = currentUser?.email?.split('@')[0] || '?';
+    const partes = nombre.split('.');
+    const ini = ((partes[0]?.[0]||'') + (partes[1]?.[0]||'')).toUpperCase() || '?';
+    const c1 = hashColor(nombre, 0);
+    const c2 = hashColor(nombre, 3);
+    el.innerHTML = `<div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;">${ini}</div>`;
+  }
+}
+
+function getAvatarHtml(agente, size=28) {
+  // Busca si el agente tiene foto guardada (en futuro podría venir de un mapa)
+  const c1 = hashColor(agente||'?', 0);
+  const c2 = hashColor(agente||'?', 3);
+  const partes = (agente||'?').trim().split(' ');
+  const ini = ((partes[0]?.[0]||'') + (partes[1]?.[0]||'')).toUpperCase();
+  // Si es el usuario actual y tiene foto
+  if(agente && currentUser && (agente === currentUser.email?.split('@')[0] || agente.toLowerCase().includes(currentUser.email?.split('@')[0]?.toLowerCase()||'__')) && _userFoto) {
+    return `<img src="${_userFoto}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;display:inline-block;vertical-align:middle;">`;
+  }
+  return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});display:inline-flex;align-items:center;justify-content:center;font-size:${Math.round(size*0.36)}px;font-weight:800;color:#fff;vertical-align:middle;flex-shrink:0;">${ini}</div>`;
+}
+
+async function guardarFotoUsuario(base64) {
+  if(!currentUser?.id) return;
+  _userFoto = base64;
+  actualizarAvatarSidebar();
+  try {
+    await supaFetch('/rest/v1/user_roles?user_id=eq.' + currentUser.id, {
+      method: 'PATCH',
+      headers: {'Prefer': 'return=minimal'},
+      body: JSON.stringify({ foto: base64 })
+    });
+    mostrarToast('✅ Foto guardada correctamente');
+  } catch(e) {
+    mostrarToast('⚠️ Error al guardar la foto: ' + e.message);
+  }
+}
+
+function comprimirYGuardarFoto(file) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      const size = 160; // 160x160px — suficiente para avatar
+      canvas.width = size; canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      // Recorte circular centrado
+      const min = Math.min(img.width, img.height);
+      const sx = (img.width - min) / 2;
+      const sy = (img.height - min) / 2;
+      ctx.drawImage(img, sx, sy, min, min, 0, 0, size, size);
+      const base64 = canvas.toDataURL('image/jpeg', 0.75);
+      guardarFotoUsuario(base64);
+      // Previsualizar
+      const prev = document.getElementById('fotoPreview');
+      if(prev) prev.src = base64;
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
 }
 
 function normalizeSearch(str) {
