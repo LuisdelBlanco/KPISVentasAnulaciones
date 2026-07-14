@@ -1075,7 +1075,7 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
 <!-- MODAL -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
   <div class="modal">
-    <div class="modal-title"><span class="modal-title-dot"></span> Registrar movimiento</div>
+    <div class="modal-title"><span class="modal-title-dot"></span> <span id="modalTitleText">Registrar movimiento</span></div>
     <div class="form-grid">
       <div class="form-group">
         <label>Fecha de emisión *</label>
@@ -2629,7 +2629,7 @@ function editRegistro(id) {
     if(input) input.value = val;
   });
   // Cambiar título del modal
-  const title = document.querySelector('#modalOverlay .modal-title');
+  const title = document.getElementById('modalTitleText');
   if(title) title.textContent = 'Editar registro';
   const saveBtn = document.querySelector('#modalOverlay .btn-primary');
   if(saveBtn) saveBtn.textContent = 'Guardar cambios';
@@ -2654,7 +2654,7 @@ function openModal(){
   });
   updateOficinaSelect();
   editingRegistroId = null;
-  const modalTitle = document.querySelector('#modalOverlay .modal-title span:last-child') || document.querySelector('#modalOverlay .modal-title');
+  const modalTitle = document.getElementById('modalTitleText');
   if(modalTitle) modalTitle.textContent = 'Nueva póliza';
   const saveBtn = document.querySelector('#modalOverlay .btn-primary');
   if(saveBtn) saveBtn.textContent = 'Guardar';
@@ -3150,22 +3150,24 @@ async function guardarRegistro(){
     closeModal();
     goPage('registros');
     renderAll();
-    // Destacar fila nueva
-    const tipoClass = {
-      'Emisión':'new-emision','Anulación':'new-anulacion','Reemplazo':'new-reemplazo',
-      'Sin efecto':'new-sinefecto','Suspenso':'new-suspenso','Rehabilitación':'new-rehab','Inicial/Suple':'new-inicial'
-    };
-    const claseNueva = tipoClass[tipo] || 'new-emision';
-    setTimeout(()=>{
-      let found = false;
-      document.querySelectorAll('#bodyRegistros tr').forEach(tr => {
-        if(!found && tr.querySelector('.badge')) {
-          tr.classList.add(claseNueva);
-          found = true;
-          setTimeout(()=>tr.classList.remove(claseNueva), 10500);
-        }
-      });
-    }, 150);
+    // Destacar fila nueva solo si es del día de hoy
+    if(reg.fecha === fechaLocal(new Date())) {
+      const tipoClass = {
+        'Emisión':'new-emision','Anulación':'new-anulacion','Reemplazo':'new-reemplazo',
+        'Sin efecto':'new-sinefecto','Suspenso':'new-suspenso','Rehabilitación':'new-rehab','Inicial/Suple':'new-inicial'
+      };
+      const claseNueva = tipoClass[tipo] || 'new-emision';
+      setTimeout(()=>{
+        let found = false;
+        document.querySelectorAll('#bodyRegistros tr').forEach(tr => {
+          if(!found && tr.querySelector('.badge')) {
+            tr.classList.add(claseNueva);
+            found = true;
+            setTimeout(()=>tr.classList.remove(claseNueva), 3600);
+          }
+        });
+      }, 150);
+    }
   } catch(e) {
     setBtnGuardar(false);
     alert('⚠️ No se pudo guardar en Supabase:\n' + e.message + '\n\nVerifica tu conexión o vuelve a iniciar sesión.');
