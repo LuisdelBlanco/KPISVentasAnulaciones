@@ -1529,6 +1529,7 @@ async function arrancarApp() {
   poblarFiltrosDash();
   renderConfig();
   await cargarFotosAgentes();
+  actualizarBtnNotif();
   restaurarFiltros();
   renderAll();
   iniciarPolling();
@@ -3825,7 +3826,7 @@ function cerrarWaNotif() {
 }
 
 // ── NOTIFICACIONES NATIVAS DEL SISTEMA ────────────────────
-let _notifPermiso = false;
+let _notifPermiso = ('Notification' in window && Notification.permission === 'granted'); // leer estado real del navegador
 
 async function pedirPermisoNotificaciones() {
   if(!('Notification' in window)) {
@@ -3933,15 +3934,15 @@ function getAvatarHtml(agente, size=28) {
 async function guardarFotoUsuario(base64) {
   if(!currentUser?.id) return;
   _userFoto = base64;
-  // Actualizar mapa global con la foto del usuario actual
-  const nombreUsuario = document.getElementById('sidebarUserName')?.textContent || currentUser.email?.split('@')[0] || '';
+  const nombreUsuario = document.getElementById('sidebarUserName')?.textContent?.trim() || '';
   if(nombreUsuario) _fotosAgentes[nombreUsuario.toLowerCase()] = base64;
   actualizarAvatarSidebar();
   try {
-    await supaFetch('/rest/v1/user_roles?user_id=eq.' + currentUser.id, {
-      method: 'PATCH',
-      headers: {'Prefer': 'return=minimal'},
-      body: JSON.stringify({ foto: base64, nombre: nombreUsuario })
+    // UPSERT — crea la fila si no existe, actualiza si existe
+    await supaFetch('/rest/v1/user_roles', {
+      method: 'POST',
+      headers: {'Prefer': 'resolution=merge-duplicates,return=minimal'},
+      body: JSON.stringify([{ user_id: currentUser.id, foto: base64, nombre: nombreUsuario }])
     });
     mostrarToast('✅ Foto guardada correctamente');
   } catch(e) {
