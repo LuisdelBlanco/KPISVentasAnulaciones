@@ -170,6 +170,54 @@ textarea { height: auto; min-height: 72px; padding: 8px 10px; resize: vertical; 
 .page { display: none; }
 .page.active { display: block; animation: fadeIn 0.18s ease; }
 @keyframes modalInMobile { from { transform: translateY(100%); } to { transform: none; } }
+
+/* ── NOTIFICACIÓN WHATSAPP ── */
+@keyframes waNotiIn  { from { opacity:0; transform:translateX(120%); } to { opacity:1; transform:translateX(0); } }
+@keyframes waNotiOut { from { opacity:1; transform:translateX(0); }    to { opacity:0; transform:translateX(120%); } }
+.wa-noti {
+  position: fixed; bottom: 80px; right: 20px; z-index: 99995;
+  min-width: 280px; max-width: 320px;
+  background: #fff; border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px;
+  animation: waNotiIn 0.35s cubic-bezier(0.34,1.2,0.64,1) forwards;
+  cursor: pointer;
+  overflow: hidden;
+}
+.wa-noti::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 4px;
+  background: var(--wa-color, #16A34A);
+}
+.wa-noti-avatar {
+  width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 800; color: #fff;
+  flex-shrink: 0;
+  background: var(--wa-color, #16A34A);
+}
+.wa-noti-body { flex: 1; min-width: 0; }
+.wa-noti-tipo { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+.wa-noti-agente { font-size: 13px; font-weight: 700; color: #1A1A18; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wa-noti-poliza { font-size: 11px; color: #A3A39E; margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+.wa-noti-time { font-size: 10px; color: #A3A39E; flex-shrink: 0; align-self: flex-start; }
+.wa-noti.saliendo { animation: waNotiOut 0.3s ease-in forwards; }
+
+/* ── PARPADEO SUTIL (solo 1 fila) ── */
+@keyframes blinkVerdeSutil  { 0%,100%{background:transparent} 40%{background:rgba(22,163,74,0.08)} }
+@keyframes blinkRojoSutil   { 0%,100%{background:transparent} 40%{background:rgba(194,0,63,0.07)} }
+@keyframes blinkAmbarSutil  { 0%,100%{background:transparent} 40%{background:rgba(217,119,6,0.08)} }
+@keyframes blinkAzulSutil   { 0%,100%{background:transparent} 40%{background:rgba(37,99,235,0.07)} }
+tr.new-emision   td { animation: blinkVerdeSutil 1.4s ease-in-out 5; }
+tr.new-anulacion td { animation: blinkRojoSutil  1.4s ease-in-out 5; }
+tr.new-reemplazo td { animation: blinkAmbarSutil 1.4s ease-in-out 5; }
+tr.new-sinefecto td { animation: blinkAzulSutil  1.4s ease-in-out 5; }
+tr.new-suspenso  td { animation: blinkRojoSutil  1.4s ease-in-out 5; }
+tr.new-rehab     td { animation: blinkVerdeSutil 1.4s ease-in-out 5; }
+tr.new-inicial   td { animation: blinkVerdeSutil 1.4s ease-in-out 5; }
+
 @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
 /* ── KPI GRID ── */
@@ -430,30 +478,57 @@ body.mobile #tabsBarRegistros button { font-size: 12px !important; padding: 7px 
 
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
+
+/* ── NOTIFICACIÓN ESTILO WHATSAPP ── */
+#waNotif {
+  position: fixed; bottom: 80px; right: 24px; z-index: 9999;
+  display: flex; align-items: flex-start; gap: 10px;
+  background: #fff; border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08);
+  padding: 12px 16px 12px 12px;
+  max-width: 300px; min-width: 220px;
+  transform: translateX(340px);
+  transition: transform 0.35s cubic-bezier(0.34,1.1,0.64,1), opacity 0.3s;
+  opacity: 0; pointer-events: none;
+  border-left: 4px solid #16A34A;
+}
+#waNotif.show { transform: translateX(0); opacity: 1; pointer-events: auto; }
+#waNotifAvatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 800; color: #fff; flex-shrink: 0;
+}
+#waNotifBody { flex: 1; min-width: 0; }
+#waNotifTipo { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px; }
+#waNotifAgente { font-size: 13px; font-weight: 700; color: #1A1A18; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#waNotifDetalle { font-size: 11px; color: #A3A39E; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#waNotifTime { font-size: 10px; color: #A3A39E; margin-top: 4px; }
+#waNotifClose { position: absolute; top: 8px; right: 8px; background: none; border: none; cursor: pointer; color: #A3A39E; font-size: 14px; line-height: 1; padding: 2px; }
+
 /* ── NUEVO REGISTRO HIGHLIGHT ── */
 @keyframes blinkVerde {
   0%,100% { background: rgba(22,163,74,0.0); }
-  50%     { background: rgba(22,163,74,0.22); }
+  50%     { background: rgba(22,163,74,0.12); }
 }
 @keyframes blinkRojo {
   0%,100% { background: rgba(194,0,63,0.0); }
-  50%     { background: rgba(194,0,63,0.18); }
+  50%     { background: rgba(194,0,63,0.10); }
 }
 @keyframes blinkAmbar {
   0%,100% { background: rgba(217,119,6,0.0); }
-  50%     { background: rgba(217,119,6,0.20); }
+  50%     { background: rgba(217,119,6,0.12); }
 }
 @keyframes blinkAzul {
   0%,100% { background: rgba(37,99,235,0.0); }
-  50%     { background: rgba(37,99,235,0.18); }
+  50%     { background: rgba(37,99,235,0.10); }
 }
-tr.new-emision td      { animation: blinkVerde 1.4s ease-in-out 7; }
-tr.new-anulacion td    { animation: blinkRojo  1.4s ease-in-out 7; }
-tr.new-reemplazo td    { animation: blinkAmbar 1.4s ease-in-out 7; }
-tr.new-sinefecto td    { animation: blinkAzul  1.4s ease-in-out 7; }
-tr.new-suspenso td     { animation: blinkAmbar 1.4s ease-in-out 7; }
-tr.new-rehab td        { animation: blinkVerde 1.4s ease-in-out 7; }
-tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
+tr.new-emision td      { animation: blinkVerde 1.2s ease-in-out 3; }
+tr.new-anulacion td    { animation: blinkRojo  1.2s ease-in-out 3; }
+tr.new-reemplazo td    { animation: blinkAmbar 1.2s ease-in-out 3; }
+tr.new-sinefecto td    { animation: blinkAzul  1.2s ease-in-out 3; }
+tr.new-suspenso td     { animation: blinkAmbar 1.2s ease-in-out 3; }
+tr.new-rehab td        { animation: blinkVerde 1.2s ease-in-out 3; }
+tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
 
 /* ── SEARCHABLE SELECT ── */
 .ss-wrap { position: relative; width: 100%; }
@@ -1142,6 +1217,21 @@ tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
     </div>
   </nav>
 
+  <!-- NOTIFICACIONES WHATSAPP -->
+  <div id="waNotiContainer" style="position:fixed;bottom:80px;right:20px;z-index:99995;display:flex;flex-direction:column-reverse;gap:8px;pointer-events:none;"></div>
+
+  <!-- NOTIFICACIÓN ESTILO WHATSAPP -->
+  <div id="waNotif">
+    <button id="waNotifClose" onclick="cerrarWaNotif()">✕</button>
+    <div id="waNotifAvatar">?</div>
+    <div id="waNotifBody">
+      <div id="waNotifTipo"></div>
+      <div id="waNotifAgente"></div>
+      <div id="waNotifDetalle"></div>
+      <div id="waNotifTime"></div>
+    </div>
+  </div>
+
   <!-- POLLING TOAST -->
   <div id="pollingToast" style="display:none;position:fixed;bottom:24px;right:24px;background:#1A1A18;color:#fff;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.2);align-items:center;gap:10px;">
     <span id="pollingMsg"></span>
@@ -1390,6 +1480,7 @@ async function arrancarApp() {
   renderAll();
   poblarFiltrosDash();
   renderConfig();
+  pedirPermisoNotificaciones();
   restaurarFiltros();
   renderAll();
   iniciarPolling();
@@ -1878,6 +1969,50 @@ function toggleTendencia(tipo) {
       chart.update();
     }
   }
+}
+
+function showWaNotificacion(reg) {
+  const colores = {
+    'Emisión':      { color:'#16A34A', emoji:'📋' },
+    'Inicial/Suple':{ color:'#16A34A', emoji:'📋' },
+    'Anulación':    { color:'#BE123C', emoji:'✕'  },
+    'Suspenso':     { color:'#BE123C', emoji:'⏸'  },
+    'Sin efecto':   { color:'#2563EB', emoji:'○'  },
+    'Reemplazo':    { color:'#D97706', emoji:'↔'  },
+    'Rehabilitación':{ color:'#059669',emoji:'↩'  },
+    'Pte. Anular':  { color:'#D97706', emoji:'⏰' },
+  };
+  const c = colores[reg.tipo] || { color:'#A3A39E', emoji:'•' };
+  const agente = (reg.agente||'').split(' ')[0]; // solo el primer nombre
+  const iniciales = (reg.agente||'?').split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase();
+  const ahora = new Date();
+  const hora = ahora.getHours().toString().padStart(2,'0') + ':' + ahora.getMinutes().toString().padStart(2,'0');
+
+  const noti = document.createElement('div');
+  noti.className = 'wa-noti';
+  noti.style.setProperty('--wa-color', c.color);
+  noti.style.pointerEvents = 'auto';
+  noti.innerHTML = `
+    <div class="wa-noti-avatar">${iniciales}</div>
+    <div class="wa-noti-body">
+      <div class="wa-noti-tipo" style="color:${c.color};">${c.emoji} ${reg.tipo}</div>
+      <div class="wa-noti-agente">${reg.agente||'Sin agente'}</div>
+      <div class="wa-noti-poliza">${reg.poliza||'—'} · ${(reg.ramo||'').split(' - ').pop()}</div>
+    </div>
+    <div class="wa-noti-time">${hora}</div>
+  `;
+  noti.onclick = () => cerrarWaNoti(noti);
+
+  const container = document.getElementById('waNotiContainer');
+  if(container) container.appendChild(noti);
+
+  // Auto-cerrar a los 5 segundos
+  setTimeout(() => cerrarWaNoti(noti), 5000);
+}
+
+function cerrarWaNoti(noti) {
+  noti.classList.add('saliendo');
+  setTimeout(() => noti.remove(), 300);
 }
 
 function toggleObjetivo() {
@@ -3009,6 +3144,8 @@ async function guardarRegistro(){
   try {
     await supaWrite(reg);
     registros.unshift(reg);
+    mostrarWaNotif(reg);
+    mostrarNotificacionSistema(reg);
     saveData();
     closeModal();
     goPage('registros');
@@ -3576,6 +3713,85 @@ function restaurarFiltros() {
     set('pteRamo',    f.pteRamo);
     set('pteRecibo',  f.pteRecibo);
   } catch(e) {}
+}
+
+
+const TIPO_CONFIG = {
+  'Emisión':       { color:'#16A34A', bg:'#F0FDF4', label:'Emisión' },
+  'Inicial/Suple': { color:'#16A34A', bg:'#F0FDF4', label:'Inicial/Suple' },
+  'Anulación':     { color:'#BE123C', bg:'#FFF1F3', label:'Anulación' },
+  'Suspenso':      { color:'#BE123C', bg:'#FFF1F3', label:'Suspenso' },
+  'Sin efecto':    { color:'#2563EB', bg:'#EFF6FF', label:'Sin efecto' },
+  'Rehabilitación':{ color:'#7C3AED', bg:'#F5F3FF', label:'Rehab.' },
+  'Reemplazo':     { color:'#D97706', bg:'#FFFBEB', label:'Reemplazo' },
+  'Pte. Anular':   { color:'#D97706', bg:'#FFFBEB', label:'Pte. Anular' },
+};
+
+// ── NOTIFICACIÓN WHATSAPP IN-APP ──────────────────────────
+let _waTimer = null;
+
+function mostrarWaNotif(reg) {
+  const cfg = TIPO_CONFIG[reg.tipo] || { color:'#A3A39E', bg:'#F7F7F6', label: reg.tipo };
+  const notif = document.getElementById('waNotif');
+  if(!notif) return;
+
+  // Colores dinámicos según tipo
+  notif.style.borderLeftColor = cfg.color;
+  const avatar = document.getElementById('waNotifAvatar');
+  avatar.style.background = cfg.color;
+
+  // Iniciales del agente
+  const agente = reg.agente || 'Desconocido';
+  const partes = agente.split(' ');
+  avatar.textContent = ((partes[0]?.[0]||'') + (partes[1]?.[0]||'')).toUpperCase() || '?';
+
+  // Contenido
+  document.getElementById('waNotifTipo').textContent = cfg.label;
+  document.getElementById('waNotifTipo').style.color = cfg.color;
+  document.getElementById('waNotifAgente').textContent = agente;
+  document.getElementById('waNotifDetalle').textContent = [reg.poliza, reg.ramo?.split(' - ').pop()].filter(Boolean).join(' · ');
+  const ahora = new Date();
+  document.getElementById('waNotifTime').textContent = ahora.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
+
+  // Mostrar
+  notif.classList.add('show');
+  if(_waTimer) clearTimeout(_waTimer);
+  _waTimer = setTimeout(() => cerrarWaNotif(), 5000);
+}
+
+function cerrarWaNotif() {
+  const notif = document.getElementById('waNotif');
+  if(notif) notif.classList.remove('show');
+  if(_waTimer) { clearTimeout(_waTimer); _waTimer = null; }
+}
+
+// ── NOTIFICACIONES NATIVAS DEL SISTEMA ────────────────────
+let _notifPermiso = false;
+
+async function pedirPermisoNotificaciones() {
+  if(!('Notification' in window)) return;
+  if(Notification.permission === 'granted') { _notifPermiso = true; return; }
+  if(Notification.permission === 'denied') return;
+  const result = await Notification.requestPermission();
+  _notifPermiso = result === 'granted';
+}
+
+function mostrarNotificacionSistema(reg) {
+  if(!_notifPermiso || Notification.permission !== 'granted') return;
+  const cfg = TIPO_CONFIG[reg.tipo] || { label: reg.tipo };
+  const titulo = `${cfg.label} · ${reg.agente || 'Agente'}`;
+  const cuerpo = [reg.poliza, reg.ramo?.split(' - ').pop(), reg.tomador].filter(Boolean).join(' · ');
+  try {
+    const n = new Notification(titulo, {
+      body: cuerpo,
+      icon: '/KPISVentasAnulaciones/icon-192.png',
+      badge: '/KPISVentasAnulaciones/icon-192.png',
+      tag: 'kompass-' + reg.id,
+      silent: false,
+    });
+    n.onclick = () => { window.focus(); n.close(); };
+    setTimeout(() => n.close(), 8000);
+  } catch(e) { console.warn('Notificación:', e.message); }
 }
 
 function normalizeSearch(str) {
