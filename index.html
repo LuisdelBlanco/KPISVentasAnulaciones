@@ -365,46 +365,67 @@ tbody tr:hover td { background: var(--bg); }
 /* ── RESPONSIVE ── */
 body.mobile { --sidebar-w: 0px; }
 body.mobile .sidebar { display: none !important; }
-body.mobile .main { margin-left: 0 !important; padding-bottom: 70px !important; }
+body.mobile .main { margin-left: 0 !important; padding-bottom: 64px !important; }
 body.mobile .bottom-nav { display: block !important; }
-body.mobile .topbar { padding: 0 12px !important; height: 52px !important; }
+
+/* Topbar */
+body.mobile .topbar { padding: 0 10px !important; height: 46px !important; }
 body.mobile .topbar-sub, body.mobile .topbar-sep { display: none !important; }
-body.mobile .topbar-title { font-size: 14px !important; }
-body.mobile .content { padding: 12px 10px !important; }
-body.mobile .kpi-grid { grid-template-columns: repeat(2,1fr) !important; gap: 8px !important; margin-bottom: 12px !important; }
-body.mobile .kpi-card { padding: 12px !important; }
-body.mobile .kpi-value { font-size: 22px !important; }
-body.mobile .kpi-label, body.mobile .kpi-delta { font-size: 10px !important; }
+body.mobile .topbar-title { font-size: 13px !important; }
+body.mobile .btn-primary { height: 34px !important; padding: 0 10px !important; font-size: 13px !important; }
+
+/* Contenido */
+body.mobile .content { padding: 10px 8px !important; }
+
+/* KPI 2 columnas */
+body.mobile .kpi-grid { grid-template-columns: repeat(2,1fr) !important; gap: 6px !important; margin-bottom: 10px !important; }
+body.mobile .kpi-card { padding: 10px !important; }
+body.mobile .kpi-value { font-size: 18px !important; }
+body.mobile .kpi-label { font-size: 9px !important; }
+body.mobile .kpi-delta { font-size: 9px !important; }
 body.mobile .kpi-progress { display: none !important; }
-body.mobile .charts-grid { grid-template-columns: 1fr !important; gap: 10px !important; }
-body.mobile .chart-wrap { height: 180px !important; }
-body.mobile .chart-card { padding: 14px 12px !important; }
+
+/* Gráficos 1 columna */
+body.mobile .charts-grid { grid-template-columns: 1fr !important; gap: 8px !important; }
+body.mobile .chart-wrap { height: 160px !important; }
+body.mobile .chart-card { padding: 12px 10px !important; }
+
+/* Oficinas 1 columna */
 body.mobile .oficinas-grid { grid-template-columns: 1fr !important; }
-body.mobile .filters-bar { flex-wrap: nowrap !important; overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; padding: 8px 10px !important; gap: 6px !important; scrollbar-width: none !important; }
+
+/* Filtros scroll horizontal */
+body.mobile .filters-bar { flex-wrap: nowrap !important; overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; padding: 6px 8px !important; gap: 5px !important; scrollbar-width: none !important; }
 body.mobile .filters-bar::-webkit-scrollbar { display: none; }
-body.mobile .filters-bar select, body.mobile .filters-bar .filter-select { min-width: 120px !important; font-size: 13px !important; height: 36px !important; flex-shrink: 0 !important; }
+body.mobile .filters-bar select, body.mobile .filters-bar .filter-select { min-width: 100px !important; font-size: 12px !important; height: 30px !important; flex-shrink: 0 !important; }
+
+/* Tabla */
 body.mobile .table-scroll { overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; }
-body.mobile td, body.mobile th { padding: 8px 10px !important; font-size: 12px !important; }
+body.mobile td, body.mobile th { padding: 6px 8px !important; font-size: 11px !important; }
+
+/* Modal desde abajo */
 body.mobile .modal-overlay { padding: 0 !important; align-items: flex-end !important; }
-body.mobile .modal { border-radius: 20px 20px 0 0 !important; max-height: 90vh !important; overflow-y: auto !important; padding: 20px 16px 24px !important; width: 100% !important; max-width: 100% !important; animation: modalInMobile 0.25s ease-out !important; }
-body.mobile .form-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
+body.mobile .modal { border-radius: 16px 16px 0 0 !important; max-height: 88vh !important; overflow-y: auto !important; padding: 18px 14px 20px !important; width: 100% !important; max-width: 100% !important; }
+body.mobile .form-grid { grid-template-columns: 1fr !important; gap: 10px !important; }
 body.mobile .form-group.span2 { grid-column: span 1 !important; }
-body.mobile .modal-actions { flex-direction: column !important; gap: 8px !important; }
-body.mobile .modal-actions .btn { width: 100% !important; height: 48px !important; font-size: 15px !important; }
-body.mobile .modal-title { font-size: 17px !important; }
+body.mobile .modal-actions .btn { flex: 1 !important; height: 42px !important; font-size: 14px !important; }
+body.mobile .modal-title { font-size: 16px !important; }
+
+/* Inputs — font-size 16px evita zoom en iOS pero no agranda el input */
 body.mobile input[type=text], body.mobile input[type=number], body.mobile input[type=date],
-body.mobile input[type=email], body.mobile input[type=password], body.mobile select { font-size: 16px !important; height: 44px !important; }
-body.mobile textarea { font-size: 16px !important; min-height: 80px !important; }
-body.mobile .btn { min-height: 44px !important; }
-body.mobile .btn-sm { min-height: 36px !important; height: 36px !important; font-size: 12px !important; }
-body.mobile .btn-primary { height: 44px !important; font-size: 15px !important; }
-body.mobile #loginScreen > div { border-radius: 0 !important; min-height: 100dvh !important; padding: 60px 24px 40px !important; display: flex !important; flex-direction: column !important; justify-content: center !important; }
-body.mobile #loginScreen input { height: 48px !important; font-size: 16px !important; }
-body.mobile #loginScreen button { height: 52px !important; font-size: 16px !important; }
-body.mobile #tabsBarRegistros button { font-size: 12px !important; padding: 8px 12px !important; }
-body.mobile .bottom-nav-inner { height: 60px !important; }
+body.mobile input[type=email], body.mobile input[type=password] { font-size: 16px !important; }
+body.mobile select { font-size: 14px !important; }
+body.mobile textarea { font-size: 14px !important; }
+
+/* Login */
+body.mobile #loginScreen > div { border-radius: 0 !important; min-height: 100dvh !important; padding: 50px 20px 30px !important; display: flex !important; flex-direction: column !important; justify-content: center !important; }
+
+/* Bottom nav */
+body.mobile .bottom-nav-inner { height: 56px !important; }
 body.mobile .bottom-nav-item { font-size: 9px !important; }
-body.mobile .bottom-nav-item .bnav-icon { font-size: 22px !important; }
+body.mobile .bottom-nav-item .bnav-icon { font-size: 20px !important; }
+
+/* Tabs */
+body.mobile #tabsBarRegistros button { font-size: 12px !important; padding: 7px 10px !important; }
 
 
 /* ── SCROLLBAR ── */
@@ -610,7 +631,12 @@ tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
         <div class="chart-card">
           <div class="chart-card-header">
             <span class="chart-card-title">Producción mensual</span>
-            <button id="btnObjetivo" class="btn btn-ghost btn-sm" onclick="toggleObjetivo()" style="font-size:11px;">◎ Objetivo</button>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;">
+              <button id="btnObjetivo" class="btn btn-ghost btn-sm" onclick="toggleObjetivo()" style="font-size:11px;">◎ Objetivo</button>
+              <button id="btnMesAnterior" class="btn btn-ghost btn-sm" onclick="toggleTendencia('mesAnterior')" style="font-size:11px;">↩ Mes ant.</button>
+              <button id="btnObjAcum" class="btn btn-ghost btn-sm" onclick="toggleTendencia('objAcum')" style="font-size:11px;">⟶ Obj. acum.</button>
+              <button id="btnMediaMovil" class="btn btn-ghost btn-sm" onclick="toggleTendencia('mediaMovil')" style="font-size:11px;">〜 Media</button>
+            </div>
           </div>
           <div class="chart-wrap"><canvas id="chartMensual"></canvas></div>
         </div>
@@ -693,7 +719,12 @@ tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
         <select class="filter-select" id="fRamo" onchange="renderRegistros();guardarFiltros()" style="width:130px">
           <option value="">Todos los ramos</option>
         </select>
-        <button onclick="resetFiltros()" style="display:inline-flex;align-items:center;gap:5px;background:#FFF1F3;color:#BE123C;border:1px solid #FECDD3;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">
+        <!-- Buscador global -->
+        <div style="position:relative;flex:1;min-width:160px;">
+          <input type="text" id="fBuscar" placeholder="🔍 Buscar póliza, tomador, ramo..." oninput="renderRegistros()" style="width:100%;height:32px;border:1px solid var(--border);border-radius:6px;padding:0 10px 0 10px;font-size:12px;font-family:inherit;background:var(--surface);">
+          <button id="fBuscarClear" onclick="document.getElementById('fBuscar').value='';renderRegistros();" style="display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-3);font-size:14px;line-height:1;">✕</button>
+        </div>
+        <button onclick="resetFiltros()" style="display:inline-flex;align-items:center;gap:5px;background:#FFF1F3;color:#BE123C;border:1px solid #FECDD3;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;flex-shrink:0;">
           <span style="font-size:14px;">⌫</span> Limpiar
         </button>
         <span style="margin-left:auto;font-size:12px;color:var(--text-3);" id="countRegistros"></span>
@@ -740,6 +771,10 @@ tr.new-inicial td      { animation: blinkVerde 1.4s ease-in-out 7; }
             <input type="date" id="pteVctoHasta" onchange="renderPendientesAnular()" style="height:32px;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:0 6px;background:var(--surface);">
           </div>
           <button onclick="limpiarFiltrosPte()" style="display:inline-flex;align-items:center;gap:5px;background:#FFF1F3;color:#BE123C;border:1px solid #FECDD3;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;"><span style="font-size:14px;">⌫</span> Limpiar</button>
+          <!-- Buscador Pte. Anular -->
+          <div style="position:relative;flex:1;min-width:160px;">
+            <input type="text" id="pteBuscar" placeholder="🔍 Buscar póliza, tomador..." oninput="renderPendientesAnular()" style="width:100%;height:32px;border:1px solid var(--border);border-radius:6px;padding:0 10px;font-size:12px;font-family:inherit;background:var(--surface);">
+          </div>
           <!-- Selección parcial -->
           <div id="pteSeleccionInfo" style="display:none;margin-left:auto;background:#F5F3FF;border:1px solid #DDD6FE;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;color:#7C3AED;white-space:nowrap;">
             ☑ Seleccionadas: <span id="pteSelCount">0</span> pólizas · <span id="pteSelTotal">0,00 €</span>
@@ -1710,16 +1745,25 @@ function getFiltered() {
 }
 function getFilteredRegistros() {
   let data = getFiltered();
-  // Excluir siempre Pte. Anular de la tabla normal — solo van a su pestaña
   data = data.filter(r => r.tipo !== 'Pte. Anular');
   const fOf = document.getElementById('fOficina')?.value||'';
   const fAg = document.getElementById('fAgente')?.value||'';
   const fTi = document.getElementById('fTipo')?.value||'';
   const fRa = document.getElementById('fRamo')?.value||'';
+  const fBuscar = (document.getElementById('fBuscar')?.value||'').trim().toLowerCase();
   if (fOf) data = data.filter(r => r.oficina === fOf);
   if (fAg) data = data.filter(r => (r.agente||r.comercial) === fAg);
   if (fTi) data = data.filter(r => r.tipo === fTi);
   if (fRa) data = data.filter(r => r.ramo === fRa);
+  if (fBuscar) {
+    data = data.filter(r => [r.poliza,r.tomador,r.ramo,r.agente,r.gestora,r.oficina,r.notas,r.motivo,r.tipo]
+      .some(v => matchSearch(v, fBuscar)));
+    const clr = document.getElementById('fBuscarClear');
+    if(clr) clr.style.display = 'block';
+  } else {
+    const clr = document.getElementById('fBuscarClear');
+    if(clr) clr.style.display = 'none';
+  }
   return data;
 }
 
@@ -1812,6 +1856,30 @@ function applyObjetivoLine() {
   chart.update();
 }
 
+function toggleTendencia(tipo) {
+  if(!window._tendencias) window._tendencias = {};
+  window._tendencias[tipo] = !window._tendencias[tipo];
+  // Actualizar botón
+  const btnMap = {mesAnterior:'btnMesAnterior', objAcum:'btnObjAcum', mediaMovil:'btnMediaMovil'};
+  const colorMap = {mesAnterior:'#2563EB', objAcum:'#D97706', mediaMovil:'#7C3AED'};
+  const btn = document.getElementById(btnMap[tipo]);
+  if(btn) {
+    btn.style.background = window._tendencias[tipo] ? colorMap[tipo] : '';
+    btn.style.color = window._tendencias[tipo] ? '#fff' : '';
+    btn.style.borderColor = window._tendencias[tipo] ? colorMap[tipo] : '';
+  }
+  // Mostrar/ocultar línea en el gráfico
+  const labelMap = {mesAnterior:'Mes anterior', objAcum:'Obj. acumulado', mediaMovil:'Media 3m'};
+  const chart = charts.mensual;
+  if(chart) {
+    const ds = chart.data.datasets.find(d => d.label === labelMap[tipo]);
+    if(ds) {
+      ds.hidden = !window._tendencias[tipo];
+      chart.update();
+    }
+  }
+}
+
 function toggleObjetivo() {
   objetivoVisible = !objetivoVisible;
   const btn = document.getElementById('btnObjetivo');
@@ -1887,8 +1955,8 @@ function renderKPIs() {
   const progColor = progPct >= 100 ? 'var(--green)' : progPct >= 70 ? 'var(--amber)' : 'var(--red)';
 
   const kpis = [
-    { label:'Emisiones', value: emisNetas, accent:'var(--green)', delta:`Brutas: ${ventas} · Sin efecto: ${sinEf}${rehab>0?' · Rehab: +'+rehab:''}${suple>0?' · Suples: '+suple:''}`, progress: { pct: progPct, color: progColor, label: `${emisNetas} de ${obj} · ${progPct}%` } },
-    { label:'Anulaciones', value: anulan, accent:'#BE123C', delta:`${Math.round(anulan/(ventas||1)*100)}% sobre emisiones${suspenso>0?' · Suspensos: '+suspenso:''}` },
+    { label:'Emisiones', value: emisNetas, accent:'var(--green)', delta:`Brutas: ${ventas} · Sin efecto: ${sinEf}${suple>0?' · Suples: '+suple:''}`, progress: { pct: progPct, color: progColor, label: `${emisNetas} de ${obj} · ${progPct}%` } },
+    { label:'Anulaciones', value: anulan, accent:'#BE123C', delta:`${Math.round(anulan/(ventas||1)*100)}% sobre emisiones${suspenso>0?' · Suspensos: '+suspenso:''}${rehab>0?' · Rehab: -'+rehab:''}` },
     { label:'Neto pólizas', value: neto>0?'+'+neto:neto, accent:'var(--blue)', delta:`Rehab: ${rehab} · Reempl: ${sust} · Susp: ${suspenso}` },
     { label:'Sin efecto', value: sinEf, accent:'var(--text-3)', delta:'' },
     { label:'Prima neta (€)', value: fmtK(totalPrima), accent:'var(--red)', delta:`Media: ${fmtK(totalPrima/(ventas||1))}€/póliza` },
@@ -1958,10 +2026,20 @@ function renderCharts() {
   else{obj=objetivo;}
   destroyChart('mensual');
   const byMonth = {};
+  // Necesitamos también datos del año anterior para "mes anterior"
+  const byMonthAll = {};
+  registros.filter(r => r.fecha && !['Pte. Anular'].includes(r.tipo)).forEach(r => {
+    const key = r.fecha?.substring(0,7); if(!key) return;
+    if(!byMonthAll[key]) byMonthAll[key]={ventas:0,sinEf:0,anulaciones:0,suspenso:0,rehab:0,inicial:0};
+    if(r.tipo==='Emisión'||r.tipo==='Inicial/Suple') byMonthAll[key].ventas++;
+    if(r.tipo==='Sin efecto') byMonthAll[key].sinEf++;
+    if(r.tipo==='Anulación'||r.tipo==='Suspenso') byMonthAll[key].anulaciones++;
+    if(r.tipo==='Rehabilitación') byMonthAll[key].rehab++;
+  });
   data.forEach(r => {
     const key = r.fecha?.substring(0,7); if(!key) return;
     if(!byMonth[key]) byMonth[key]={ventas:0,sinEf:0,anulaciones:0,suspenso:0,rehab:0};
-    if(r.tipo==='Emisión') byMonth[key].ventas++;
+    if(r.tipo==='Emisión'||r.tipo==='Inicial/Suple') byMonth[key].ventas++;
     if(r.tipo==='Sin efecto') byMonth[key].sinEf++;
     if(r.tipo==='Anulación') byMonth[key].anulaciones++;
     if(r.tipo==='Suspenso') byMonth[key].suspenso++;
@@ -1970,11 +2048,53 @@ function renderCharts() {
   const sortedMonths = Object.keys(byMonth).sort().slice(-18);
   const MNAMES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   const mLabels = sortedMonths.map(m=>{const[y,mo]=m.split('-');return MNAMES[parseInt(mo)-1]+' '+y.slice(2);});
+  const emisNetas = sortedMonths.map(m=>byMonth[m].ventas-byMonth[m].sinEf+byMonth[m].rehab);
+
+  // Línea mes anterior (mismo mes del año previo)
+  const dataMesAnterior = sortedMonths.map(m => {
+    const [y,mo] = m.split('-');
+    const prevKey = (parseInt(y)-1) + '-' + mo;
+    const prev = byMonthAll[prevKey];
+    return prev ? prev.ventas - prev.sinEf + prev.rehab : null;
+  });
+
+  // Línea objetivo acumulado (ritmo lineal para llegar al objetivo mensual)
+  const dataObjAcum = sortedMonths.map((m,i) => {
+    const diasMes = new Date(parseInt(m.split('-')[0]), parseInt(m.split('-')[1]), 0).getDate();
+    const hoy = new Date();
+    const esMesActual = m === hoy.toISOString().slice(0,7);
+    const diasTranscurridos = esMesActual ? hoy.getDate() : diasMes;
+    return Math.round(obj * diasTranscurridos / diasMes);
+  });
+
+  // Media móvil 3 meses
+  const dataMedia = sortedMonths.map((m,i) => {
+    if(i < 2) return null;
+    const vals = [emisNetas[i-2], emisNetas[i-1], emisNetas[i]];
+    return Math.round(vals.reduce((a,b)=>a+b,0)/3);
+  });
+
   const ctx1 = document.getElementById('chartMensual');
-  if(ctx1) { charts.mensual = new Chart(ctx1,{type:'bar',data:{labels:mLabels,datasets:[
-    {label:'Emisiones netas',data:sortedMonths.map(m=>byMonth[m].ventas-byMonth[m].sinEf),backgroundColor:'rgba(22,163,74,0.75)',borderRadius:4,borderSkipped:false},
-    {label:'Anulaciones',data:sortedMonths.map(m=>byMonth[m].anulaciones),backgroundColor:'rgba(194,0,63,0.15)',borderRadius:4,borderSkipped:false}
-  ]},options:{...CHART_OPTS,scales:{...CHART_OPTS.scales,x:{...CHART_OPTS.scales.x,ticks:{font:{family:'Plus Jakarta Sans',size:10},color:'#A3A39E',maxRotation:0}},y:{...CHART_OPTS.scales.y,beginAtZero:true}}}}); }
+  if(ctx1) {
+    const datasets = [
+      {label:'Emisiones netas', data:emisNetas, backgroundColor:'rgba(22,163,74,0.75)', borderRadius:4, borderSkipped:false, type:'bar'},
+      {label:'Anulaciones', data:sortedMonths.map(m=>byMonth[m].anulaciones+byMonth[m].suspenso), backgroundColor:'rgba(194,0,63,0.15)', borderRadius:4, borderSkipped:false, type:'bar'},
+      // Mes anterior
+      {label:'Mes anterior', data:dataMesAnterior, type:'line', borderColor:'#2563EB', backgroundColor:'transparent', borderWidth:2, borderDash:[4,4], pointRadius:3, pointBackgroundColor:'#2563EB', tension:0.3, hidden:!window._tendencias?.mesAnterior},
+      // Objetivo acumulado
+      {label:'Obj. acumulado', data:dataObjAcum, type:'line', borderColor:'#D97706', backgroundColor:'transparent', borderWidth:2, borderDash:[2,2], pointRadius:2, pointBackgroundColor:'#D97706', tension:0, hidden:!window._tendencias?.objAcum},
+      // Media móvil
+      {label:'Media 3m', data:dataMedia, type:'line', borderColor:'#7C3AED', backgroundColor:'transparent', borderWidth:2, pointRadius:2, pointBackgroundColor:'#7C3AED', tension:0.4, hidden:!window._tendencias?.mediaMovil},
+    ];
+    charts.mensual = new Chart(ctx1, {
+      type:'bar',
+      data:{labels:mLabels, datasets},
+      options:{...CHART_OPTS, scales:{...CHART_OPTS.scales,
+        x:{...CHART_OPTS.scales.x, ticks:{font:{family:'Plus Jakarta Sans',size:10},color:'#A3A39E',maxRotation:0}},
+        y:{...CHART_OPTS.scales.y, beginAtZero:true}
+      }}
+    });
+  }
 
   destroyChart('tipos');
   const tipos={'Emisión':0,'Anulación':0,'Rehabilitación':0,'Reemplazo':0,'Sin efecto':0,'Suspenso':0};
@@ -2289,7 +2409,11 @@ function renderRegistros() {
 }
 
 function formatDate(d){if(!d)return'—';const[y,m,day]=d.split('-');return`${day}/${m}/${y}`;}
-function resetFiltros(){['fOficina','fAgente','fTipo','fRamo'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});guardarFiltros();renderRegistros();}
+function resetFiltros(){
+  ['fOficina','fAgente','fTipo','fRamo','fBuscar'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const clr=document.getElementById('fBuscarClear'); if(clr) clr.style.display='none';
+  guardarFiltros();renderRegistros();
+}
 function deleteRegistro(id){
   if(!confirm('¿Eliminar este registro?')) return;
   registros = registros.filter(r => String(r.id) !== String(id));
@@ -3239,6 +3363,13 @@ function renderPendientesAnular() {
   if(fRa) pendientes = pendientes.filter(r => r.ramo === fRa);
   if(fRe) pendientes = pendientes.filter(r => (r.estadoRecibo||'pendiente') === fRe);
 
+  // Buscador libre
+  const pteBuscar = (document.getElementById('pteBuscar')?.value||'').trim().toLowerCase();
+  if(pteBuscar) {
+    pendientes = pendientes.filter(r => [r.poliza,r.tomador,r.ramo,r.agente,r.gestora,r.oficina,r.notas,r.motivo]
+      .some(v => matchSearch(v, pteBuscar)));
+  }
+
   // Filtro por vencimiento
   if(fVctoRango && fVctoRango !== 'personalizado') {
     pendientes = pendientes.filter(r => {
@@ -3341,7 +3472,7 @@ function toggleFechasLibresPte() {
 }
 
 function limpiarFiltrosPte() {
-  ['pteOficina','pteAgente','pteRamo','pteRecibo','pteVctoRango','pteVctoDesde','pteVctoHasta'].forEach(id => {
+  ['pteOficina','pteAgente','pteRamo','pteRecibo','pteVctoRango','pteVctoDesde','pteVctoHasta','pteBuscar'].forEach(id => {
     const el = document.getElementById(id); if(el) el.value = '';
   });
   const orden = document.getElementById('pteOrden');
@@ -3445,6 +3576,19 @@ function restaurarFiltros() {
     set('pteRamo',    f.pteRamo);
     set('pteRecibo',  f.pteRecibo);
   } catch(e) {}
+}
+
+function normalizeSearch(str) {
+  return (str||'')
+    .normalize('NFD')                        // descompone caracteres con tilde
+    .replace(/[\u0300-\u036f]/g, '')         // elimina los diacríticos (tildes, etc.)
+    .replace(/[.\-,;:_/\\()\s]+/g, ' ')     // reemplaza puntuación y espacios múltiples por espacio
+    .trim()
+    .toLowerCase();
+}
+
+function matchSearch(valor, busqueda) {
+  return normalizeSearch(valor).includes(normalizeSearch(busqueda));
 }
 
 function getLunesDeHoy() {
