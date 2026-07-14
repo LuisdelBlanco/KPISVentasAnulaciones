@@ -1026,7 +1026,7 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
           </div>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:960px;">
+      <div id="ajustesAvanzados" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:960px;">
         <div class="table-card">
           <div class="table-card-header"><span class="table-card-title">Oficinas</span></div>
           <div style="padding:14px;">
@@ -1478,7 +1478,9 @@ async function doLogout() {
 function aplicarPermisos() {
   const isAdvanced = currentRole === 'advanced';
   const ajustesLink = null; // permisos vía data-page
-  if(ajustesLink) ajustesLink.style.display = isAdvanced ? '' : 'none';
+  if(ajustesLink) ajustesLink.style.display = ''; // todos pueden acceder a Ajustes (foto)
+  const ajAvanzados = document.getElementById('ajustesAvanzados');
+  if(ajAvanzados) ajAvanzados.style.display = isAdvanced ? 'grid' : 'none';
   const userInfo = document.getElementById('sidebarUser');
   if(userInfo) {
     const nombre = currentUser?.email?.split('@')[0] || '';
