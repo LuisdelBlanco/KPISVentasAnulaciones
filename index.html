@@ -1616,16 +1616,11 @@ function iniciarPolling() {
           mapped.forEach(r => window._registrosNuevosIds.add(String(r.id)));
           registros = [...mapped, ...registros];
           renderAll();
-          // Mostrar toast solo cuando hay registros nuevos
-          const toast = document.getElementById('pollingToast');
-          const msg = document.getElementById('pollingMsg');
-          if(toast && msg) {
-            toast.style.display = 'flex';
-            msg.textContent = realesNuevos.length === 1
-              ? '1 nuevo registro añadido'
-              : realesNuevos.length + ' nuevos registros añadidos';
-            clearTimeout(toast._hideTimer);
-            toast._hideTimer = setTimeout(() => { toast.style.display = 'none'; }, 5000);
+          // Notificación WhatsApp in-app + sistema para el último registro nuevo
+          const ultimo = mapped[0];
+          if(ultimo) {
+            mostrarWaNotif(ultimo);
+            mostrarNotificacionSistema(ultimo);
           }
         }
       }
