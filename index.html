@@ -1511,7 +1511,15 @@ function aplicarPermisos() {
   const userInfo = document.getElementById('sidebarUser');
   if(userInfo) {
     const nombre = currentUser?.email?.split('@')[0] || '';
-    userInfo.textContent = nombre + (isAdvanced ? ' · Admin' : '');
+    const nombreMostrar = document.getElementById('sidebarUserName')?.textContent || nombre;
+    userInfo.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div id="sidebarAvatar" style="flex-shrink:0;">${avatarHTML(nombreMostrar, 32)}</div>
+        <div>
+          <div style="font-weight:600;font-size:12px;color:var(--text);">${nombreMostrar}</div>
+          <div style="font-size:10px;color:var(--text-3);">${isAdvanced ? 'Admin' : 'Agente'}</div>
+        </div>
+      </div>`;
   }
 }
 
@@ -1529,6 +1537,7 @@ async function arrancarApp() {
   renderConfig();
   await cargarFotosAgentes();
   actualizarBtnNotif();
+  aplicarPermisos(); // refrescar avatar sidebar con fotos cargadas
   restaurarFiltros();
   renderAll();
   iniciarPolling();
@@ -2187,9 +2196,20 @@ function getInitials(nombre) {
   return nombre.slice(0,2).toUpperCase();
 }
 function avatarHTML(nombre, size=28) {
-  const color = getAvatarColor(nombre);
-  const initials = getInitials(nombre);
-  return `<span style="display:inline-flex;align-items:center;justify-content:center;width:${size}px;height:${size}px;border-radius:50%;background:${color};color:#fff;font-size:${Math.round(size*0.38)}px;font-weight:700;flex-shrink:0;letter-spacing:-0.5px;">${initials}</span>`;
+  // Usar foto si está disponible en el mapa global
+  const foto = _fotosAgentes[(nombre||'').toLowerCase()] ||
+    (_userFoto && nombre && currentUser &&
+     nombre.toLowerCase().includes((currentUser.email?.split('@')[0]||'').toLowerCase())
+     ? _userFoto : '');
+  if(foto) {
+    return `<img src="${foto}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;flex-shrink:0;display:inline-block;vertical-align:middle;">`;
+  }
+  // Sin foto → gradiente con iniciales
+  const c1 = hashColor(nombre||'?', 0);
+  const c2 = hashColor(nombre||'?', 3);
+  const partes = (nombre||'?').trim().split(' ');
+  const ini = ((partes[0]?.[0]||'') + (partes[1]?.[0]||'')).toUpperCase() || '?';
+  return `<span style="display:inline-flex;align-items:center;justify-content:center;width:${size}px;height:${size}px;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});color:#fff;font-size:${Math.round(size*0.36)}px;font-weight:800;flex-shrink:0;letter-spacing:-0.5px;">${ini}</span>`;
 }
 
 function destroyChart(id) { if(charts[id]){charts[id].destroy();delete charts[id];} }
