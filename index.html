@@ -3826,7 +3826,8 @@ function cerrarWaNotif() {
 }
 
 // ── NOTIFICACIONES NATIVAS DEL SISTEMA ────────────────────
-let _notifPermiso = ('Notification' in window && Notification.permission === 'granted'); // leer estado real del navegador
+let _notifPermiso = ('Notification' in window && Notification.permission === 'granted');
+let _notifMuted = localStorage.getItem('kompass_notif_muted') === 'true';
 
 async function pedirPermisoNotificaciones() {
   if(!('Notification' in window)) {
@@ -3862,14 +3863,19 @@ function actualizarBtnNotif() {
   if(!('Notification' in window)) {
     btn.textContent = '🔕 No disponible en este navegador';
     btn.disabled = true;
-  } else if(Notification.permission === 'granted') {
-    btn.textContent = '🔔 Notificaciones activas';
-    btn.style.background = '#16A34A';
-    btn.disabled = false;
+    btn.style.background = '#A3A39E';
   } else if(Notification.permission === 'denied') {
-    btn.textContent = '🚫 Bloqueadas — activar en el navegador';
+    btn.textContent = '🚫 Bloqueadas — activar en ajustes del navegador';
     btn.style.background = '#A3A39E';
     btn.disabled = true;
+  } else if(Notification.permission === 'granted' && !_notifMuted) {
+    btn.textContent = '🔔 Notificaciones activas — clic para silenciar';
+    btn.style.background = '#16A34A';
+    btn.disabled = false;
+  } else if(Notification.permission === 'granted' && _notifMuted) {
+    btn.textContent = '🔕 Silenciadas — clic para activar';
+    btn.style.background = '#A3A39E';
+    btn.disabled = false;
   } else {
     btn.textContent = '🔔 Activar notificaciones';
     btn.style.background = 'var(--red)';
@@ -3877,8 +3883,41 @@ function actualizarBtnNotif() {
   }
 }
 
+async function pedirPermisoNotificaciones() {
+  if(!('Notification' in window)) {
+    mostrarToast('⚠️ Tu navegador no soporta notificaciones');
+    return;
+  }
+  // Si ya están concedidas → toggle silenciar/activar
+  if(Notification.permission === 'granted') {
+    _notifMuted = !_notifMuted;
+    _notifPermiso = !_notifMuted;
+    localStorage.setItem('kompass_notif_muted', _notifMuted);
+    actualizarBtnNotif();
+    mostrarToast(_notifMuted ? '🔕 Notificaciones silenciadas' : '🔔 Notificaciones activadas');
+    return;
+  }
+  // Si están bloqueadas
+  if(Notification.permission === 'denied') {
+    mostrarToast('🚫 Bloqueadas. Actívalas en los ajustes del navegador.');
+    return;
+  }
+  // Pedir permiso por primera vez
+  const result = await Notification.requestPermission();
+  _notifPermiso = result === 'granted';
+  _notifMuted = false;
+  localStorage.setItem('kompass_notif_muted', 'false');
+  actualizarBtnNotif();
+  if(_notifPermiso) {
+    mostrarToast('✅ Notificaciones activadas');
+    new Notification('Kompass', { body: 'Las notificaciones funcionan correctamente ✓', icon: '/KPISVentasAnulaciones/icon-192.png' });
+  } else {
+    mostrarToast('⚠️ Permiso denegado. Revisa los ajustes del navegador.');
+  }
+}
+
 function mostrarNotificacionSistema(reg) {
-  if(!_notifPermiso || Notification.permission !== 'granted') return;
+  if(!_notifPermiso || _notifMuted || Notification.permission !== 'granted') return;
   const cfg = TIPO_CONFIG[reg.tipo] || { label: reg.tipo };
   const titulo = `${cfg.label} · ${reg.agente || 'Agente'}`;
   const cuerpo = [reg.poliza, reg.ramo?.split(' - ').pop(), reg.tomador].filter(Boolean).join(' · ');
