@@ -3985,18 +3985,30 @@ function getAvatarHtml(agente, size=28) {
 async function guardarFotoUsuario(base64) {
   if(!currentUser?.id) return;
   _userFoto = base64;
-  const nombreUsuario = document.getElementById('sidebarUserName')?.textContent?.trim() || '';
+  const nombreUsuario = _fotosAgentes && Object.keys(_fotosAgentes).length > 0
+    ? Object.keys(_fotosAgentes).find(k => _fotosAgentes[k] === _userFoto) || ''
+    : '';
+  // Actualizar mapa global
   if(nombreUsuario) _fotosAgentes[nombreUsuario.toLowerCase()] = base64;
   actualizarAvatarSidebar();
+  aplicarPermisos();
   try {
-    // UPSERT — crea la fila si no existe, actualiza si existe
-    await supaFetch('/rest/v1/user_roles', {
-      method: 'POST',
-      headers: {'Prefer': 'resolution=merge-duplicates,return=minimal'},
-      body: JSON.stringify([{ user_id: currentUser.id, foto: base64, nombre: nombreUsuario }])
-    });
+    // Intentar PATCH primero
+    const patch = await supaFetch(
+      '/rest/v1/user_roles?user_id=eq.' + currentUser.id,
+      { method: 'PATCH', headers: {'Prefer': 'return=representation'}, body: JSON.stringify({ foto: base64 }) }
+    );
+    // Si PATCH no encontró la fila → INSERT
+    if(!patch || (Array.isArray(patch) && patch.length === 0)) {
+      await supaFetch('/rest/v1/user_roles', {
+        method: 'POST',
+        headers: {'Prefer': 'return=minimal'},
+        body: JSON.stringify([{ user_id: currentUser.id, role: 'basic', foto: base64 }])
+      });
+    }
     mostrarToast('✅ Foto guardada correctamente');
   } catch(e) {
+    console.error('Error guardando foto:', e.message);
     mostrarToast('⚠️ Error al guardar la foto: ' + e.message);
   }
 }
