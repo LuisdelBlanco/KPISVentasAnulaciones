@@ -3894,31 +3894,33 @@ function calcularIncentivo(nombre, mes, anio) {
   const enMargen = tramoNum >= tip.tramoMin && tramoNum <= tip.tramoMax;
 
   // Multiplicadores (solo si está en margen)
-  let bonusTotal = 0;
+  // Multiplicadores — se calculan siempre, pero solo suman bono si está en margen
   const multiplicadores = [];
+  let bonusTotal = 0;
+  const bonoMinTramo = enMargen ? bonoBase : (TRAMOS_INC.find(t => t.num === tip.tramoMin)?.bono || 0);
 
-  if(enMargen && bonoBase > 0) {
-    // Vida Temporal: prima neta >= 200€
-    const vida = computables.filter(r => esVidaTemporal(r) && (r.prima||0) >= 200);
-    if(vida.length > 0) {
-      const bonus = bonoBase * 2;
-      bonusTotal += bonus;
-      multiplicadores.push({ label: '🛡️ Vida Temporal', factor: '×2', importe: bonus });
-    }
-    // Ahorro: prima anual >= 1200€
-    const ahorro = computables.filter(r => esAhorro(r) && (r.prima||0) >= 1200);
-    if(ahorro.length > 0) {
-      const bonus = bonoBase * 0.5;
-      bonusTotal += bonus;
-      multiplicadores.push({ label: '💼 Ahorro', factor: '×0.5', importe: bonus });
-    }
-    // Salud: prima neta >= 200€
-    const salud = computables.filter(r => esSalud(r) && (r.prima||0) >= 200);
-    if(salud.length > 0) {
-      const bonus = bonoBase * 0.75;
-      bonusTotal += bonus;
-      multiplicadores.push({ label: '🏥 Salud', factor: '×0.75', importe: bonus });
-    }
+  // Vida Temporal: al menos 1 póliza con prima neta >= 200€
+  const vida = computables.filter(r => esVidaTemporal(r) && (r.prima||0) >= 200);
+  if(vida.length > 0) {
+    const importe = enMargen ? bonoBase * 2 : 0;
+    if(enMargen) bonusTotal += importe;
+    multiplicadores.push({ label: '🛡️ Vida Temporal', factor: '×2', importe, alcanzado: true, enMargen });
+  }
+
+  // Ahorro: al menos 1 póliza con prima >= 1200€
+  const ahorro = computables.filter(r => esAhorro(r) && (r.prima||0) >= 1200);
+  if(ahorro.length > 0) {
+    const importe = enMargen ? bonoBase * 0.5 : 0;
+    if(enMargen) bonusTotal += importe;
+    multiplicadores.push({ label: '💼 Ahorro', factor: '×0.5', importe, alcanzado: true, enMargen });
+  }
+
+  // Salud: al menos 1 póliza con prima >= 200€
+  const salud = computables.filter(r => esSalud(r) && (r.prima||0) >= 200);
+  if(salud.length > 0) {
+    const importe = enMargen ? bonoBase * 0.75 : 0;
+    if(enMargen) bonusTotal += importe;
+    multiplicadores.push({ label: '🏥 Salud', factor: '×0.75', importe, alcanzado: true, enMargen });
   }
 
   const bonoTotal = enMargen ? bonoBase + bonusTotal : 0;
@@ -3987,7 +3989,10 @@ function renderIncentivos() {
     const colorEstado = r.bonoTotal > 0 ? '#16A34A' : (r.nComputables >= r.tip.tramoMin*5 ? '#D97706' : '#A3A39E');
 
     const multHtml = r.multiplicadores.length > 0
-      ? r.multiplicadores.map(m => `<span style="background:var(--surface-2);border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;color:var(--text-2);">${m.label} ${m.factor} <strong>+${m.importe.toFixed(2)}€</strong></span>`).join(' ')
+      ? r.multiplicadores.map(m => m.enMargen
+          ? `<span style="background:#F0FDF4;border:1px solid #86EFAC;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;color:#16A34A;">${m.label} ${m.factor} <strong>+${m.importe.toFixed(2)}€</strong></span>`
+          : `<span style="background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;color:var(--text-3);" title="Conseguido — activo cuando alcances tu tramo mínimo">${m.label} ${m.factor} <strong>✓ conseguido</strong></span>`
+        ).join(' ')
       : '<span style="font-size:11px;color:var(--text-3);">Sin multiplicadores este mes</span>';
 
     const minTipo = r.tip.tramoMin === 1 ? 5 : r.tip.tramoMin === 2 ? 10 : 20;
