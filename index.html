@@ -1511,6 +1511,8 @@ async function loadUserRole() {
     _userFoto = data?.[0]?.foto || '';
     // Repintar nav ahora que tenemos el rol
     aplicarPermisos();
+    // Re-renderizar Mi Área si está abierta
+    if(currentPage === 'incentivos') { initIncentivosSelectors(); renderIncentivos(); }
     // Registrar el nombre del usuario en el mapa de fotos
     const nombreSidebar = document.getElementById('sidebarUserName')?.textContent;
     if(nombreSidebar && _userFoto) _fotosAgentes[nombreSidebar.toLowerCase()] = _userFoto;
@@ -2019,6 +2021,7 @@ function goPage(id) {
   if (id==='registros') populateFilterSelects();
   if (id==='config') renderConfig();
   if (id==='actividad') { renderActividad(); preseleccionarMesActividad(); }
+  if (id==='incentivos') { initIncentivosSelectors(); setTimeout(renderIncentivos, 200); }
   renderAll();
 }
 function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
