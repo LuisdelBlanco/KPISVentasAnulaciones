@@ -641,6 +641,7 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
   </div>
   <div class="nav-group">
     <div class="nav-group-label">Sistema</div>
+    <div class="nav-item" id="navIncentivos" onclick="goPage('incentivos')"><span class="nav-icon">🔐</span> Mi Área</div>
     <div class="nav-item" onclick="goPage('config')"><span class="nav-icon">◈</span> Ajustes</div>
   </div>
 
@@ -1470,7 +1471,11 @@ async function loadUserRole() {
   try {
     const data = await supaFetch('/rest/v1/user_roles?select=role,foto&user_id=eq.' + currentUser.id);
     currentRole = data?.[0]?.role || 'basic';
+    // Fallback: si el UUID es el de Luis, siempre advanced
+    if(currentUser.id === '2beeddaf-8c14-4467-99bc-2dc0b80e7cbd') currentRole = 'advanced';
     _userFoto = data?.[0]?.foto || '';
+    // Repintar nav ahora que tenemos el rol
+    aplicarPermisos();
     // Registrar el nombre del usuario en el mapa de fotos
     const nombreSidebar = document.getElementById('sidebarUserName')?.textContent;
     if(nombreSidebar && _userFoto) _fotosAgentes[nombreSidebar.toLowerCase()] = _userFoto;
@@ -3733,6 +3738,261 @@ function convertirAAnulacion(id) {
 }
 
 
+
+// ── INCENTIVOS ────────────────────────────────────────────
+const TIPOLOGIAS_INC = {
+  'Mary González':     { tipo: 'Senior',  tramoMin: 2, tramoMax: 4 },
+  'María Linares':     { tipo: 'Experto', tramoMin: 4, tramoMax: 6 },
+  'Carlos del Blanco': { tipo: 'Experto', tramoMin: 4, tramoMax: 6 },
+  'Raúl López':        { tipo: 'Experto', tramoMin: 4, tramoMax: 6 },
+  'Jezabel Tristany':  { tipo: 'Senior',  tramoMin: 2, tramoMax: 4 },
+  'Dafne Campaña':     { tipo: 'Junior',  tramoMin: 1, tramoMax: 3 },
+  'Conchi Soto':       { tipo: 'Senior',  tramoMin: 2, tramoMax: 4 },
+};
+
+const TRAMOS_INC = [
+  { num:1, min:5,  max:9,        bono:50  },
+  { num:2, min:10, max:14,       bono:100 },
+  { num:3, min:15, max:19,       bono:150 },
+  { num:4, min:20, max:24,       bono:200 },
+  { num:5, min:25, max:29,       bono:250 },
+  { num:6, min:30, max:Infinity, bono:300 },
+];
+
+function getTramo(n) {
+  return TRAMOS_INC.find(t => n >= t.min && n <= t.max) || null;
+}
+
+function esVidaTemporal(r) {
+  const ramo = (r.ramo||'').toLowerCase();
+  return ramo.includes('vida temp') || ramo.includes('temporal');
+}
+function esAhorro(r) {
+  const ramo = (r.ramo||'').toLowerCase();
+  return ramo.includes('ahorro') || ramo.includes('creciente') || ramo.includes('1354') || ramo.includes('1355');
+}
+function esSalud(r) {
+  const ramo = (r.ramo||'').toLowerCase();
+  return ramo.includes('salud');
+}
+function esSuple(r) {
+  return r.tipo === 'Inicial/Suple';
+}
+
+function calcularIncentivo(nombre, mes, anio) {
+  const tip = TIPOLOGIAS_INC[nombre];
+  if(!tip) return null;
+
+  // Registros del mes del agente
+  const regs = registros.filter(r => {
+    if(!r.fecha) return false;
+    const d = new Date(r.fecha);
+    return d.getFullYear() == anio && (d.getMonth()+1) == mes && r.agente === nombre;
+  });
+
+  // Emisiones brutas (Emisión + Inicial/Suple)
+  const emitidas = regs.filter(r => r.tipo === 'Emisión' || r.tipo === 'Inicial/Suple');
+  // Sin efectos del mes
+  const sinEfectos = regs.filter(r => r.tipo === 'Sin efecto').length;
+
+  // Aplicar restricciones de pólizas con prima < 50€
+  let polizasBase = [...emitidas];
+
+  // Separar suplementarias
+  const suples = polizasBase.filter(r => esSuple(r));
+  const noSuples = polizasBase.filter(r => !esSuple(r));
+
+  // Calcular tramo provisional con TODAS para determinar límite de suples
+  const totalProv = polizasBase.length - sinEfectos;
+  const tramoProv = getTramo(totalProv);
+  const maxSuples = tramoProv && tramoProv.num >= 4 ? 2 : 1;
+
+  // Filtrar suplementarias: solo cuentan si prima >= 1500 y dentro del límite
+  const suplesValidas = suples.filter(r => (r.prima||0) >= 1500).slice(0, maxSuples);
+  const suplesInvalidas = suples.filter(r => !suplesValidas.includes(r));
+
+  // Recalcular sin suples inválidas
+  polizasBase = [...noSuples, ...suplesValidas];
+
+  // Aplicar restricción prima < 50€
+  const primasBajas = polizasBase.filter(r => (r.prima||0) < 50);
+  const primasNormales = polizasBase.filter(r => (r.prima||0) >= 50);
+  const maxPrimasBajas = getTramo(polizasBase.length - sinEfectos)?.num >= 4 ? 2 : 1;
+  const primasBajasValidas = primasBajas.slice(0, maxPrimasBajas);
+
+  // Pólizas computables finales
+  const computables = [...primasNormales, ...primasBajasValidas];
+  const nComputables = Math.max(0, computables.length - sinEfectos);
+
+  // Determinar tramo final
+  const tramo = getTramo(nComputables);
+  const tramoNum = tramo ? tramo.num : 0;
+  const bonoBase = tramo ? tramo.bono : 0;
+
+  // Verificar si está en el margen de su tipología
+  const enMargen = tramoNum >= tip.tramoMin && tramoNum <= tip.tramoMax;
+
+  // Multiplicadores (solo si está en margen)
+  let bonusTotal = 0;
+  const multiplicadores = [];
+
+  if(enMargen && bonoBase > 0) {
+    // Vida Temporal: prima neta >= 200€
+    const vida = computables.filter(r => esVidaTemporal(r) && (r.prima||0) >= 200);
+    if(vida.length > 0) {
+      const bonus = bonoBase * 2;
+      bonusTotal += bonus;
+      multiplicadores.push({ label: '🛡️ Vida Temporal', factor: '×2', importe: bonus });
+    }
+    // Ahorro: prima anual >= 1200€
+    const ahorro = computables.filter(r => esAhorro(r) && (r.prima||0) >= 1200);
+    if(ahorro.length > 0) {
+      const bonus = bonoBase * 0.5;
+      bonusTotal += bonus;
+      multiplicadores.push({ label: '💼 Ahorro', factor: '×0.5', importe: bonus });
+    }
+    // Salud: prima neta >= 200€
+    const salud = computables.filter(r => esSalud(r) && (r.prima||0) >= 200);
+    if(salud.length > 0) {
+      const bonus = bonoBase * 0.75;
+      bonusTotal += bonus;
+      multiplicadores.push({ label: '🏥 Salud', factor: '×0.75', importe: bonus });
+    }
+  }
+
+  const bonoTotal = enMargen ? bonoBase + bonusTotal : 0;
+
+  // Pólizas para siguiente tramo
+  const siguienteTramo = TRAMOS_INC.find(t => t.num === tramoNum + 1);
+  const paraSubir = siguienteTramo && tramoNum < tip.tramoMax
+    ? Math.max(0, siguienteTramo.min - nComputables) : 0;
+
+  return {
+    nombre, tip, nComputables, sinEfectos,
+    tramo, tramoNum, bonoBase, enMargen,
+    multiplicadores, bonusTotal, bonoTotal,
+    paraSubir, siguienteTramo,
+    emitidas: emitidas.length
+  };
+}
+
+function renderIncentivos() {
+  const anio = parseInt(document.getElementById('incYear')?.value) || new Date().getFullYear();
+  const mes = parseInt(document.getElementById('incMonth')?.value) || new Date().getMonth()+1;
+  const cards = document.getElementById('incCards');
+  const totalAdmin = document.getElementById('incTotalAdmin');
+  const totalVal = document.getElementById('incTotalVal');
+  if(!cards) return;
+
+  const isAdv = currentRole === 'advanced';
+  // Nombre del usuario actual para filtrar si no es admin
+  const nombreActual = Object.keys(TIPOLOGIAS_INC).find(n => {
+    const partes = n.toLowerCase().split(' ');
+    return (currentUser?.email||'').toLowerCase().includes(partes[0]) ||
+           (currentUser?.email||'').toLowerCase().includes(partes[1]||'___');
+  }) || '';
+
+  const comercialesVer = isAdv
+    ? Object.keys(TIPOLOGIAS_INC)
+    : (TIPOLOGIAS_INC[nombreActual] ? [nombreActual] : []);
+
+  if(comercialesVer.length === 0) {
+    cards.innerHTML = '<p style="color:var(--text-3);font-size:14px;">No tienes incentivos configurados para este mes.</p>';
+    return;
+  }
+
+  let totalPagar = 0;
+  cards.innerHTML = comercialesVer.map(nombre => {
+    const r = calcularIncentivo(nombre, mes, anio);
+    if(!r) return '';
+    totalPagar += r.bonoTotal;
+
+    const pct = r.tramo ? Math.min(100, ((r.nComputables - r.tramo.min) / (Math.min(r.tramo.max, r.tramo.min+4) - r.tramo.min)) * 100) : 0;
+    const colorEstado = r.bonoTotal > 0 ? '#16A34A' : (r.nComputables >= r.tip.tramoMin*5 ? '#D97706' : '#A3A39E');
+
+    const multHtml = r.multiplicadores.length > 0
+      ? r.multiplicadores.map(m => `<span style="background:var(--surface-2);border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;color:var(--text-2);">${m.label} ${m.factor} <strong>+${m.importe.toFixed(2)}€</strong></span>`).join(' ')
+      : '<span style="font-size:11px;color:var(--text-3);">Sin multiplicadores este mes</span>';
+
+    const minTipo = r.tip.tramoMin === 1 ? 5 : r.tip.tramoMin === 2 ? 10 : 20;
+    const maxTipo = r.tip.tramoMax === 3 ? 19 : r.tip.tramoMax === 4 ? 24 : 999;
+    const pctGeneral = Math.min(100, (r.nComputables / (maxTipo === 999 ? 30 : maxTipo)) * 100);
+
+    return `<div style="background:var(--surface);border-radius:12px;border:1px solid var(--border);padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,0.05);">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+        ${avatarHTML(nombre, 38)}
+        <div style="flex:1;">
+          <div style="font-size:15px;font-weight:800;color:var(--text);">${nombre}</div>
+          <div style="font-size:11px;color:var(--text-3);">${r.tip.tipo} · Tramos ${r.tip.tramoMin}–${r.tip.tramoMax}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:22px;font-weight:900;color:${r.bonoTotal > 0 ? 'var(--red)' : 'var(--text-3)'};">${r.bonoTotal.toFixed(2)} €</div>
+          <div style="font-size:10px;color:var(--text-3);">bono estimado</div>
+        </div>
+      </div>
+
+      <!-- Stats fila -->
+      <div style="display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap;">
+        <div style="text-align:center;">
+          <div style="font-size:22px;font-weight:800;color:var(--text);">${r.nComputables}</div>
+          <div style="font-size:10px;color:var(--text-3);">pólizas</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:22px;font-weight:800;color:#BE123C;">${r.sinEfectos}</div>
+          <div style="font-size:10px;color:var(--text-3);">sin efectos</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:22px;font-weight:800;color:var(--text);">${r.tramo ? 'T'+r.tramoNum : '—'}</div>
+          <div style="font-size:10px;color:var(--text-3);">tramo</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:22px;font-weight:800;color:${r.enMargen ? '#16A34A' : '#BE123C'};">${r.enMargen ? '✓' : '✗'}</div>
+          <div style="font-size:10px;color:var(--text-3);">${r.enMargen ? 'en margen' : 'fuera margen'}</div>
+        </div>
+        ${r.paraSubir > 0 && r.tramoNum < r.tip.tramoMax ? `<div style="text-align:center;margin-left:auto;">
+          <div style="font-size:13px;font-weight:700;color:#D97706;">+${r.paraSubir} para T${r.tramoNum+1} (${r.siguienteTramo?.bono}€)</div>
+          <div style="font-size:10px;color:var(--text-3);">siguiente tramo</div>
+        </div>` : ''}
+      </div>
+
+      <!-- Barra de progreso -->
+      <div style="background:var(--surface-2);border-radius:99px;height:8px;margin-bottom:10px;overflow:hidden;">
+        <div style="height:100%;border-radius:99px;background:${r.bonoTotal > 0 ? 'var(--green)' : '#D97706'};width:${pctGeneral}%;transition:width 0.5s;"></div>
+      </div>
+
+      <!-- Multiplicadores -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">${multHtml}</div>
+
+      ${r.bonoTotal > 0 && r.bonoBase > 0 ? `
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:12px;color:var(--text-3);">
+        <span>Base: <strong>${r.bonoBase}€</strong></span>
+        <span>Bonus: <strong>+${r.bonusTotal.toFixed(2)}€</strong></span>
+        <span>Total: <strong style="color:var(--red);">${r.bonoTotal.toFixed(2)}€</strong></span>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+
+  // Mostrar total admin
+  if(isAdv && totalAdmin && totalVal) {
+    totalAdmin.style.display = 'flex';
+    totalVal.textContent = totalPagar.toFixed(2) + ' €';
+  }
+}
+
+function initIncentivosSelectors() {
+  const yearSel = document.getElementById('incYear');
+  if(!yearSel || yearSel.options.length > 0) return;
+  const hoy = new Date();
+  for(let y = hoy.getFullYear(); y >= 2025; y--) {
+    const opt = document.createElement('option');
+    opt.value = y; opt.textContent = y;
+    yearSel.appendChild(opt);
+  }
+  yearSel.value = hoy.getFullYear();
+  document.getElementById('incMonth').value = hoy.getMonth() + 1;
+}
+
+
 // ── FILTROS PERSISTENTES ──────────────────────────────────
 function guardarFiltros() {
   if(!currentUser?.id) return;
@@ -4246,6 +4506,8 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     accessToken = session.access_token;
     refreshToken = session.refresh_token || null;
     currentUser = session.user;
+  // Forzar rol admin por UUID antes de cualquier render
+  if(currentUser.id === '2beeddaf-8c14-4467-99bc-2dc0b80e7cbd') currentRole = 'advanced';
     await loadUserRole();
     iniciarRenovacionToken();
     await arrancarApp();
