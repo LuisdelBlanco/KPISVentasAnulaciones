@@ -1038,7 +1038,7 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
         <!-- Sección incentivos -->
         <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">💰 Incentivos comerciales</div>
         <!-- Cards -->
-        <div id="incCards" style="display:flex;flex-direction:column;gap:14px;"></div>
+        <div id="incCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(520px,1fr));gap:12px;"></div>
       </div>
     </div>
 
@@ -4015,76 +4015,63 @@ function renderIncentivos() {
       ? r.siguienteTramo.bono + r.bonusTotal * (r.siguienteTramo.bono / (r.bonoBase || 1))
       : null;
 
-    return `<div style="display:grid;grid-template-columns:1fr 280px;gap:12px;align-items:stretch;">
+    return `<div style="background:var(--surface);border-radius:12px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,0.05);overflow:hidden;">
 
-      <!-- FICHA PRINCIPAL -->
-      <div style="background:var(--surface);border-radius:12px;border:1px solid var(--border);padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,0.05);">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
-          ${avatarHTML(nombre, 38)}
-          <div style="flex:1;">
-            <div style="font-size:15px;font-weight:800;color:var(--text);">${nombre}</div>
-            <div style="font-size:11px;color:var(--text-3);">${r.tip.tipo} · Tramos ${r.tip.tramoMin}–${r.tip.tramoMax}</div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-size:24px;font-weight:900;color:${r.bonoTotal > 0 ? 'var(--red)' : 'var(--text-3)'};">${r.bonoTotal.toFixed(0)}€</div>
-            <div style="font-size:10px;color:var(--text-3);">bono estimado</div>
-          </div>
+      <!-- CABECERA: avatar + bono -->
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);">
+        ${avatarHTML(nombre, 32)}
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${nombre}</div>
+          <div style="font-size:10px;color:var(--text-3);">${r.tip.tipo} · T${r.tip.tramoMin}–T${r.tip.tramoMax}</div>
         </div>
-        <div style="display:flex;gap:16px;margin-bottom:12px;">
-          <div style="text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--text);">${r.nComputables}</div><div style="font-size:10px;color:var(--text-3);">pólizas</div></div>
-          <div style="text-align:center;"><div style="font-size:22px;font-weight:800;color:#BE123C;">${r.sinEfectos}</div><div style="font-size:10px;color:var(--text-3);">sin efectos</div></div>
-          <div style="text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--text);">${r.tramo ? 'T'+r.tramoNum : '—'}</div><div style="font-size:10px;color:var(--text-3);">tramo</div></div>
-          <div style="text-align:center;"><div style="font-size:22px;font-weight:800;color:${r.enMargen ? '#16A34A' : '#BE123C'};">${r.enMargen ? '✓' : '✗'}</div><div style="font-size:10px;color:var(--text-3);">${r.enMargen ? 'en margen' : 'fuera margen'}</div></div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-size:20px;font-weight:900;color:${r.bonoTotal > 0 ? 'var(--red)' : 'var(--text-3)'};">${r.bonoTotal.toFixed(0)}€</div>
+          <div style="font-size:9px;color:var(--text-3);">bono estimado</div>
         </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">${multHtml}</div>
-        ${r.bonoTotal > 0 ? `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:12px;color:var(--text-3);">
-          <span>Base: <strong>${r.bonoBase}€</strong></span><span>Bonus: <strong>+${r.bonusTotal.toFixed(0)}€</strong></span><span>Total: <strong style="color:var(--red);">${r.bonoTotal.toFixed(0)}€</strong></span>
-        </div>` : ''}
       </div>
 
-      <!-- PANEL DE PROGRESO -->
-      <div style="background:var(--surface);border-radius:12px;border:1px solid var(--border);padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.05);display:flex;flex-direction:column;gap:12px;">
+      <!-- CUERPO: dos columnas -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
 
-        <!-- Tramos -->
-        <div>
-          <div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;">Tramos</div>
+        <!-- Columna izquierda: stats + multiplicadores -->
+        <div style="padding:10px 14px;border-right:1px solid var(--border);">
+          <!-- Stats -->
+          <div style="display:flex;gap:12px;margin-bottom:10px;">
+            <div style="text-align:center;"><div style="font-size:18px;font-weight:800;color:var(--text);">${r.nComputables}</div><div style="font-size:9px;color:var(--text-3);">pólizas</div></div>
+            <div style="text-align:center;"><div style="font-size:18px;font-weight:800;color:#BE123C;">${r.sinEfectos}</div><div style="font-size:9px;color:var(--text-3);">sin efecto</div></div>
+            <div style="text-align:center;"><div style="font-size:18px;font-weight:800;color:var(--text);">${r.tramo ? 'T'+r.tramoNum : '—'}</div><div style="font-size:9px;color:var(--text-3);">tramo</div></div>
+            <div style="text-align:center;"><div style="font-size:18px;font-weight:800;color:${r.enMargen ? '#16A34A' : '#BE123C'};">${r.enMargen ? '✓' : '✗'}</div><div style="font-size:9px;color:var(--text-3);">margen</div></div>
+          </div>
+          <!-- Multiplicadores como badges compactos -->
+          <div style="display:flex;gap:5px;">
+            ${multTypes.map(m => `<div style="flex:1;text-align:center;padding:5px 2px;background:${m.conseguido ? '#F0FDF4' : 'var(--surface-2)'};border-radius:6px;border:1.5px solid ${m.conseguido ? '#86EFAC' : 'var(--border)'};">
+              <div style="font-size:14px;${m.conseguido ? '' : 'filter:grayscale(1);opacity:0.35;'}">${m.icon}</div>
+              <div style="font-size:8px;font-weight:700;color:${m.conseguido ? '#16A34A' : 'var(--text-3)'};">${m.conseguido ? '✓' : m.hint}</div>
+            </div>`).join('')}
+          </div>
+          ${r.bonoTotal > 0 ? `<div style="margin-top:8px;font-size:10px;color:var(--text-3);">Base ${r.bonoBase}€ + bonus ${r.bonusTotal.toFixed(0)}€ = <strong style="color:var(--red);">${r.bonoTotal.toFixed(0)}€</strong></div>` : ''}
+        </div>
+
+        <!-- Columna derecha: tramos + máximo -->
+        <div style="padding:10px 14px;">
           ${tramosDisponibles.map(t => {
-            const pct = Math.min(100, (r.nComputables / t.min) * 100);
             const alcanzado = r.tramoNum >= t.num;
-            const esActual = r.tramoNum === t.num;
             const falta = Math.max(0, t.min - r.nComputables);
-            const bg = alcanzado ? '#16A34A' : (esActual ? '#D97706' : 'var(--border)');
-            const fill = alcanzado ? 100 : Math.min(99, (r.nComputables / t.min) * 100);
-            return `<div style="margin-bottom:6px;">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
-                <span style="font-size:11px;font-weight:700;color:${alcanzado ? '#16A34A' : 'var(--text-2)'};">T${t.num} · ${t.bono}€</span>
-                <span style="font-size:10px;color:var(--text-3);">${alcanzado ? '✓' : (falta === 0 ? '✓' : '+'+falta+' pólizas')}</span>
+            const fill = alcanzado ? 100 : Math.min(98, (r.nComputables / t.min) * 100);
+            return `<div style="margin-bottom:5px;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:2px;">
+                <span style="font-size:10px;font-weight:700;color:${alcanzado ? '#16A34A' : 'var(--text-2)'};">T${t.num} · ${t.bono}€</span>
+                <span style="font-size:9px;color:var(--text-3);">${alcanzado ? '✓' : '+'+falta}</span>
               </div>
-              <div style="height:6px;background:var(--surface-2);border-radius:99px;overflow:hidden;">
-                <div style="height:100%;width:${fill}%;background:${alcanzado ? '#16A34A' : '#D97706'};border-radius:99px;transition:width 0.6s ease;"></div>
+              <div style="height:5px;background:var(--surface-2);border-radius:99px;overflow:hidden;">
+                <div style="height:100%;width:${fill}%;background:${alcanzado ? '#16A34A' : '#D97706'};border-radius:99px;"></div>
               </div>
             </div>`;
           }).join('')}
-        </div>
-
-        <!-- Multiplicadores insignias -->
-        <div>
-          <div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;">Multiplicadores</div>
-          <div style="display:flex;gap:6px;">
-            ${multTypes.map(m => `
-              <div style="flex:1;text-align:center;padding:8px 4px;background:${m.conseguido ? '#F0FDF4' : 'var(--surface-2)'};border-radius:8px;border:1.5px solid ${m.conseguido ? '#86EFAC' : 'var(--border)'};">
-                <div style="font-size:18px;margin-bottom:2px;${m.conseguido ? '' : 'filter:grayscale(1);opacity:0.4;'}">${m.icon}</div>
-                <div style="font-size:9px;font-weight:700;color:${m.conseguido ? '#16A34A' : 'var(--text-3)'};">${m.label}</div>
-                <div style="font-size:9px;color:var(--text-3);">${m.conseguido ? '✓' : m.hint}</div>
-              </div>`).join('')}
+          <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
+            <div style="font-size:9px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em;">Máximo posible</div>
+            <div style="font-size:16px;font-weight:900;color:var(--text-2);">${maxPosible.toFixed(0)}€</div>
           </div>
-        </div>
-
-        <!-- Máximo posible -->
-        <div style="margin-top:auto;padding-top:10px;border-top:1px solid var(--border);">
-          <div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px;">Máximo posible</div>
-          <div style="font-size:20px;font-weight:900;color:var(--text-2);">${maxPosible.toFixed(0)}€</div>
-          <div style="font-size:10px;color:var(--text-3);">T${r.tip.tramoMax} + todos los multiplicadores</div>
         </div>
 
       </div>
