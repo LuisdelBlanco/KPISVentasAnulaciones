@@ -1008,6 +1008,33 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
     </div>
 
     <!-- PAGE: AJUSTES -->
+    <!-- PAGE: INCENTIVOS -->
+    <div class="page" id="page-incentivos">
+      <div style="max-width:960px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+          <h2 style="font-size:18px;font-weight:800;color:var(--text);margin:0;">🔐 Mi Área</h2>
+          <div style="display:flex;gap:8px;margin-left:auto;">
+            <select id="incYear" onchange="renderIncentivos()" style="height:34px;font-size:13px;border:1px solid var(--border);border-radius:8px;padding:0 10px;background:var(--surface);font-family:inherit;"></select>
+            <select id="incMonth" onchange="renderIncentivos()" style="height:34px;font-size:13px;border:1px solid var(--border);border-radius:8px;padding:0 10px;background:var(--surface);font-family:inherit;">
+              <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
+              <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
+              <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
+              <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+            </select>
+          </div>
+        </div>
+        <!-- Total admin -->
+        <div id="incTotalAdmin" style="display:none;background:var(--surface-2);border-radius:10px;padding:12px 18px;margin-bottom:16px;align-items:center;justify-content:space-between;">
+          <span style="font-size:13px;color:var(--text-2);font-weight:600;">Total a pagar este mes</span>
+          <span id="incTotalVal" style="font-size:20px;font-weight:800;color:var(--red);">0 €</span>
+        </div>
+        <!-- Sección incentivos -->
+        <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">💰 Incentivos comerciales</div>
+        <!-- Cards -->
+        <div id="incCards" style="display:flex;flex-direction:column;gap:14px;"></div>
+      </div>
+    </div>
+
     <div class="page" id="page-config">
       <!-- FOTO DE PERFIL -->
       <div class="table-card" style="max-width:480px;margin-bottom:20px;">
@@ -1927,7 +1954,8 @@ const pageNames = {
   registros: ['Registros','Listado de movimientos'],
   importar: ['Importar','CSV / Excel → sistema'],
   actividad: ['Actividad comercial','Datos mensuales'],
-  config: ['Ajustes','Configuración del sistema']
+  config: ['Ajustes','Configuración del sistema'],
+  incentivos: ['Mi Área','Incentivos y área personal']
 };
 let currentRegistrosTab = 'registros';
 
