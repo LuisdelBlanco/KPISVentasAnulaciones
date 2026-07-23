@@ -1582,10 +1582,13 @@ async function arrancarApp() {
   renderConfig();
   await cargarFotosAgentes();
   actualizarBtnNotif();
-  aplicarPermisos(); // refrescar avatar sidebar con fotos cargadas
+  aplicarPermisos();
   restaurarFiltros();
   renderAll();
   iniciarPolling();
+  // Restaurar última página visitada
+  const ultimaPagina = localStorage.getItem('kompass_last_page') || 'dashboard';
+  goPage(ultimaPagina);
   setTimeout(mostrarChangelogSiHayNovedades, 800);
 }
 
@@ -2011,6 +2014,8 @@ function setBottomNav(id) {
 }
 
 function goPage(id) {
+  currentPage = id;
+  localStorage.setItem('kompass_last_page', id); // recordar página actual
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-'+id)?.classList.add('active');
