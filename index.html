@@ -1468,11 +1468,12 @@ async function doLogin() {
 }
 
 async function loadUserRole() {
+  const esLuis = currentUser?.id === '2beeddaf-8c14-4467-99bc-2dc0b80e7cbd';
+  if(esLuis) currentRole = 'advanced'; // garantizar rol antes de Supabase
   try {
     const data = await supaFetch('/rest/v1/user_roles?select=role,foto&user_id=eq.' + currentUser.id);
     currentRole = data?.[0]?.role || 'basic';
-    // Fallback: si el UUID es el de Luis, siempre advanced
-    if(currentUser.id === '2beeddaf-8c14-4467-99bc-2dc0b80e7cbd') currentRole = 'advanced';
+    if(esLuis) currentRole = 'advanced'; // garantizar rol tras Supabase
     _userFoto = data?.[0]?.foto || '';
     // Repintar nav ahora que tenemos el rol
     aplicarPermisos();
@@ -1487,7 +1488,10 @@ async function loadUserRole() {
       if(prev) { prev.src = _userFoto; prev.style.display = 'block'; }
       if(ini) ini.style.display = 'none';
     }
-  } catch(e) { currentRole = 'basic'; }
+  } catch(e) {
+    if(esLuis) currentRole = 'advanced'; // garantizar rol en caso de error
+    else currentRole = 'basic';
+  }
 }
 
 async function doLogout() {
