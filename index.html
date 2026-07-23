@@ -1021,14 +1021,21 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
               <option value="Mataró">Mataró</option>
               <option value="Barcelona">Barcelona</option>
             </select>
-            <select id="incYear" onchange="renderIncentivos()" style="height:34px;font-size:13px;border:1px solid var(--border);border-radius:8px;padding:0 10px;background:var(--surface);font-family:inherit;"></select>
-            <select id="incMonth" onchange="renderIncentivos()" style="height:34px;font-size:13px;border:1px solid var(--border);border-radius:8px;padding:0 10px;background:var(--surface);font-family:inherit;">
+            <select id="incYear" onchange="cargarValidacionesInc(parseInt(document.getElementById('incMonth').value),parseInt(this.value)).then(renderIncentivos)" style="height:34px;font-size:13px;border:1px solid var(--border);border-radius:8px;padding:0 10px;background:var(--surface);font-family:inherit;"></select>
+            <select id="incMonth" onchange="cargarValidacionesInc(parseInt(this.value),parseInt(document.getElementById('incYear').value)).then(renderIncentivos)" style="height:34px;font-size:13px;border:1px solid var(--border);border-radius:8px;padding:0 10px;background:var(--surface);font-family:inherit;">
               <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
               <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
               <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
               <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
             </select>
           </div>
+        </div>
+        <!-- Botón copiar email (solo si hay validaciones) -->
+        <div id="incCopiarWrap" style="display:none;margin-bottom:12px;text-align:right;">
+          <button onclick="copiarResumenEmail(parseInt(document.getElementById('incMonth').value),parseInt(document.getElementById('incYear').value))"
+            style="display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text-2);">
+            📋 Copiar resumen para email
+          </button>
         </div>
         <!-- Total admin -->
         <div id="incTotalAdmin" style="display:none;background:var(--surface-2);border-radius:10px;padding:12px 18px;margin-bottom:16px;align-items:center;justify-content:space-between;">
@@ -4015,18 +4022,23 @@ function renderIncentivos() {
       ? r.siguienteTramo.bono + r.bonusTotal * (r.siguienteTramo.bono / (r.bonoBase || 1))
       : null;
 
-    return `<div style="background:var(--surface);border-radius:12px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,0.05);overflow:hidden;">
+    return `<div onclick="irARegistrosAgente('${nombre}',${mes},${anio})" style="background:var(--surface);border-radius:12px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,0.05);overflow:hidden;cursor:pointer;transition:box-shadow 0.15s,border-color 0.15s;" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,0.1)';this.style.borderColor='var(--red)'" onmouseout="this.style.boxShadow='0 1px 4px rgba(0,0,0,0.05)';this.style.borderColor='var(--border)'">
 
       <!-- CABECERA: avatar + bono -->
-      <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);${_validacionesInc[nombre] ? 'background:#F0FDF4;' : ''}">
         ${avatarHTML(nombre, 32)}
         <div style="flex:1;min-width:0;">
           <div style="font-size:13px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${nombre}</div>
           <div style="font-size:10px;color:var(--text-3);">${r.tip.tipo} · T${r.tip.tramoMin}–T${r.tip.tramoMax}</div>
+          ${_validacionesInc[nombre] ? `<div style="font-size:9px;color:#16A34A;font-weight:600;margin-top:2px;">✓ Validado por ${_validacionesInc[nombre].por} · ${_validacionesInc[nombre].fecha}</div>` : ''}
         </div>
-        <div style="text-align:right;flex-shrink:0;">
+        <div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
           <div style="font-size:20px;font-weight:900;color:${r.bonoTotal > 0 ? 'var(--red)' : 'var(--text-3)'};">${r.bonoTotal.toFixed(0)}€</div>
           <div style="font-size:9px;color:var(--text-3);">bono estimado</div>
+          ${isAdv ? `<button onclick="event.stopPropagation();validarIncentivo('${nombre}',${mes},${anio},${r.bonoTotal.toFixed(0)})"
+            style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;border:1px solid ${_validacionesInc[nombre] ? '#86EFAC' : 'var(--border)'};background:${_validacionesInc[nombre] ? '#F0FDF4' : 'var(--surface-2)'};color:${_validacionesInc[nombre] ? '#16A34A' : 'var(--text-3)'};cursor:pointer;font-family:inherit;">
+            ${_validacionesInc[nombre] ? '✓ Validado' : 'Validar'}
+          </button>` : ''}
         </div>
       </div>
 
@@ -4105,6 +4117,9 @@ function renderIncentivos() {
     totalAdmin.style.display = 'flex';
     totalVal.textContent = totalPagar.toFixed(2) + ' €';
   }
+  // Mostrar botón copiar si hay validaciones
+  const copiarWrap = document.getElementById('incCopiarWrap');
+  if(copiarWrap) copiarWrap.style.display = Object.keys(_validacionesInc).length > 0 ? 'block' : 'none';
 }
 
 function initIncentivosSelectors() {
@@ -4127,6 +4142,66 @@ function initIncentivosSelectors() {
   if(incOf) incOf.style.display = currentRole === 'advanced' ? '' : 'none';
 }
 
+
+
+// ── VALIDACIONES INCENTIVOS ───────────────────────────────
+async function cargarValidacionesInc(mes, anio) {
+  const clave = 'incentivos_val_' + anio + '_' + String(mes).padStart(2,'0');
+  try {
+    const data = await sbGet('config', 'clave=eq.' + encodeURIComponent(clave));
+    _validacionesInc = data?.[0]?.valor || {};
+  } catch(e) { _validacionesInc = {}; }
+}
+
+async function validarIncentivo(nombre, mes, anio, bono) {
+  const clave = 'incentivos_val_' + anio + '_' + String(mes).padStart(2,'0');
+  const yaValidado = _validacionesInc[nombre];
+  if(yaValidado) {
+    if(!confirm('Este bono ya está validado. ¿Quieres quitar la validación?')) return;
+    delete _validacionesInc[nombre];
+  } else {
+    const nombreValidador = Object.keys(TIPOLOGIAS_INC).find(n => false) || 'Admin';
+    // Buscar nombre del usuario actual en user_roles
+    const validadorNombre = document.getElementById('sidebarUser')?.querySelector('div')?.textContent?.trim() || currentUser?.email?.split('@')[0] || 'Admin';
+    _validacionesInc[nombre] = {
+      por: validadorNombre,
+      fecha: new Date().toLocaleDateString('es-ES'),
+      bono: bono
+    };
+  }
+  // Guardar en Supabase config
+  try {
+    await supaFetch('/rest/v1/config', {
+      method: 'POST',
+      headers: {'Prefer': 'resolution=merge-duplicates,return=minimal'},
+      body: JSON.stringify([{ clave, valor: _validacionesInc }])
+    });
+    mostrarToast(yaValidado ? '↩ Validación eliminada' : '✅ Bono validado correctamente');
+  } catch(e) {
+    mostrarToast('⚠️ Error al guardar validación: ' + e.message);
+  }
+  renderIncentivos();
+}
+
+function copiarResumenEmail(mes, anio) {
+  const MNAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const lineas = Object.entries(_validacionesInc)
+    .map(([nombre, v]) => nombre + ' - ' + v.bono + '€')
+    .join('\n');
+  const texto = 'Incentivos ' + MNAMES[mes-1] + ' ' + anio + '\n\n' + lineas;
+  navigator.clipboard.writeText(texto).then(() => {
+    mostrarToast('📋 Copiado al portapapeles');
+  }).catch(() => {
+    // Fallback para navegadores sin clipboard API
+    const ta = document.createElement('textarea');
+    ta.value = texto;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    mostrarToast('📋 Copiado al portapapeles');
+  });
+}
 
 // ── FILTROS PERSISTENTES ──────────────────────────────────
 function guardarFiltros() {
@@ -4344,7 +4419,8 @@ function mostrarNotificacionSistema(reg) {
 
 // ── AVATAR DE USUARIO ────────────────────────────────────
 
-let _fotosAgentes = {}; // nombre agente → base64 foto
+let _fotosAgentes = {};
+let _validacionesInc = {}; // clave: "nombre_mes_anio" → {por, fecha, bono} // nombre agente → base64 foto
 
 async function cargarFotosAgentes() {
   try {
@@ -4465,6 +4541,22 @@ function mostrarToast(msg, duracion=3500, tipo='info') {
     toast.style.opacity = '0';
     setTimeout(() => { toast.style.display = 'none'; }, 300);
   }, duracion);
+}
+
+function irARegistrosAgente(nombre, mes, anio) {
+  // Establecer filtros de año y mes en el dashboard
+  const yearSel = document.getElementById('yearFilter');
+  const monthSel = document.getElementById('monthFilter');
+  if(yearSel) yearSel.value = anio;
+  if(monthSel) monthSel.value = mes;
+  // Establecer filtro de agente en registros
+  const fAgente = document.getElementById('fAgente');
+  if(fAgente) fAgente.value = nombre;
+  // Ir a registros
+  goPage('registros');
+  // Asegurar que la pestaña es la de registros normales
+  switchRegistrosTab('registros');
+  guardarFiltros();
 }
 
 function getLunesDeHoy() {
