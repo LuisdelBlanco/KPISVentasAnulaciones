@@ -3923,10 +3923,24 @@ function calcularIncentivo(nombre, mes, anio) {
 
   const bonoTotal = enMargen ? bonoBase + bonusTotal : 0;
 
-  // Pólizas para siguiente tramo
-  const siguienteTramo = TRAMOS_INC.find(t => t.num === tramoNum + 1);
-  const paraSubir = siguienteTramo && tramoNum < tip.tramoMax
-    ? Math.max(0, siguienteTramo.min - nComputables) : 0;
+  // Pólizas para siguiente tramo — solo dentro del rango del agente
+  let paraSubir = 0;
+  let siguienteTramo = null;
+
+  if(tramoNum === 0) {
+    // Aún no ha llegado a ningún tramo — mostrar cuánto falta para su tramoMin
+    siguienteTramo = TRAMOS_INC.find(t => t.num === tip.tramoMin);
+    paraSubir = siguienteTramo ? Math.max(0, siguienteTramo.min - nComputables) : 0;
+  } else if(tramoNum < tip.tramoMax) {
+    // Está en rango pero puede subir — mostrar siguiente tramo dentro del rango
+    siguienteTramo = TRAMOS_INC.find(t => t.num === tramoNum + 1);
+    paraSubir = siguienteTramo ? Math.max(0, siguienteTramo.min - nComputables) : 0;
+  } else if(tramoNum < tip.tramoMin) {
+    // Está por debajo de su rango mínimo — mostrar cuánto falta para tramoMin
+    siguienteTramo = TRAMOS_INC.find(t => t.num === tip.tramoMin);
+    paraSubir = siguienteTramo ? Math.max(0, siguienteTramo.min - nComputables) : 0;
+  }
+  // Si ya está en tramoMax o por encima → no mostrar siguiente tramo
 
   return {
     nombre, tip, nComputables, sinEfectos,
@@ -4011,9 +4025,9 @@ function renderIncentivos() {
           <div style="font-size:22px;font-weight:800;color:${r.enMargen ? '#16A34A' : '#BE123C'};">${r.enMargen ? '✓' : '✗'}</div>
           <div style="font-size:10px;color:var(--text-3);">${r.enMargen ? 'en margen' : 'fuera margen'}</div>
         </div>
-        ${r.paraSubir > 0 && r.tramoNum < r.tip.tramoMax ? `<div style="text-align:center;margin-left:auto;">
-          <div style="font-size:13px;font-weight:700;color:#D97706;">+${r.paraSubir} para T${r.tramoNum+1} (${r.siguienteTramo?.bono}€)</div>
-          <div style="font-size:10px;color:var(--text-3);">siguiente tramo</div>
+        ${paraSubir > 0 && siguienteTramo ? `<div style="text-align:center;margin-left:auto;">
+          <div style="font-size:13px;font-weight:700;color:#D97706;">+${paraSubir} para ${tramoNum < tip.tramoMin ? 'T'+tip.tramoMin+' (mínimo '+siguienteTramo?.bono+'€)' : 'T'+(tramoNum+1)+' ('+siguienteTramo?.bono+'€)'}</div>
+          <div style="font-size:10px;color:var(--text-3);">${tramoNum < tip.tramoMin ? 'primer tramo' : 'siguiente tramo'}</div>
         </div>` : ''}
       </div>
 
