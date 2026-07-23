@@ -4025,9 +4025,9 @@ function renderIncentivos() {
           <div style="font-size:22px;font-weight:800;color:${r.enMargen ? '#16A34A' : '#BE123C'};">${r.enMargen ? '✓' : '✗'}</div>
           <div style="font-size:10px;color:var(--text-3);">${r.enMargen ? 'en margen' : 'fuera margen'}</div>
         </div>
-        ${paraSubir > 0 && siguienteTramo ? `<div style="text-align:center;margin-left:auto;">
-          <div style="font-size:13px;font-weight:700;color:#D97706;">+${paraSubir} para ${tramoNum < tip.tramoMin ? 'T'+tip.tramoMin+' (mínimo '+siguienteTramo?.bono+'€)' : 'T'+(tramoNum+1)+' ('+siguienteTramo?.bono+'€)'}</div>
-          <div style="font-size:10px;color:var(--text-3);">${tramoNum < tip.tramoMin ? 'primer tramo' : 'siguiente tramo'}</div>
+        ${r.paraSubir > 0 && r.siguienteTramo ? `<div style="text-align:center;margin-left:auto;">
+          <div style="font-size:13px;font-weight:700;color:#D97706;">+${r.paraSubir} para ${r.tramoNum < r.tip.tramoMin ? 'T'+r.tip.tramoMin+' (mínimo '+r.siguienteTramo?.bono+'€)' : 'T'+(r.tramoNum+1)+' ('+r.siguienteTramo?.bono+'€)'}</div>
+          <div style="font-size:10px;color:var(--text-3);">${r.tramoNum < r.tip.tramoMin ? 'primer tramo' : 'siguiente tramo'}</div>
         </div>` : ''}
       </div>
 
