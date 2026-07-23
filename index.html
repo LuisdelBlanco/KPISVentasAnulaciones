@@ -4029,7 +4029,7 @@ function renderIncentivos() {
         ${avatarHTML(nombre, 32)}
         <div style="flex:1;min-width:0;">
           <div style="font-size:13px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${nombre}</div>
-          <div style="font-size:10px;color:var(--text-3);">${isAdv ? r.tip.tipo+' · T'+r.tip.tramoMin+'–T'+r.tip.tramoMax : ''}</div>
+          <div style="font-size:10px;color:var(--text-3);">${isAdv ? 'T'+r.tip.tramoMin+'–T'+r.tip.tramoMax : ''}</div>
           ${_validacionesInc[nombre] ? `<div style="font-size:9px;color:#16A34A;font-weight:600;margin-top:2px;">✓ Validado por ${_validacionesInc[nombre].por} · ${_validacionesInc[nombre].fecha}</div>` : ''}
         </div>
         <div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
