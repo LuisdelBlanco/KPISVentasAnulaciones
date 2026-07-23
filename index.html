@@ -1509,12 +1509,12 @@ async function doLogin() {
 }
 
 async function loadUserRole() {
-  const esLuis = currentUser?.id === '2beeddaf-8c14-4467-99bc-2dc0b80e7cbd';
-  if(esLuis) currentRole = 'advanced'; // garantizar rol antes de Supabase
+  const esAdmin = ['2beeddaf-8c14-4467-99bc-2dc0b80e7cbd', '11d688ae-3bce-42f1-a712-d0a49842ca81'].includes(currentUser?.id);
+  if(esAdmin) currentRole = 'advanced';
   try {
     const data = await supaFetch('/rest/v1/user_roles?select=role,foto&user_id=eq.' + currentUser.id);
     currentRole = data?.[0]?.role || 'basic';
-    if(esLuis) currentRole = 'advanced'; // garantizar rol tras Supabase
+    if(esAdmin) currentRole = 'advanced'; // garantizar rol tras Supabase
     _userFoto = data?.[0]?.foto || '';
     // Repintar nav ahora que tenemos el rol
     aplicarPermisos();
@@ -1532,7 +1532,7 @@ async function loadUserRole() {
       if(ini) ini.style.display = 'none';
     }
   } catch(e) {
-    if(esLuis) currentRole = 'advanced'; // garantizar rol en caso de error
+    if(esAdmin) currentRole = 'advanced'; // garantizar rol en caso de error
     else currentRole = 'basic';
   }
 }
@@ -4029,7 +4029,7 @@ function renderIncentivos() {
         ${avatarHTML(nombre, 32)}
         <div style="flex:1;min-width:0;">
           <div style="font-size:13px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${nombre}</div>
-          <div style="font-size:10px;color:var(--text-3);">${r.tip.tipo} · T${r.tip.tramoMin}–T${r.tip.tramoMax}</div>
+          <div style="font-size:10px;color:var(--text-3);">${isAdv ? r.tip.tipo+' · T'+r.tip.tramoMin+'–T'+r.tip.tramoMax : ''}</div>
           ${_validacionesInc[nombre] ? `<div style="font-size:9px;color:#16A34A;font-weight:600;margin-top:2px;">✓ Validado por ${_validacionesInc[nombre].por} · ${_validacionesInc[nombre].fecha}</div>` : ''}
         </div>
         <div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
@@ -4081,7 +4081,7 @@ function renderIncentivos() {
             </div>`;
           }).join('')}
           <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
-            <div style="font-size:9px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em;">Máximo posible</div>
+            <div style="font-size:9px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em;">${isAdv ? 'Máximo posible' : 'Potencial del mes'}</div>
             <div style="font-size:16px;font-weight:900;color:var(--text-2);">${maxPosible.toFixed(0)}€</div>
           </div>
         </div>
