@@ -1013,7 +1013,14 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
       <div style="max-width:960px;">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
           <h2 style="font-size:18px;font-weight:800;color:var(--text);margin:0;">🔐 Mi Área</h2>
-          <div style="display:flex;gap:8px;margin-left:auto;">
+          <div style="display:flex;gap:8px;margin-left:auto;flex-wrap:wrap;">
+            <select id="incOficina" onchange="renderIncentivos()" style="height:34px;font-size:13px;border:1px solid var(--border);border-radius:8px;padding:0 10px;background:var(--surface);font-family:inherit;display:none;">
+              <option value="">Todas las oficinas</option>
+              <option value="Montornés">Montornés</option>
+              <option value="Polígono">Polígono</option>
+              <option value="Mataró">Mataró</option>
+              <option value="Barcelona">Barcelona</option>
+            </select>
             <select id="incYear" onchange="renderIncentivos()" style="height:34px;font-size:13px;border:1px solid var(--border);border-radius:8px;padding:0 10px;background:var(--surface);font-family:inherit;"></select>
             <select id="incMonth" onchange="renderIncentivos()" style="height:34px;font-size:13px;border:1px solid var(--border);border-radius:8px;padding:0 10px;background:var(--surface);font-family:inherit;">
               <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
@@ -3773,13 +3780,13 @@ function convertirAAnulacion(id) {
 
 // ── INCENTIVOS ────────────────────────────────────────────
 const TIPOLOGIAS_INC = {
-  'Mary González':     { tipo: 'Senior',  tramoMin: 2, tramoMax: 4 },
-  'María Linares':     { tipo: 'Experto', tramoMin: 4, tramoMax: 6 },
-  'Carlos del Blanco': { tipo: 'Experto', tramoMin: 4, tramoMax: 6 },
-  'Raúl López':        { tipo: 'Experto', tramoMin: 4, tramoMax: 6 },
-  'Jezabel Tristany':  { tipo: 'Senior',  tramoMin: 2, tramoMax: 4 },
-  'Dafne Campaña':     { tipo: 'Junior',  tramoMin: 1, tramoMax: 3 },
-  'Conchi Soto':       { tipo: 'Senior',  tramoMin: 2, tramoMax: 4 },
+  'Mary González':     { tipo: 'Senior',  tramoMin: 2, tramoMax: 4, oficina: 'Barcelona' },
+  'María Linares':     { tipo: 'Experto', tramoMin: 4, tramoMax: 6, oficina: 'Polígono' },
+  'Carlos del Blanco': { tipo: 'Experto', tramoMin: 4, tramoMax: 6, oficina: 'Montornés' },
+  'Raúl López':        { tipo: 'Experto', tramoMin: 4, tramoMax: 6, oficina: 'Montornés' },
+  'Jezabel Tristany':  { tipo: 'Senior',  tramoMin: 2, tramoMax: 4, oficina: 'Barcelona' },
+  'Dafne Campaña':     { tipo: 'Junior',  tramoMin: 1, tramoMax: 3, oficina: 'Mataró' },
+  'Conchi Soto':       { tipo: 'Senior',  tramoMin: 2, tramoMax: 4, oficina: 'Polígono' },
 };
 
 const TRAMOS_INC = [
@@ -3911,6 +3918,7 @@ function calcularIncentivo(nombre, mes, anio) {
 function renderIncentivos() {
   const anio = parseInt(document.getElementById('incYear')?.value) || new Date().getFullYear();
   const mes = parseInt(document.getElementById('incMonth')?.value) || new Date().getMonth()+1;
+  const fOficina = document.getElementById('incOficina')?.value || '';
   const cards = document.getElementById('incCards');
   const totalAdmin = document.getElementById('incTotalAdmin');
   const totalVal = document.getElementById('incTotalVal');
@@ -3925,7 +3933,7 @@ function renderIncentivos() {
   }) || '';
 
   const comercialesVer = isAdv
-    ? Object.keys(TIPOLOGIAS_INC)
+    ? Object.keys(TIPOLOGIAS_INC).filter(n => !fOficina || TIPOLOGIAS_INC[n].oficina === fOficina)
     : (TIPOLOGIAS_INC[nombreActual] ? [nombreActual] : []);
 
   if(comercialesVer.length === 0) {
@@ -4013,15 +4021,22 @@ function renderIncentivos() {
 
 function initIncentivosSelectors() {
   const yearSel = document.getElementById('incYear');
-  if(!yearSel || yearSel.options.length > 0) return;
-  const hoy = new Date();
-  for(let y = hoy.getFullYear(); y >= 2025; y--) {
-    const opt = document.createElement('option');
-    opt.value = y; opt.textContent = y;
-    yearSel.appendChild(opt);
+  if(!yearSel) return;
+  if(yearSel.options.length === 0) {
+    const hoy = new Date();
+    for(let y = hoy.getFullYear(); y >= 2025; y--) {
+      const opt = document.createElement('option');
+      opt.value = y; opt.textContent = y;
+      yearSel.appendChild(opt);
+    }
   }
+  // Siempre seleccionar mes y año en curso al abrir
+  const hoy = new Date();
   yearSel.value = hoy.getFullYear();
   document.getElementById('incMonth').value = hoy.getMonth() + 1;
+  // Mostrar filtro de oficina solo para admin
+  const incOf = document.getElementById('incOficina');
+  if(incOf) incOf.style.display = currentRole === 'advanced' ? '' : 'none';
 }
 
 
