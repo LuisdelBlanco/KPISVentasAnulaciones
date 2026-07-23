@@ -3784,13 +3784,27 @@ function convertirAAnulacion(id) {
 // ── INCENTIVOS ────────────────────────────────────────────
 const TIPOLOGIAS_INC = {
   'Mary González':     { tipo: 'Senior',  tramoMin: 2, tramoMax: 4, oficina: 'Barcelona' },
-  'María Linares':     { tipo: 'Experto', tramoMin: 4, tramoMax: 6, oficina: 'Polígono' },
+  'Jezabel Tristany':  { tipo: 'Senior',  tramoMin: 2, tramoMax: 4, oficina: 'Mataró' },
+  'Dafne Campaña':     { tipo: 'Junior',  tramoMin: 1, tramoMax: 3, oficina: 'Mataró' },
+  'María Linares':     { tipo: 'Experto', tramoMin: 4, tramoMax: 6, oficina: 'Montornés' },
+  'Conchi Soto':       { tipo: 'Senior',  tramoMin: 2, tramoMax: 4, oficina: 'Polígono' },
   'Carlos del Blanco': { tipo: 'Experto', tramoMin: 4, tramoMax: 6, oficina: 'Montornés' },
   'Raúl López':        { tipo: 'Experto', tramoMin: 4, tramoMax: 6, oficina: 'Montornés' },
-  'Jezabel Tristany':  { tipo: 'Senior',  tramoMin: 2, tramoMax: 4, oficina: 'Barcelona' },
-  'Dafne Campaña':     { tipo: 'Junior',  tramoMin: 1, tramoMax: 3, oficina: 'Mataró' },
-  'Conchi Soto':       { tipo: 'Senior',  tramoMin: 2, tramoMax: 4, oficina: 'Polígono' },
 };
+
+// Agentes pendientes de plan (tarjeta gris)
+const PENDIENTES_INC = [
+  { nombre: 'Victoria Giménez', oficina: 'Barcelona' },
+  { nombre: 'Marta Calcerrada', oficina: 'Barcelona' },
+  { nombre: 'Irene Ruiz',       oficina: 'Barcelona' },
+  { nombre: 'Elsa Kubala',      oficina: 'Barcelona' },
+  { nombre: 'Cristina Egea',    oficina: 'Barcelona' },
+  { nombre: 'Imma Franco',      oficina: 'Montornés' },
+  { nombre: 'Macarena Melero',  oficina: 'Montornés' },
+  { nombre: 'Luis del Blanco',  oficina: 'Polígono'  },
+  { nombre: 'Erika Gómez',      oficina: 'Mataró'    },
+  { nombre: 'Iago Losada',      oficina: 'Mataró'    },
+];
 
 const TRAMOS_INC = [
   { num:1, min:5,  max:9,        bono:50  },
@@ -4014,6 +4028,28 @@ function renderIncentivos() {
       </div>` : ''}
     </div>`;
   }).join('');
+
+  // Tarjetas grises para agentes sin plan (solo admin)
+  if(isAdv) {
+    const pendientesFiltrados = PENDIENTES_INC.filter(p => !fOficina || p.oficina === fOficina);
+    if(pendientesFiltrados.length > 0) {
+      cards.innerHTML += `<div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em;margin:16px 0 8px;">⏳ Plan pendiente de configurar</div>`;
+      cards.innerHTML += pendientesFiltrados.map(p => `
+        <div style="background:var(--surface-2);border-radius:12px;border:1px solid var(--border);padding:18px 20px;opacity:0.6;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            ${avatarHTML(p.nombre, 38)}
+            <div style="flex:1;">
+              <div style="font-size:15px;font-weight:800;color:var(--text-3);">${p.nombre}</div>
+              <div style="font-size:11px;color:var(--text-3);">${p.oficina} · Plan de incentivos pendiente</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:13px;font-weight:600;color:var(--text-3);">— €</div>
+              <div style="font-size:10px;color:var(--text-3);">sin plan asignado</div>
+            </div>
+          </div>
+        </div>`).join('');
+    }
+  }
 
   // Mostrar total admin
   if(isAdv && totalAdmin && totalVal) {
