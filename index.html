@@ -1509,7 +1509,7 @@ async function doLogin() {
 }
 
 async function loadUserRole() {
-  const esAdmin = ['2beeddaf-8c14-4467-99bc-2dc0b80e7cbd', '11d688ae-3bce-42f1-a712-d0a49842ca81'].includes(currentUser?.id);
+  const esAdmin = ['2beeddaf-8c14-4467-99bc-2dc0b80e7cbd', '11d688ae-3bce-42f1-a712-d0a49842ca81', 'c4f2609a-2ec6-4885-9394-17f78c97caae'].includes(currentUser?.id);
   if(esAdmin) currentRole = 'advanced';
   try {
     const data = await supaFetch('/rest/v1/user_roles?select=role,foto&user_id=eq.' + currentUser.id);
