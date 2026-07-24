@@ -2246,6 +2246,13 @@ const AVATAR_COLORS = [
   '#0891B2','#DB2777','#059669','#EA580C','#4F46E5',
   '#0284C7','#DC2626','#65A30D','#9333EA','#0D9488'
 ];
+function hashColor(str, offset) {
+  let h = 0;
+  for(let i = 0; i < str.length; i++) h = str.charCodeAt(i) + ((h << 5) - h);
+  const hue = Math.abs(h + offset * 137) % 360;
+  return `hsl(${hue}, 60%, 45%)`;
+}
+
 function getAvatarColor(nombre) {
   let hash = 0;
   for(let i=0;i<nombre.length;i++) hash = nombre.charCodeAt(i) + ((hash<<5)-hash);
