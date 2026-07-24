@@ -1037,12 +1037,6 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
             📋 Copiar resumen para email
           </button>
         </div>
-        <!-- Total admin -->
-        <div id="incTotalAdmin" style="display:none;background:var(--surface-2);border-radius:10px;padding:12px 18px;margin-bottom:16px;align-items:center;justify-content:space-between;">
-          <span style="font-size:13px;color:var(--text-2);font-weight:600;">Total a pagar este mes</span>
-          <span id="incTotalVal" style="font-size:20px;font-weight:800;color:var(--red);">0 €</span>
-        </div>
-        <!-- PERFIL Y NOTIFICACIONES -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
           <!-- Foto de perfil -->
           <div class="table-card">
@@ -1081,9 +1075,16 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
         </div>
 
         <!-- Sección incentivos -->
-        <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">💰 Incentivos comerciales</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+          <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em;">💰 Incentivos comerciales</div>
+          <div id="incTotalAdmin" style="display:none;align-items:center;gap:8px;">
+            <span style="font-size:12px;color:var(--text-2);font-weight:600;">Total a pagar:</span>
+            <span id="incTotalVal" style="font-size:18px;font-weight:900;color:var(--red);">0 €</span>
+          </div>
+        </div>
         <!-- Cards -->
         <div id="incCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(520px,1fr));gap:12px;"></div>
+
       </div>
     </div>
 
