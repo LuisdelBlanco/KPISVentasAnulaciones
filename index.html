@@ -557,6 +557,8 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 10px; }
 </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
 </head>
 <body>
 
@@ -4514,36 +4516,73 @@ async function guardarFotoUsuario(base64) {
 
 let _fotoBase64Pendiente = null; // foto seleccionada pero no guardada aún
 
-function previsualizarFoto(file) {
+
+// ── CROP DE FOTO ─────────────────────────────────────────
+let _cropper = null;
+
+function abrirCropModal(file) {
   if(!file) return;
-  const status = document.getElementById('fotoStatus');
-  if(status) status.textContent = 'Archivo: ' + file.name + ' (' + Math.round(file.size/1024) + ' KB)';
   const reader = new FileReader();
   reader.onload = function(e) {
-    const img = new Image();
-    img.onload = function() {
-      const canvas = document.createElement('canvas');
-      const size = 160;
-      canvas.width = size; canvas.height = size;
-      const ctx = canvas.getContext('2d');
-      const min = Math.min(img.width, img.height);
-      const sx = (img.width - min) / 2;
-      const sy = (img.height - min) / 2;
-      ctx.drawImage(img, sx, sy, min, min, 0, 0, size, size);
-      _fotoBase64Pendiente = canvas.toDataURL('image/jpeg', 0.75);
-      // Mostrar preview
-      const prev = document.getElementById('fotoPreview');
-      const ini = document.getElementById('fotoPreviewIni');
-      if(prev) { prev.src = _fotoBase64Pendiente; prev.style.display = 'block'; }
-      if(ini) ini.style.display = 'none';
-      // Habilitar botón guardar
-      const btn = document.getElementById('btnGuardarFoto');
-      if(btn) { btn.disabled = false; btn.style.opacity = '1'; }
-      if(status) status.textContent = '✓ Lista para guardar';
-    };
+    const overlay = document.getElementById('cropOverlay');
+    const img = document.getElementById('cropImage');
+    overlay.style.display = 'flex';
     img.src = e.target.result;
+    // Destruir cropper anterior si existe
+    if(_cropper) { _cropper.destroy(); _cropper = null; }
+    // Inicializar Cropper.js
+    setTimeout(() => {
+      _cropper = new Cropper(img, {
+        aspectRatio: 1,
+        viewMode: 1,
+        dragMode: 'move',
+        autoCropArea: 0.85,
+        cropBoxMovable: false,
+        cropBoxResizable: false,
+        toggleDragModeOnDblclick: false,
+        preview: '#cropPreview',
+        ready() {
+          // Forzar crop box circular visualmente
+          const cropBox = document.querySelector('.cropper-crop-box');
+          if(cropBox) cropBox.style.borderRadius = '50%';
+          const viewBox = document.querySelector('.cropper-view-box');
+          if(viewBox) viewBox.style.borderRadius = '50%';
+        }
+      });
+    }, 100);
   };
   reader.readAsDataURL(file);
+}
+
+function confirmarCrop() {
+  if(!_cropper) return;
+  const canvas = _cropper.getCroppedCanvas({ width: 160, height: 160 });
+  const base64 = canvas.toDataURL('image/jpeg', 0.80);
+  _fotoBase64Pendiente = base64;
+  // Mostrar preview en la sección de ajustes
+  const prev = document.getElementById('fotoPreview');
+  const ini = document.getElementById('fotoPreviewIni');
+  if(prev) { prev.src = base64; prev.style.display = 'block'; }
+  if(ini) ini.style.display = 'none';
+  // Habilitar botón guardar
+  const btn = document.getElementById('btnGuardarFoto');
+  if(btn) { btn.disabled = false; btn.style.opacity = '1'; }
+  const status = document.getElementById('fotoStatus');
+  if(status) status.textContent = '✓ Lista para guardar';
+  cancelarCrop();
+}
+
+function cancelarCrop() {
+  if(_cropper) { _cropper.destroy(); _cropper = null; }
+  document.getElementById('cropOverlay').style.display = 'none';
+  // Resetear input
+  const input = document.getElementById('fotoFileInput');
+  if(input) input.value = '';
+}
+
+function previsualizarFoto(file) {
+  if(!file) return;
+  abrirCropModal(file);
 }
 
 async function guardarFotoDesdeInput() {
@@ -4819,5 +4858,32 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   });
 });
 </script>
+
+  <!-- MODAL RECORTE FOTO -->
+  <div id="cropOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:99999;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:16px;padding:24px;max-width:480px;width:calc(100% - 40px);box-shadow:0 20px 60px rgba(0,0,0,0.4);">
+      <div style="font-size:16px;font-weight:800;color:#1A1A18;margin-bottom:4px;">Encuadra tu foto</div>
+      <div style="font-size:12px;color:#A3A39E;margin-bottom:16px;">Arrastra para reposicionar · Pellizca o rueda para hacer zoom</div>
+      <div style="width:100%;max-height:320px;overflow:hidden;border-radius:10px;background:#f0f0f0;">
+        <img id="cropImage" style="max-width:100%;display:block;">
+      </div>
+      <!-- Preview circular -->
+      <div style="display:flex;align-items:center;gap:16px;margin-top:16px;">
+        <div style="flex-shrink:0;">
+          <div style="font-size:10px;color:#A3A39E;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.06em;">Vista previa</div>
+          <div id="cropPreview" style="width:64px;height:64px;border-radius:50%;overflow:hidden;border:2px solid #E8E8E4;"></div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:8px;">
+          <button onclick="confirmarCrop()" style="width:100%;height:42px;background:#C2003F;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">
+            ✓ Usar esta foto
+          </button>
+          <button onclick="cancelarCrop()" style="width:100%;height:36px;background:#F7F7F6;color:#A3A39E;border:1px solid #E8E8E4;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
