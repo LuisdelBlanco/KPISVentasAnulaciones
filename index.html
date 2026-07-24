@@ -4461,10 +4461,8 @@ function getAvatarHtml(agente, size=28) {
 }
 
 async function guardarFotoUsuario(base64) {
-  if(!currentUser?.id) {
-    mostrarToast('⚠️ No hay sesión activa');
-    return;
-  }
+  if(!currentUser?.id) throw new Error('No hay sesión activa');
+
   _userFoto = base64;
   actualizarAvatarSidebar();
   aplicarPermisos();
@@ -4475,38 +4473,27 @@ async function guardarFotoUsuario(base64) {
   if(prev) { prev.src = base64; prev.style.display = 'block'; }
   if(ini) ini.style.display = 'none';
 
-  // Guardar en Supabase — upsert directo por user_id
-  try {
-    const res = await fetch(SUPA_URL + '/rest/v1/user_roles', {
-      method: 'POST',
-      headers: {
-        'apikey': SUPA_KEY,
-        'Authorization': 'Bearer ' + (accessToken || SUPA_KEY),
-        'Content-Type': 'application/json',
-        'Prefer': 'resolution=merge-duplicates,return=minimal'
-      },
-      body: JSON.stringify([{
-        user_id: currentUser.id,
-        foto: base64,
-        role: currentRole || 'basic'
-      }])
-    });
+  // PATCH directo sobre la fila del usuario
+  const res = await fetch(SUPA_URL + '/rest/v1/user_roles?user_id=eq.' + currentUser.id, {
+    method: 'PATCH',
+    headers: {
+      'apikey': SUPA_KEY,
+      'Authorization': 'Bearer ' + (accessToken || SUPA_KEY),
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({ foto: base64 })
+  });
 
-    if(res.ok) {
-      mostrarToast('✅ Foto guardada correctamente');
-      // Actualizar mapa de fotos
-      const nombreSidebar = document.getElementById('sidebarUser')
-        ?.querySelector('[style*="font-weight:600"]')?.textContent?.trim() || '';
-      if(nombreSidebar) _fotosAgentes[nombreSidebar.toLowerCase()] = base64;
-    } else {
-      const err = await res.text();
-      console.error('Error Supabase:', res.status, err);
-      mostrarToast('⚠️ Error ' + res.status + ': ' + err.slice(0, 80));
-    }
-  } catch(e) {
-    console.error('Error guardando foto:', e);
-    mostrarToast('⚠️ Error de red: ' + e.message);
+  if(!res.ok) {
+    const err = await res.text();
+    throw new Error('Supabase ' + res.status + ': ' + err.slice(0, 100));
   }
+
+  // Actualizar mapa de fotos
+  const nombreEl = document.querySelector('#sidebarUser div[style*="font-weight:600"]');
+  if(nombreEl?._textContent) _fotosAgentes[nombreEl.textContent.trim().toLowerCase()] = base64;
+  mostrarToast('✅ Foto guardada correctamente');
 }
 
 let _fotoBase64Pendiente = null; // foto seleccionada pero no guardada aún
@@ -4548,12 +4535,21 @@ async function guardarFotoDesdeInput() {
   const btn = document.getElementById('btnGuardarFoto');
   const status = document.getElementById('fotoStatus');
   if(btn) { btn.disabled = true; btn.textContent = '⏳ Guardando...'; }
-  await guardarFotoUsuario(_fotoBase64Pendiente);
-  _fotoBase64Pendiente = null;
-  if(btn) { btn.disabled = false; btn.textContent = '💾 Guardar foto'; btn.style.opacity = '0.4'; btn.disabled = true; }
-  // Resetear input para poder subir otra
-  const input = document.getElementById('fotoFileInput');
-  if(input) input.value = '';
+  if(status) status.textContent = 'Guardando en Supabase...';
+
+  try {
+    await guardarFotoUsuario(_fotoBase64Pendiente);
+    _fotoBase64Pendiente = null;
+    if(status) status.textContent = '✅ Foto guardada';
+    if(btn) { btn.textContent = '✅ Guardada'; btn.style.opacity = '0.4'; }
+    const input = document.getElementById('fotoFileInput');
+    if(input) input.value = '';
+  } catch(e) {
+    if(status) status.textContent = '⚠️ Error: ' + e.message;
+    mostrarToast('⚠️ Error: ' + e.message);
+  } finally {
+    if(btn) { btn.disabled = false; }
+  }
 }
 
 function comprimirYGuardarFoto(file) {
