@@ -1059,11 +1059,18 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
             <span id="fotoPreviewIni" style="font-size:22px;font-weight:800;color:var(--text-3);">?</span>
           </div>
           <div>
-            <p style="font-size:12px;color:var(--text-3);margin-bottom:10px;line-height:1.5;">Se recorta automáticamente en círculo.<br>Recomendado: foto cuadrada, mínimo 200×200px.</p>
-            <label style="display:inline-flex;align-items:center;gap:6px;background:var(--red);color:#fff;border-radius:6px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;">
-              📷 Subir foto
-              <input type="file" accept="image/*" style="display:none;" onchange="comprimirYGuardarFoto(this.files[0])">
-            </label>
+            <p style="font-size:12px;color:var(--text-3);margin-bottom:10px;line-height:1.5;">Selecciona una foto y pulsa Guardar.<br>Se recortará en círculo automáticamente.</p>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <label style="display:inline-flex;align-items:center;gap:6px;background:var(--surface-2);color:var(--text-2);border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;">
+                📁 Seleccionar foto
+                <input type="file" accept="image/*" id="fotoFileInput" style="display:none;" onchange="previsualizarFoto(this.files[0])">
+              </label>
+              <button id="btnGuardarFoto" onclick="guardarFotoDesdeInput()" disabled
+                style="display:inline-flex;align-items:center;gap:6px;background:var(--red);color:#fff;border:none;border-radius:6px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;opacity:0.4;">
+                💾 Guardar foto
+              </button>
+            </div>
+            <p id="fotoStatus" style="font-size:11px;color:var(--text-3);margin-top:8px;"></p>
           </div>
         </div>
       </div>
@@ -4502,31 +4509,55 @@ async function guardarFotoUsuario(base64) {
   }
 }
 
-function comprimirYGuardarFoto(file) {
+let _fotoBase64Pendiente = null; // foto seleccionada pero no guardada aún
+
+function previsualizarFoto(file) {
+  if(!file) return;
+  const status = document.getElementById('fotoStatus');
+  if(status) status.textContent = 'Archivo: ' + file.name + ' (' + Math.round(file.size/1024) + ' KB)';
   const reader = new FileReader();
   reader.onload = function(e) {
     const img = new Image();
     img.onload = function() {
       const canvas = document.createElement('canvas');
-      const size = 160; // 160x160px — suficiente para avatar
+      const size = 160;
       canvas.width = size; canvas.height = size;
       const ctx = canvas.getContext('2d');
-      // Recorte circular centrado
       const min = Math.min(img.width, img.height);
       const sx = (img.width - min) / 2;
       const sy = (img.height - min) / 2;
       ctx.drawImage(img, sx, sy, min, min, 0, 0, size, size);
-      const base64 = canvas.toDataURL('image/jpeg', 0.75);
-      guardarFotoUsuario(base64);
-      // Previsualizar
+      _fotoBase64Pendiente = canvas.toDataURL('image/jpeg', 0.75);
+      // Mostrar preview
       const prev = document.getElementById('fotoPreview');
       const ini = document.getElementById('fotoPreviewIni');
-      if(prev) { prev.src = base64; prev.style.display = 'block'; }
+      if(prev) { prev.src = _fotoBase64Pendiente; prev.style.display = 'block'; }
       if(ini) ini.style.display = 'none';
+      // Habilitar botón guardar
+      const btn = document.getElementById('btnGuardarFoto');
+      if(btn) { btn.disabled = false; btn.style.opacity = '1'; }
+      if(status) status.textContent = '✓ Lista para guardar';
     };
     img.src = e.target.result;
   };
   reader.readAsDataURL(file);
+}
+
+async function guardarFotoDesdeInput() {
+  if(!_fotoBase64Pendiente) { mostrarToast('⚠️ Selecciona una foto primero'); return; }
+  const btn = document.getElementById('btnGuardarFoto');
+  const status = document.getElementById('fotoStatus');
+  if(btn) { btn.disabled = true; btn.textContent = '⏳ Guardando...'; }
+  await guardarFotoUsuario(_fotoBase64Pendiente);
+  _fotoBase64Pendiente = null;
+  if(btn) { btn.disabled = false; btn.textContent = '💾 Guardar foto'; btn.style.opacity = '0.4'; btn.disabled = true; }
+  // Resetear input para poder subir otra
+  const input = document.getElementById('fotoFileInput');
+  if(input) input.value = '';
+}
+
+function comprimirYGuardarFoto(file) {
+  previsualizarFoto(file);
 }
 
 function normalizeSearch(str) {
