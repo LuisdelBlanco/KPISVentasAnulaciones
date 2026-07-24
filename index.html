@@ -4145,13 +4145,23 @@ function initIncentivosSelectors() {
       yearSel.appendChild(opt);
     }
   }
-  // Siempre seleccionar mes y año en curso al abrir
   const hoy = new Date();
   yearSel.value = hoy.getFullYear();
   document.getElementById('incMonth').value = hoy.getMonth() + 1;
-  // Mostrar filtro de oficina solo para admin
   const incOf = document.getElementById('incOficina');
   if(incOf) incOf.style.display = currentRole === 'advanced' ? '' : 'none';
+
+  // Cargar foto guardada en el preview
+  const prev = document.getElementById('fotoPreview');
+  const ini = document.getElementById('fotoPreviewIni');
+  if(_userFoto && prev) {
+    prev.src = _userFoto;
+    prev.style.display = 'block';
+    if(ini) ini.style.display = 'none';
+  } else if(prev) {
+    prev.style.display = 'none';
+    if(ini) ini.style.display = '';
+  }
 }
 
 
