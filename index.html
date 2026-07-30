@@ -3810,13 +3810,13 @@ function convertirAAnulacion(id) {
 
 // ── INCENTIVOS ────────────────────────────────────────────
 const TIPOLOGIAS_INC = {
-  'Mary González':     { tipo: 'Senior',  tramoMin: 2, tramoMax: 4, oficina: 'Barcelona' },
-  'Jez Tristany':      { tipo: 'Senior',  tramoMin: 2, tramoMax: 4, oficina: 'Mataró' },
-  'Dafne Campaña':     { tipo: 'Junior',  tramoMin: 1, tramoMax: 3, oficina: 'Mataró' },
-  'María Linares':     { tipo: 'Experto', tramoMin: 4, tramoMax: 6, oficina: 'Montornés' },
-  'Conchi Soto':       { tipo: 'Senior',  tramoMin: 2, tramoMax: 4, oficina: 'Polígono' },
-  'Carlos del Blanco': { tipo: 'Experto', tramoMin: 4, tramoMax: 6, oficina: 'Montornés' },
-  'Raúl López':        { tipo: 'Experto', tramoMin: 4, tramoMax: 6, oficina: 'Montornés' },
+  'Mary González':     { tipo: 'Senior',  tramoMin: 2, tramoMax: 4, oficina: 'Barcelona',  userId: 'f42fe03f-8248-4c09-aa70-484701f25d05' },
+  'Jez Tristany':      { tipo: 'Senior',  tramoMin: 2, tramoMax: 4, oficina: 'Mataró',     userId: '9964ff2d-bbc6-4752-9ffa-b821cadec4c5' },
+  'Dafne Campaña':     { tipo: 'Junior',  tramoMin: 1, tramoMax: 3, oficina: 'Mataró',     userId: '3a6692b3-9a17-49ee-baaf-fb532c3d40c4' },
+  'María Linares':     { tipo: 'Experto', tramoMin: 4, tramoMax: 6, oficina: 'Montornés',  userId: 'e79cb1e7-a9d1-4f44-a5f4-f5fb47ed4d13' },
+  'Conchi Soto':       { tipo: 'Senior',  tramoMin: 2, tramoMax: 4, oficina: 'Polígono',   userId: 'fbd44c00-5e0f-468e-b723-40ee914d6310' },
+  'Carlos del Blanco': { tipo: 'Experto', tramoMin: 4, tramoMax: 6, oficina: 'Montornés',  userId: '98e153c7-c1ac-44c7-8200-9a41805ba179' },
+  'Raúl López':        { tipo: 'Experto', tramoMin: 4, tramoMax: 6, oficina: 'Montornés',  userId: '0cb972cd-171b-46cf-8219-f17c3579c6d5' },
 };
 
 // Agentes pendientes de plan (tarjeta gris)
@@ -3985,12 +3985,10 @@ function renderIncentivos() {
   if(!cards) return;
 
   const isAdv = currentRole === 'advanced';
-  // Nombre del usuario actual para filtrar si no es admin
-  const nombreActual = Object.keys(TIPOLOGIAS_INC).find(n => {
-    const partes = n.toLowerCase().split(' ');
-    return (currentUser?.email||'').toLowerCase().includes(partes[0]) ||
-           (currentUser?.email||'').toLowerCase().includes(partes[1]||'___');
-  }) || '';
+  // Buscar por UUID — fiable independientemente de tildes o formato de email
+  const nombreActual = Object.keys(TIPOLOGIAS_INC).find(n =>
+    TIPOLOGIAS_INC[n].userId === currentUser?.id
+  ) || '';
 
   const comercialesVer = isAdv
     ? Object.keys(TIPOLOGIAS_INC).filter(n => !fOficina || TIPOLOGIAS_INC[n].oficina === fOficina)
