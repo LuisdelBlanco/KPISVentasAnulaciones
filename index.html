@@ -4539,15 +4539,29 @@ function cargarPreviewAgente(u) {
   // Rol (solo para otros usuarios, no para uno mismo)
   const panelRol = document.getElementById('panelRol');
   if(panelRol) {
-    panelRol.style.display = (u && currentRole === 'advanced' && u.userId !== currentUser?.id) ? '' : 'none';
     if(u && u.userId !== currentUser?.id) {
+      // Editando otro agente: mostrar botones de cambio de rol
+      panelRol.style.display = currentRole === 'advanced' ? '' : 'none';
       const rolStatus = document.getElementById('rolStatus');
       const btnA = document.getElementById('btnRolAgente');
       const btnAd = document.getElementById('btnRolAdmin');
       const esAdmin = u.role === 'advanced';
-      if(btnA) { btnA.style.background = !esAdmin ? '#C2003F' : 'var(--surface)'; btnA.style.color = !esAdmin ? '#fff' : 'var(--text)'; btnA.style.borderColor = !esAdmin ? '#C2003F' : 'var(--border)'; }
-      if(btnAd) { btnAd.style.background = esAdmin ? '#C2003F' : 'var(--surface)'; btnAd.style.color = esAdmin ? '#fff' : 'var(--text)'; btnAd.style.borderColor = esAdmin ? '#C2003F' : 'var(--border)'; }
+      if(btnA) { btnA.style.display = ''; btnA.style.background = !esAdmin ? '#C2003F' : 'var(--surface)'; btnA.style.color = !esAdmin ? '#fff' : 'var(--text)'; btnA.style.borderColor = !esAdmin ? '#C2003F' : 'var(--border)'; }
+      if(btnAd) { btnAd.style.display = ''; btnAd.style.background = esAdmin ? '#C2003F' : 'var(--surface)'; btnAd.style.color = esAdmin ? '#fff' : 'var(--text)'; btnAd.style.borderColor = esAdmin ? '#C2003F' : 'var(--border)'; }
       if(rolStatus) rolStatus.textContent = `Rol actual: ${esAdmin ? 'Administrador' : 'Agente'}`;
+    } else {
+      // Perfil propio: mostrar rol como texto fijo
+      panelRol.style.display = '';
+      const rolStatus = document.getElementById('rolStatus');
+      const btnA = document.getElementById('btnRolAgente');
+      const btnAd = document.getElementById('btnRolAdmin');
+      if(btnA) btnA.style.display = 'none';
+      if(btnAd) btnAd.style.display = 'none';
+      if(rolStatus) {
+        const esAdmin = currentRole === 'advanced';
+        rolStatus.textContent = '';
+        rolStatus.innerHTML = `<span style="font-size:13px;font-weight:800;color:${esAdmin?'var(--red)':'var(--text-2)'};">${esAdmin ? '⭐ Administrador' : '👤 Agente'}</span>`;
+      }
     }
   }
 }
