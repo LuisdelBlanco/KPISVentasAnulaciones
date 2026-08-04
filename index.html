@@ -4343,10 +4343,7 @@ function renderIncentivos() {
 
       <!-- CABECERA: avatar + bono -->
       <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);${_validacionesInc[nombre] ? 'background:#F0FDF4;' : ''}">
-        <div style="position:relative;flex-shrink:0;">
-          ${avatarHTML(nombre, 32)}
-          ${isAdv ? `<button onclick="event.stopPropagation();abrirCropParaAgente('${nombre.replace(/'/g,"\'")}')" title="Cambiar foto" style="position:absolute;bottom:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:#C2003F;border:2px solid #fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;padding:0;line-height:1;">📷</button>` : ''}
-        </div>
+        ${avatarHTML(nombre, 32)}
         <div style="flex:1;min-width:0;">
           <div style="font-size:13px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${nombre}</div>
           <div style="font-size:10px;color:var(--text-3);">${isAdv ? 'T'+r.tip.tramoMin+'–T'+r.tip.tramoMax : ''}</div>
