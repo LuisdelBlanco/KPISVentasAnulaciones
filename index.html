@@ -4332,7 +4332,10 @@ function renderIncentivos() {
 
       <!-- CABECERA: avatar + bono -->
       <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);${_validacionesInc[nombre] ? 'background:#F0FDF4;' : ''}">
-        ${avatarHTML(nombre, 32)}
+        <div style="position:relative;flex-shrink:0;">
+          ${avatarHTML(nombre, 32)}
+          ${isAdv ? `<button onclick="event.stopPropagation();abrirCropParaAgente('${nombre.replace(/'/g,"\'")}')" title="Cambiar foto" style="position:absolute;bottom:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:#C2003F;border:2px solid #fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;padding:0;line-height:1;">📷</button>` : ''}
+        </div>
         <div style="flex:1;min-width:0;">
           <div style="font-size:13px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${nombre}</div>
           <div style="font-size:10px;color:var(--text-3);">${isAdv ? 'T'+r.tip.tramoMin+'–T'+r.tip.tramoMax : ''}</div>
@@ -4737,6 +4740,7 @@ function mostrarNotificacionSistema(reg) {
 // ── AVATAR DE USUARIO ────────────────────────────────────
 
 let _fotosAgentes = {};
+let _editingAgente = null; // { userId, nombre } cuando admin edita foto de otro
 let _validacionesInc = {}; // clave: "nombre_mes_anio" → {por, fecha, bono} // nombre agente → base64 foto
 
 async function cargarFotosAgentes() {
@@ -4846,12 +4850,35 @@ function abrirCropModal(file) {
   reader.readAsDataURL(file);
 }
 
+function abrirCropParaAgente(nombre) {
+  // Buscar el userId de este agente en TIPOLOGIAS_INC
+  const tip = TIPOLOGIAS_INC[nombre];
+  if(!tip?.userId) { mostrarToast('⚠️ No se encontró el userId de ' + nombre); return; }
+  _editingAgente = { userId: tip.userId, nombre };
+  // Abrir file picker
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = e => { if(e.target.files[0]) abrirCropModal(e.target.files[0]); };
+  input.click();
+}
+
 function confirmarCrop() {
   if(!_cropper) return;
   const canvas = _cropper.getCroppedCanvas({ width: 160, height: 160 });
   const base64 = canvas.toDataURL('image/jpeg', 0.80);
+
+  if(_editingAgente) {
+    // Admin cambiando foto de otro agente
+    const { userId, nombre } = _editingAgente;
+    _editingAgente = null;
+    cancelarCrop();
+    guardarFotoDeAgente(userId, nombre, base64);
+    return;
+  }
+
   _fotoBase64Pendiente = base64;
-  // Mostrar preview en la sección de ajustes
+  // Mostrar preview en Mi Área
   const prev = document.getElementById('fotoPreview');
   const ini = document.getElementById('fotoPreviewIni');
   if(prev) { prev.src = base64; prev.style.display = 'block'; }
@@ -4864,10 +4891,36 @@ function confirmarCrop() {
   cancelarCrop();
 }
 
+async function guardarFotoDeAgente(userId, nombre, base64) {
+  mostrarToast('⏳ Guardando foto de ' + nombre + '...');
+  try {
+    const res = await fetch(SUPA_URL + '/rest/v1/user_roles?user_id=eq.' + userId, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPA_KEY,
+        'Authorization': 'Bearer ' + (accessToken || SUPA_KEY),
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ foto: base64 })
+    });
+    if(res.ok) {
+      _fotosAgentes[nombre.toLowerCase()] = base64;
+      renderIncentivos();
+      renderAll();
+      mostrarToast('✅ Foto de ' + nombre + ' actualizada');
+    } else {
+      mostrarToast('⚠️ Error al guardar la foto');
+    }
+  } catch(e) {
+    mostrarToast('⚠️ Error: ' + e.message);
+  }
+}
+
 function cancelarCrop() {
   if(_cropper) { _cropper.destroy(); _cropper = null; }
+  _editingAgente = null;
   document.getElementById('cropOverlay').style.display = 'none';
-  // Resetear input
   const input = document.getElementById('fotoFileInput');
   if(input) input.value = '';
 }
