@@ -4433,9 +4433,6 @@ function renderPanel70(anio, mes, isAdv, container) {
 
   // Agrupar por agente
   let html70 = `<div style="margin-bottom:16px;">
-    <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">
-      💶 Sistema comisional Barcelona (70%)${isAdv?'':' — Mi área'}
-    </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(480px,1fr));gap:12px;">`;
 
   agentes70.forEach(nombre => {
@@ -4460,7 +4457,7 @@ function renderPanel70(anio, mes, isAdv, container) {
         detalle = `Dif. ${(parseFloat(r.comisionOccident)||0).toFixed(2)}€ × 70%`;
       }
       const puedeEditar = isAdv || !!AGENTES_70[currentUser?.id];
-      return `<div onclick="${puedeEditar ? `editarRegistro70('${r.id}')` : ''}" style="display:grid;grid-template-columns:70px 1fr 80px 80px;gap:6px;align-items:center;padding:5px 8px;border-radius:6px;font-size:11px;background:${inc < 0?'#FFF1F3':'var(--surface-2)'};${puedeEditar?'cursor:pointer;':''};" ${puedeEditar?`onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"`:''}>
+      return `<div onclick="event.stopPropagation();${puedeEditar ? `editarRegistro70('${r.id}')` : ''}" style="display:grid;grid-template-columns:70px 1fr 80px 80px;gap:6px;align-items:center;padding:5px 8px;border-radius:6px;font-size:11px;background:${inc < 0?'#FFF1F3':'var(--surface-2)'};${puedeEditar?'cursor:pointer;':''};" ${puedeEditar?`onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"`:''}>
         <span style="font-weight:700;color:var(--text-3);">${r.fecha?.slice(5)||''}</span>
         <span style="color:var(--text);">${r.poliza||'—'} <span style="color:var(--text-3);">${r.tipo}</span></span>
         <span style="color:var(--text-3);font-size:10px;">${detalle}</span>
@@ -4470,19 +4467,18 @@ function renderPanel70(anio, mes, isAdv, container) {
 
 
 
-    html70 += `<div style="background:var(--surface);border-radius:12px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,0.05);overflow:hidden;">
-      <div onclick="irARegistrosAgente('${nombre.replace(/'/g,"\\'")}',${mes},${anio})" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background=''">
+    html70 += `<div onclick="irARegistrosAgente('${nombre.replace(/'/g,"\\'")}',${mes},${anio})" style="background:var(--surface);border-radius:12px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,0.05);overflow:hidden;cursor:pointer;transition:box-shadow 0.15s,border-color 0.15s;" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,0.1)';this.style.borderColor='var(--red)'" onmouseout="this.style.boxShadow='0 1px 4px rgba(0,0,0,0.05)';this.style.borderColor='var(--border)'">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);">
         ${avatarHTML(nombre, 32)}
-        <div style="flex:1;"><div style="font-size:13px;font-weight:800;">${nombre}</div><div style="font-size:10px;color:var(--text-3);">Sistema 70% · Barcelona · ver registros →</div></div>
+        <div style="flex:1;"><div style="font-size:13px;font-weight:800;">${nombre}</div><div style="font-size:10px;color:var(--text-3);">Sistema 70% · Barcelona</div></div>
         <div style="text-align:right;">
           <div style="font-size:22px;font-weight:900;color:${totalInc>=0?'var(--red)':'#BE123C'};">${totalInc.toFixed(2)}€</div>
           <div style="font-size:9px;color:var(--text-3);">incentivo estimado</div>
         </div>
       </div>
-      <div style="padding:10px 14px;display:flex;flex-direction:column;gap:4px;max-height:240px;overflow-y:auto;">
+      <div style="padding:10px 14px;display:flex;flex-direction:column;gap:4px;max-height:240px;overflow-y:auto;" onclick="event.stopPropagation()">
         ${filas || '<span style="font-size:12px;color:var(--text-3);">Sin registros este mes</span>'}
       </div>
-
     </div>`;
   });
 
