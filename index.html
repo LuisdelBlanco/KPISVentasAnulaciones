@@ -4966,14 +4966,15 @@ let _validacionesInc = {}; // clave: "nombre_mes_anio" → {por, fecha, bono} //
 
 async function cargarFotosAgentes() {
   try {
-    const data = await supaFetch('/rest/v1/user_roles?select=nombre,foto,user_id,notif_enabled&order=nombre.asc');
+    const data = await supaFetch('/rest/v1/user_roles?select=nombre,foto,user_id,notif_enabled,role&order=nombre.asc');
     if(Array.isArray(data)) {
       _todosUsuarios = data
         .filter(r => r.user_id)
         .map(r => ({
           userId: r.user_id,
           nombre: r.nombre || NOMBRES_EQUIPO[r.user_id] || r.user_id.slice(0,8),
-          foto: r.foto || '', notif_enabled: r.notif_enabled || false
+          foto: r.foto || '', notif_enabled: r.notif_enabled || false,
+          role: r.role || 'basic'
         }))
         .sort((a,b) => a.nombre.localeCompare(b.nombre));
       data.forEach(r => {
