@@ -1045,56 +1045,72 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
           </button>
         </div>
         <!-- PANEL PERSONAL / GESTIÓN EQUIPO -->
-        <div class="table-card" style="margin-bottom:24px;">
+        <!-- PANEL GESTIÓN EQUIPO (admin) / PERFIL PROPIO (agente) -->
+        <div class="table-card" id="panelEquipo" style="margin-bottom:24px;">
           <div class="table-card-header">
-            <span class="table-card-title" id="panelFotoTitulo">📷 Tu foto de perfil</span>
-            <!-- Selector de agente (solo admin) -->
-            <div id="selectorAgenteFoto" style="display:none;align-items:center;gap:8px;">
-              <span style="font-size:11px;color:var(--text-3);font-weight:600;">Editar agente:</span>
-              <select id="selectAgenteFoto" onchange="cambiarAgenteSeleccionado()" style="height:30px;border:1px solid var(--border);border-radius:6px;padding:0 8px;font-size:12px;font-family:inherit;background:var(--surface);">
-                <option value="">— Yo mismo —</option>
-              </select>
-            </div>
+            <span class="table-card-title" id="panelFotoTitulo">📷 Mi perfil</span>
           </div>
-          <div style="padding:16px;display:grid;grid-template-columns:auto 1fr 1fr;gap:20px;align-items:start;">
+          <div style="padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
 
-            <!-- Columna 1: Avatar + botones foto -->
-            <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0;">
-              <div style="width:80px;height:80px;border-radius:50%;overflow:hidden;border:2px solid var(--border);background:var(--surface-2);display:flex;align-items:center;justify-content:center;">
-                <img id="fotoPreview" src="" style="width:80px;height:80px;object-fit:cover;display:none;border-radius:50%;">
-                <span id="fotoPreviewIni" style="font-size:24px;font-weight:800;color:var(--text-3);">?</span>
-              </div>
-              <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:center;">
-                <label style="display:inline-flex;align-items:center;gap:4px;background:var(--surface-2);color:var(--text-2);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:11px;font-weight:600;cursor:pointer;">
-                  📁 Seleccionar
-                  <input type="file" accept="image/*" id="fotoFileInput" style="display:none;" onchange="previsualizarFoto(this.files[0])">
-                </label>
-                <button id="btnGuardarFoto" onclick="guardarFotoDesdeInput()" disabled
-                  style="background:var(--red);color:#fff;border:none;border-radius:6px;padding:5px 8px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;opacity:0.4;">
-                  💾 Guardar
-                </button>
-                <button id="btnEliminarFoto" onclick="eliminarFotoPerfil()"
-                  style="background:var(--surface-2);color:var(--text-3);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">
-                  🗑 Eliminar
-                </button>
-              </div>
-              <p id="fotoStatus" style="font-size:10px;color:var(--text-3);text-align:center;max-width:120px;"></p>
-            </div>
-
-            <!-- Columna 2: Notificaciones del agente seleccionado -->
+            <!-- COL 1: Edición del agente seleccionado -->
             <div>
-              <div style="font-size:12px;font-weight:700;color:var(--text-2);margin-bottom:8px;">🔔 Notificaciones</div>
-              <p id="notifDesc" style="font-size:11px;color:var(--text-3);margin-bottom:10px;line-height:1.5;">Recibe avisos cuando otro agente registre una póliza, aunque Kompass esté minimizado.</p>
-              <button id="btnActivarNotif" onclick="pedirPermisoNotificaciones()"
-                style="background:var(--red);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">
-                🔔 Activar notificaciones
-              </button>
+              <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px;" id="editandoLabel">Tu perfil</div>
+
+              <!-- Foto -->
+              <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">
+                <div style="width:72px;height:72px;border-radius:50%;overflow:hidden;border:2px solid var(--border);background:var(--surface-2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <img id="fotoPreview" src="" style="width:72px;height:72px;object-fit:cover;display:none;border-radius:50%;">
+                  <span id="fotoPreviewIni" style="font-size:20px;font-weight:800;color:var(--text-3);">?</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                  <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <label style="display:inline-flex;align-items:center;gap:4px;background:var(--surface-2);color:var(--text-2);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:11px;font-weight:600;cursor:pointer;">
+                      📁 Cambiar foto
+                      <input type="file" accept="image/*" id="fotoFileInput" style="display:none;" onchange="previsualizarFoto(this.files[0])">
+                    </label>
+                    <button id="btnGuardarFoto" onclick="guardarFotoDesdeInput()" disabled
+                      style="background:var(--red);color:#fff;border:none;border-radius:6px;padding:5px 8px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;opacity:0.4;">
+                      💾 Guardar
+                    </button>
+                    <button onclick="eliminarFotoPerfil()"
+                      style="background:var(--surface-2);color:var(--text-3);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">
+                      🗑 Eliminar
+                    </button>
+                  </div>
+                  <p id="fotoStatus" style="font-size:10px;color:var(--text-3);"></p>
+                </div>
+              </div>
+
+              <!-- Notificaciones -->
+              <div style="margin-bottom:14px;padding:12px;background:var(--surface-2);border-radius:8px;border:1px solid var(--border);">
+                <div style="font-size:11px;font-weight:700;color:var(--text-2);margin-bottom:8px;">🔔 Notificaciones</div>
+                <button id="btnActivarNotif" onclick="pedirPermisoNotificaciones()"
+                  style="background:var(--red);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:100%;">
+                  🔔 Activar notificaciones
+                </button>
+              </div>
+
+              <!-- Rol (solo admin, y no puede cambiar su propio rol) -->
+              <div id="panelRol" style="display:none;padding:12px;background:var(--surface-2);border-radius:8px;border:1px solid var(--border);">
+                <div style="font-size:11px;font-weight:700;color:var(--text-2);margin-bottom:8px;">👤 Rol</div>
+                <div style="display:flex;gap:8px;">
+                  <button id="btnRolAgente" onclick="cambiarRol('basic')"
+                    style="flex:1;padding:6px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border:2px solid var(--border);background:var(--surface);">
+                    Agente
+                  </button>
+                  <button id="btnRolAdmin" onclick="cambiarRol('advanced')"
+                    style="flex:1;padding:6px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border:2px solid var(--border);background:var(--surface);">
+                    Admin
+                  </button>
+                </div>
+                <p id="rolStatus" style="font-size:10px;color:var(--text-3);margin-top:6px;"></p>
+              </div>
             </div>
 
-            <!-- Columna 3: Lista equipo con scroll (solo admin) -->
+            <!-- COL 2: Lista equipo con scroll (solo admin) -->
             <div id="panelNotifEquipo" style="display:none;">
-              <div style="font-size:12px;font-weight:700;color:var(--text-2);margin-bottom:8px;">🔔 Notificaciones del equipo</div>
-              <div id="listaNotifAgentes" style="display:flex;flex-direction:column;gap:4px;max-height:220px;overflow-y:auto;padding-right:4px;"></div>
+              <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">Equipo — clic para seleccionar</div>
+              <div id="listaNotifAgentes" style="display:flex;flex-direction:column;gap:3px;max-height:360px;overflow-y:auto;"></div>
             </div>
 
           </div>
@@ -4465,86 +4481,123 @@ function initIncentivosSelectors() {
   const incOf = document.getElementById('incOficina');
   if(incOf) incOf.style.display = currentRole === 'advanced' ? '' : 'none';
 
-  // Panel admin: selector de agente + notificaciones equipo
-  const selectorDiv = document.getElementById('selectorAgenteFoto');
-  const panelNotif = document.getElementById('panelNotifEquipo');
   const isAdv = currentRole === 'advanced';
-  if(selectorDiv) selectorDiv.style.display = isAdv ? 'flex' : 'none';
+  const panelNotif = document.getElementById('panelNotifEquipo');
+  const panelRol = document.getElementById('panelRol');
   if(panelNotif) panelNotif.style.display = isAdv ? '' : 'none';
+  if(panelRol) panelRol.style.display = 'none'; // se muestra al seleccionar agente
 
-  if(isAdv) {
-    // Poblar selector con TODOS los usuarios del equipo
-    const sel = document.getElementById('selectAgenteFoto');
-    if(sel) {
-      sel.innerHTML = '<option value="">— Yo mismo —</option>';
-      _todosUsuarios.forEach(u => {
-        if(u.userId === currentUser?.id) return; // yo mismo ya está
-        const opt = document.createElement('option');
-        opt.value = u.nombre; opt.textContent = u.nombre;
-        sel.appendChild(opt);
-      });
-    }
-    renderNotifEquipo();
-  }
+  // Cargar foto propia en preview por defecto
+  cargarPreviewAgente(null);
 
-  // Cargar foto del usuario actual en preview
-  const prev = document.getElementById('fotoPreview');
-  const ini = document.getElementById('fotoPreviewIni');
-  if(_userFoto && prev) {
-    prev.src = _userFoto;
-    prev.style.display = 'block';
-    if(ini) ini.style.display = 'none';
-  } else if(prev) {
-    prev.style.display = 'none';
-    if(ini) ini.style.display = '';
-  }
+  if(isAdv) renderListaEquipo();
 }
 
-function cambiarAgenteSeleccionado() {
-  const sel = document.getElementById('selectAgenteFoto');
-  const nombre = sel?.value || '';
-  const titulo = document.getElementById('panelFotoTitulo');
-  const status = document.getElementById('fotoStatus');
-  const btn = document.getElementById('btnGuardarFoto');
+let _agenteSeleccionado = null; // usuario seleccionado en la lista del equipo
+
+function cargarPreviewAgente(u) {
+  // u = objeto {userId, nombre, foto, notif_enabled, role} o null = yo mismo
   const prev = document.getElementById('fotoPreview');
   const ini = document.getElementById('fotoPreviewIni');
-  const btnNotif = document.getElementById('btnActivarNotif');
-  const notifDesc = document.getElementById('notifDesc');
+  const titulo = document.getElementById('panelFotoTitulo');
+  const label = document.getElementById('editandoLabel');
+  const btn = document.getElementById('btnGuardarFoto');
+  const status = document.getElementById('fotoStatus');
   _fotoBase64Pendiente = null;
   if(btn) { btn.disabled = true; btn.style.opacity = '0.4'; btn.textContent = '💾 Guardar'; }
   if(status) status.textContent = '';
 
-  if(!nombre) {
-    // Yo mismo
-    if(titulo) titulo.textContent = '📷 Tu foto de perfil';
-    if(_userFoto && prev) { prev.src = _userFoto; prev.style.display = 'block'; if(ini) ini.style.display = 'none'; }
-    else { if(prev) prev.style.display = 'none'; if(ini) { ini.textContent = '?'; ini.style.display = ''; } }
-    // Restaurar botón notif propio
-    if(btnNotif) { btnNotif.onclick = pedirPermisoNotificaciones; }
-    if(notifDesc) notifDesc.textContent = 'Recibe avisos cuando otro agente registre una póliza, aunque Kompass esté minimizado.';
-    actualizarBtnNotif();
-  } else {
-    if(titulo) titulo.textContent = `📷 Foto de ${nombre}`;
-    const foto = _fotosAgentes[nombre.toLowerCase()];
-    if(foto && prev) { prev.src = foto; prev.style.display = 'block'; if(ini) ini.style.display = 'none'; }
-    else {
-      if(prev) prev.style.display = 'none';
-      if(ini) {
-        ini.textContent = nombre.split(' ').map(p=>p[0]).join('').toUpperCase().slice(0,2);
-        ini.style.display = '';
-      }
+  const nombre = u ? u.nombre : (document.getElementById('sidebarUserName')?.textContent || 'Tú');
+  const foto = u ? (u.foto || _fotosAgentes[u.nombre.toLowerCase()] || '') : _userFoto;
+
+  if(titulo) titulo.textContent = u ? `✏️ Editando: ${nombre}` : '📷 Mi perfil';
+  if(label) label.textContent = u ? `Editando a ${nombre}` : 'Tu perfil';
+
+  if(foto && prev) { prev.src = foto; prev.style.display = 'block'; if(ini) ini.style.display = 'none'; }
+  else {
+    if(prev) prev.style.display = 'none';
+    if(ini) {
+      ini.textContent = nombre.split(' ').map(p=>p[0]||'').join('').toUpperCase().slice(0,2) || '?';
+      ini.style.display = '';
     }
-    // Mostrar estado notificaciones del agente seleccionado
-    const u = _todosUsuarios.find(u => u.nombre === nombre);
-    if(u && btnNotif) {
-      const enabled = u.notif_enabled === true;
-      if(notifDesc) notifDesc.textContent = `Estado de notificaciones de ${nombre}.`;
+  }
+
+  // Notificaciones
+  const btnNotif = document.getElementById('btnActivarNotif');
+  if(u) {
+    const enabled = u.notif_enabled === true;
+    if(btnNotif) {
       btnNotif.textContent = enabled ? '🔔 Activas — clic para silenciar' : '🔕 Silenciadas — clic para activar';
       btnNotif.style.background = enabled ? '#16A34A' : 'var(--red)';
       btnNotif.onclick = () => toggleNotifAgente(u.nombre, u.userId);
     }
+  } else {
+    if(btnNotif) { btnNotif.onclick = pedirPermisoNotificaciones; }
+    actualizarBtnNotif();
+  }
+
+  // Rol (solo para otros usuarios, no para uno mismo)
+  const panelRol = document.getElementById('panelRol');
+  if(panelRol) {
+    panelRol.style.display = (u && currentRole === 'advanced' && u.userId !== currentUser?.id) ? '' : 'none';
+    if(u && u.userId !== currentUser?.id) {
+      const rolStatus = document.getElementById('rolStatus');
+      const btnA = document.getElementById('btnRolAgente');
+      const btnAd = document.getElementById('btnRolAdmin');
+      const esAdmin = u.role === 'advanced';
+      if(btnA) { btnA.style.background = !esAdmin ? '#C2003F' : 'var(--surface)'; btnA.style.color = !esAdmin ? '#fff' : 'var(--text)'; btnA.style.borderColor = !esAdmin ? '#C2003F' : 'var(--border)'; }
+      if(btnAd) { btnAd.style.background = esAdmin ? '#C2003F' : 'var(--surface)'; btnAd.style.color = esAdmin ? '#fff' : 'var(--text)'; btnAd.style.borderColor = esAdmin ? '#C2003F' : 'var(--border)'; }
+      if(rolStatus) rolStatus.textContent = `Rol actual: ${esAdmin ? 'Administrador' : 'Agente'}`;
+    }
   }
 }
+
+async function cambiarRol(nuevoRol) {
+  if(!_agenteSeleccionado) return;
+  const { userId, nombre } = _agenteSeleccionado;
+  try {
+    const res = await fetch(SUPA_URL + '/rest/v1/user_roles?user_id=eq.' + userId, {
+      method: 'PATCH',
+      headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + (accessToken||SUPA_KEY), 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ role: nuevoRol })
+    });
+    if(res.ok) {
+      _agenteSeleccionado.role = nuevoRol;
+      const u = _todosUsuarios.find(u => u.userId === userId);
+      if(u) u.role = nuevoRol;
+      cargarPreviewAgente(_agenteSeleccionado);
+      renderListaEquipo();
+      mostrarToast(`✅ ${nombre}: rol cambiado a ${nuevoRol === 'advanced' ? 'Administrador' : 'Agente'}`);
+    }
+  } catch(e) { mostrarToast('⚠️ Error: ' + e.message); }
+}
+
+function renderListaEquipo() {
+  const lista = document.getElementById('listaNotifAgentes');
+  if(!lista) return;
+  lista.innerHTML = _todosUsuarios.map(u => {
+    const selec = _agenteSeleccionado?.userId === u.userId;
+    const enabled = u.notif_enabled === true;
+    const esAdmin = u.role === 'advanced';
+    return `<div onclick="seleccionarAgenteEquipo('${u.userId}')" style="display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;cursor:pointer;background:${selec?'#FFF1F3':'transparent'};border:1.5px solid ${selec?'var(--red)':'transparent'};" onmouseover="if(!${selec})this.style.background='var(--surface-2)'" onmouseout="if(!${selec})this.style.background='transparent'">
+      ${avatarHTML(u.nombre, 28)}
+      <span style="flex:1;font-size:12px;font-weight:${selec?'800':'600'};color:${selec?'var(--red)':'var(--text)'};">${u.nombre}</span>
+      <span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;background:${enabled?'#F0FDF4':'var(--surface-2)'};color:${enabled?'#16A34A':'var(--text-3)'};border:1px solid ${enabled?'#86EFAC':'var(--border)'};">${enabled?'🔔':'🔕'}</span>
+      <span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;background:${esAdmin?'#FFF1F3':'var(--surface-2)'};color:${esAdmin?'var(--red)':'var(--text-3)'};border:1px solid ${esAdmin?'#FECDD3':'var(--border)'};">${esAdmin?'Admin':'Agente'}</span>
+    </div>`;
+  }).join('');
+}
+
+function seleccionarAgenteEquipo(userId) {
+  const u = _todosUsuarios.find(u => u.userId === userId);
+  if(!u) return;
+  _agenteSeleccionado = u;
+  cargarPreviewAgente(u);
+  renderListaEquipo();
+}
+
+// (reemplazado por seleccionarAgenteEquipo)
+
 
 async function renderNotifEquipo() {
   const lista = document.getElementById('listaNotifAgentes');
@@ -4586,9 +4639,10 @@ async function toggleNotifAgente(nombre, userId) {
     // Actualizar en memoria
     const u = _todosUsuarios.find(u => u.userId === userId);
     if(u) u.notif_enabled = !actual;
+    if(_agenteSeleccionado?.userId === userId) _agenteSeleccionado.notif_enabled = !actual;
     // Refrescar lista y botón central
-    renderNotifEquipo();
-    cambiarAgenteSeleccionado();
+    renderListaEquipo();
+    if(_agenteSeleccionado?.userId === userId) cargarPreviewAgente(_agenteSeleccionado);
     mostrarToast(`${!actual ? '🔔 Activadas' : '🔕 Silenciadas'} para ${nombre}`);
   } catch(e) { mostrarToast('⚠️ Error: ' + e.message); }
 }
@@ -4872,7 +4926,28 @@ function mostrarNotificacionSistema(reg) {
 
 let _fotosAgentes = {};
 let _editingAgente = null;
-let _todosUsuarios = []; // {userId, nombre, foto, notif_enabled} — todos los de user_roles // { userId, nombre } cuando admin edita foto de otro
+let _todosUsuarios = [];
+
+// Mapa completo de todos los usuarios — fallback si nombre está vacío en Supabase
+const NOMBRES_EQUIPO = {
+  '2beeddaf-8c14-4467-99bc-2dc0b80e7cbd': 'Luis del Blanco',
+  'c4f2609a-2ec6-4885-9394-17f78c97caae': 'Iago Losada',
+  '11d688ae-3bce-42f1-a712-d0a49842ca81': 'Erika Gómez',
+  '98e153c7-c1ac-44c7-8200-9a41805ba179': 'Carlos del Blanco',
+  'fbd44c00-5e0f-468e-b723-40ee914d6310': 'Conchi Soto',
+  '4fb9dd85-ad99-4bb7-ae2e-acfd82e188c6': 'Cristina Egea',
+  '3a6692b3-9a17-49ee-baaf-fb532c3d40c4': 'Dafne Campaña',
+  'a4f081a7-dd4d-48fb-981e-02808183ae52': 'Elsa Kubala',
+  '522e68ff-6570-4038-8561-2026ab9dd6ca': 'Imma Franco',
+  '78060cbc-b66b-416d-a976-338edb759920': 'Irene Ruiz',
+  '9964ff2d-bbc6-4752-9ffa-b821cadec4c5': 'Jez Tristany',
+  'ecc5015e-471b-49df-bdc9-33378d263cd1': 'Macarena Melero',
+  'e79cb1e7-a9d1-4f44-a5f4-f5fb47ed4d13': 'María Linares',
+  '967fb75a-9686-40dd-98c9-ff1703932732': 'Marta Calcerrada',
+  'f42fe03f-8248-4c09-aa70-484701f25d05': 'Mary González',
+  '0cb972cd-171b-46cf-8219-f17c3579c6d5': 'Raúl López',
+  '9029663b-d1ab-4a01-a83c-f1b0ec6f23c7': 'Victoria Giménez',
+}; // { userId, nombre } cuando admin edita foto de otro
 let _validacionesInc = {}; // clave: "nombre_mes_anio" → {por, fecha, bono} // nombre agente → base64 foto
 
 async function cargarFotosAgentes() {
@@ -4883,11 +4958,7 @@ async function cargarFotosAgentes() {
         .filter(r => r.user_id)
         .map(r => ({
           userId: r.user_id,
-          nombre: r.nombre || (() => {
-            // Fallback: buscar en TIPOLOGIAS_INC por userId
-            const found = Object.keys(TIPOLOGIAS_INC).find(n => TIPOLOGIAS_INC[n].userId === r.user_id);
-            return found || r.user_id.slice(0,8);
-          })(),
+          nombre: r.nombre || NOMBRES_EQUIPO[r.user_id] || r.user_id.slice(0,8),
           foto: r.foto || '', notif_enabled: r.notif_enabled || false
         }))
         .sort((a,b) => a.nombre.localeCompare(b.nombre));
@@ -5036,8 +5107,7 @@ function confirmarCrop() {
 }
 
 async function eliminarFotoPerfil() {
-  const sel = document.getElementById('selectAgenteFoto');
-  const nombreSel = sel?.value || '';
+  const nombreSel = _agenteSeleccionado?.nombre || '';
   const esOtro = nombreSel && currentRole === 'advanced';
   const quien = esOtro ? nombreSel : 'tu perfil';
   if(!confirm('¿Eliminar la foto de ' + quien + '?')) return;
@@ -5045,8 +5115,8 @@ async function eliminarFotoPerfil() {
   let userId = currentUser?.id;
   if(esOtro) {
     const u = _todosUsuarios.find(u => u.nombre === nombreSel);
-    if(!u?.userId) { mostrarToast('⚠️ Usuario no encontrado'); return; }
-    userId = u.userId;
+    if(!_agenteSeleccionado?.userId) { mostrarToast('⚠️ Usuario no encontrado'); return; }
+    userId = _agenteSeleccionado.userId;
   }
 
   try {
@@ -5057,7 +5127,7 @@ async function eliminarFotoPerfil() {
     });
     if(res.ok) {
       if(!esOtro) { _userFoto = ''; actualizarAvatarSidebar(); }
-      else { _fotosAgentes[nombreSel.toLowerCase()] = ''; renderAll(); }
+      else { _fotosAgentes[nombreSel.toLowerCase()] = ''; if(_agenteSeleccionado) { _agenteSeleccionado.foto = ''; renderListaEquipo(); } }
       // Limpiar preview
       const prev = document.getElementById('fotoPreview');
       const ini = document.getElementById('fotoPreviewIni');
@@ -5117,15 +5187,15 @@ async function guardarFotoDesdeInput() {
   if(status) status.textContent = 'Guardando...';
 
   // Comprobar si hay un agente seleccionado en el dropdown admin
-  const sel = document.getElementById('selectAgenteFoto');
-  const nombreSel = sel?.value || '';
+  const nombreSel = _agenteSeleccionado?.nombre || '';
 
   try {
     if(nombreSel && currentRole === 'advanced') {
       // Guardar foto de otro agente
-      const usuario = _todosUsuarios.find(u => u.nombre === nombreSel);
+      const usuario = _agenteSeleccionado;
       if(!usuario?.userId) throw new Error('userId no encontrado para ' + nombreSel);
       await guardarFotoDeAgente(usuario.userId, nombreSel, _fotoBase64Pendiente);
+      if(_agenteSeleccionado) { _agenteSeleccionado.foto = _fotoBase64Pendiente; renderListaEquipo(); }
       // Actualizar preview
       const prev = document.getElementById('fotoPreview');
       if(prev) { prev.src = _fotoBase64Pendiente; prev.style.display = 'block'; }
