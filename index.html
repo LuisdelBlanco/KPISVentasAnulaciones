@@ -4258,11 +4258,7 @@ const TIPOLOGIAS_INC = {
 
 // Agentes pendientes de plan (tarjeta gris)
 const PENDIENTES_INC = [
-  { nombre: 'Victoria Giménez', oficina: 'Barcelona' },
-  { nombre: 'Marta Calcerrada', oficina: 'Barcelona' },
-  { nombre: 'Irene Ruiz',       oficina: 'Barcelona' },
   { nombre: 'Elsa Kubala',      oficina: 'Barcelona' },
-  { nombre: 'Cristina Egea',    oficina: 'Barcelona' },
   { nombre: 'Imma Franco',      oficina: 'Montornés' },
   { nombre: 'Macarena Melero',  oficina: 'Montornés' },
   { nombre: 'Luis del Blanco',  oficina: 'Polígono'  },
@@ -4669,10 +4665,28 @@ function renderIncentivos() {
     }
   }
 
-  // Mostrar total admin
+  // Sumar total Barcelona 70% al total general
+  let totalBarcelona = 0;
+  if(isAdv) {
+    const anio70 = parseInt(document.getElementById('incYear')?.value) || new Date().getFullYear();
+    const mes70  = parseInt(document.getElementById('incMonth')?.value) || new Date().getMonth()+1;
+    Object.values(AGENTES_70).forEach(nombre => {
+      const regsAgente = registros.filter(r => {
+        if(r.agente !== nombre) return false;
+        if(!r.fecha) return false;
+        const [y,m] = r.fecha.split('-').map(Number);
+        return y === anio70 && m === mes70 &&
+          ['Emisión','Inicial/Suple','Aumento prevista','Sin efecto','Reemplazo'].includes(r.tipo);
+      });
+      regsAgente.forEach(r => { totalBarcelona += calcularIncentivo70(r); });
+    });
+  }
+
+  // Mostrar total admin (tramos + Barcelona)
   if(isAdv && totalAdmin && totalVal) {
     totalAdmin.style.display = 'flex';
-    totalVal.textContent = totalPagar.toFixed(2) + ' €';
+    const totalGeneral = totalPagar + totalBarcelona;
+    totalVal.textContent = totalGeneral.toFixed(2) + ' €';
   }
   // Mostrar botón copiar si hay validaciones
   const copiarWrap = document.getElementById('incCopiarWrap');
