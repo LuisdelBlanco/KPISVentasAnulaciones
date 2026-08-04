@@ -4404,6 +4404,13 @@ function calcularIncentivo(nombre, mes, anio) {
 
 
 // ── PANEL INCENTIVOS 70% BARCELONA ───────────────────────────
+
+function editarRegistro70(id) {
+  const r = registros.find(x => x.id == id);
+  if(!r) return;
+  openModal(r);
+}
+
 function renderPanel70(anio, mes, isAdv, container) {
   const agentes70 = isAdv ? Object.values(AGENTES_70) : [AGENTES_70[currentUser?.id]].filter(Boolean);
   if(!agentes70.length) return;
@@ -4448,7 +4455,8 @@ function renderPanel70(anio, mes, isAdv, container) {
       } else if(r.tipo === 'Reemplazo') {
         detalle = `Dif. ${(parseFloat(r.comisionOccident)||0).toFixed(2)}€ × 70%`;
       }
-      return `<div style="display:grid;grid-template-columns:70px 1fr 80px 80px;gap:6px;align-items:center;padding:5px 8px;border-radius:6px;font-size:11px;background:${inc < 0?'#FFF1F3':'var(--surface-2)'};">
+      const puedeEditar = isAdv || !!AGENTES_70[currentUser?.id];
+      return `<div onclick="${puedeEditar ? `editarRegistro70('${r.id}')` : ''}" style="display:grid;grid-template-columns:70px 1fr 80px 80px;gap:6px;align-items:center;padding:5px 8px;border-radius:6px;font-size:11px;background:${inc < 0?'#FFF1F3':'var(--surface-2)'};${puedeEditar?'cursor:pointer;':''};" ${puedeEditar?`onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"`:''}>
         <span style="font-weight:700;color:var(--text-3);">${r.fecha?.slice(5)||''}</span>
         <span style="color:var(--text);">${r.poliza||'—'} <span style="color:var(--text-3);">${r.tipo}</span></span>
         <span style="color:var(--text-3);font-size:10px;">${detalle}</span>
@@ -4500,26 +4508,18 @@ function renderIncentivos() {
 
   // ── Sistema 70% Barcelona ──────────────────────────────
   const esAgente70actual = !!AGENTES_70[currentUser?.id];
-  const nombreAgente70   = AGENTES_70[currentUser?.id] || '';
   const esSoloBarcelona  = esAgente70actual && !isAdv;
+  const adminVe70panel   = adminVe70(); // Luis e Iago
 
-  if(esSoloBarcelona || (isAdv && comercialesVer.length === 0)) {
-    // Renderizar panel 70% para las agentes de Barcelona
-    renderPanel70(anio, mes, isAdv);
-    // Para admin también renderizar comparativa
-    if(isAdv) {
-      if(comercialesVer.length === 0) {
-        cards.innerHTML = '';
-        return;
-      }
-    } else {
-      cards.innerHTML = '';
-      return;
-    }
+  // Agentes Barcelona: solo ven su panel
+  if(esSoloBarcelona) {
+    renderPanel70(anio, mes, false);
+    cards.innerHTML = '';
+    return;
   }
 
-  // Si es admin, añadir panel 70% para las Barcelona antes de las cards normales
-  if(isAdv) {
+  // Luis e Iago: ven el panel Barcelona completo (editable) + sus tramos normales
+  if(adminVe70panel) {
     const div70 = document.getElementById('panel70Barcelona') || (() => {
       const d = document.createElement('div');
       d.id = 'panel70Barcelona';
@@ -5157,6 +5157,12 @@ const AGENTES_70 = {
   '4fb9dd85-ad99-4bb7-ae2e-acfd82e188c6': 'Cristina Egea',
 };
 const NOMBRES_70 = Object.values(AGENTES_70);
+// Admins que también ven y editan el panel Barcelona
+const ADMINS_VEN_70 = [
+  '2beeddaf-8c14-4467-99bc-2dc0b80e7cbd', // Luis del Blanco
+  'c4f2609a-2ec6-4885-9394-17f78c97caae', // Iago Losada
+];
+function adminVe70() { return ADMINS_VEN_70.includes(currentUser?.id); }
 const RAMOS_AHORRO_70 = [
   '1354 - Ahorro Creciente','384 - PPA','1364 - Universal PIAS Garantizado',
   '1337 - Sialp','935 - Catalana Occidente Patrimonio, F.I.','1310 - Inversión multifondos',
