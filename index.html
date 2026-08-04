@@ -920,16 +920,6 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
           </div>
         </div>
 
-        <div class="table-card" style="border-left:3px solid var(--amber);">
-          <div class="table-card-header"><span class="table-card-title">🔧 Recalcular primas corregidas</span></div>
-          <div style="padding:16px;">
-            <p style="font-size:13px;color:var(--text-2);margin-bottom:6px;">Recalcula y guarda la prima corregida en <strong>todos los registros</strong> que no la tienen o que la tienen en cero, aplicando los coeficientes actuales por ramo y tipo.</p>
-            <p style="font-size:11px;color:var(--text-3);margin-bottom:14px;">Solo afecta a registros con prima corregida vacía o cero. No modifica los que ya tienen valor.</p>
-            <button class="btn btn-primary" onclick="recalcularPrimasCorregidas()" id="btnRecalcular">⚙️ Ejecutar recálculo</button>
-            <div id="recalcMsg" style="margin-top:10px;font-size:12px;"></div>
-          </div>
-        </div>
-
         <p class="section-label">Importar desde Excel / CSV</p>
         <div class="import-drop" onclick="document.getElementById('csvInput').click()">
           <div class="import-drop-icon">📄</div>
@@ -1168,10 +1158,21 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
             <input type="hidden" id="objetivoMensual">
           </div>
         </div>
+        <div class="table-card" style="grid-column:span 2;border-left:3px solid var(--amber);">
+          <div class="table-card-header"><span class="table-card-title">🔧 Recalcular primas corregidas</span></div>
+          <div style="padding:16px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;">
+            <div>
+              <p style="font-size:13px;color:var(--text-2);margin-bottom:4px;">Recalcula la prima corregida de todos los registros que la tienen vacía o en cero, aplicando los coeficientes actuales por ramo y tipo.</p>
+              <p style="font-size:11px;color:var(--text-3);">No modifica registros que ya tienen valor.</p>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;">
+              <button class="btn btn-primary" onclick="recalcularPrimasCorregidas()" id="btnRecalcular">⚙️ Ejecutar recálculo</button>
+              <div id="recalcMsg" style="font-size:12px;text-align:right;"></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-
-  </div><!-- /content -->
 </main>
 
 <!-- MODAL -->
