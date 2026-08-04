@@ -761,9 +761,10 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
           <table>
             <thead><tr>
               <th>#</th><th>Agente</th><th>Oficina</th>
-              <th>Emisiones</th><th>Anulaciones</th><th>Rehab.</th><th>Reempl.</th><th>Sin efecto</th><th>Neto</th><th>Retención</th>
+              <th>Emisiones netas</th><th>Anulaciones</th><th>Rehab.</th><th>Reempl.</th><th>Sin efecto</th><th>Neto</th><th style="text-align:right">Prima corregida</th>
             </tr></thead>
             <tbody id="bodyComerciales"></tbody>
+            <tfoot id="footComerciales"></tfoot>
           </table>
         </div>
       </div>
@@ -2458,36 +2459,66 @@ function renderOficinas() {
 
 // ── COMERCIALES PAGE ──────────────────────────────
 function renderComerciales() {
-  const data=getFiltered();
-  const byC={};
-  data.forEach(r=>{
-    const k=r.agente||r.comercial||'(sin asignar)';
-    if(!byC[k])byC[k]={oficina:r.oficina||'',v:0,a:0,rh:0,s:0,se:0};
-    if(r.tipo==='Emisión')byC[k].v++;
-    if(r.tipo==='Anulación')byC[k].a++;
-    if(r.tipo==='Rehabilitación')byC[k].rh++;
-    if(r.tipo==='Reemplazo')byC[k].s++;
-    if(r.tipo==='Sin efecto')byC[k].se++;
+  const data = getFiltered();
+  const byC = {};
+  data.forEach(r => {
+    const k = r.agente || r.comercial || '(sin asignar)';
+    if(!byC[k]) byC[k] = { oficina: r.oficina||'', v:0, a:0, rh:0, s:0, se:0, primaC:0 };
+    if(r.tipo === 'Emisión')        { byC[k].v++;  byC[k].primaC += parseFloat(r.primaCorregida)||0; }
+    if(r.tipo === 'Anulación')        byC[k].a++;
+    if(r.tipo === 'Rehabilitación')   byC[k].rh++;
+    if(r.tipo === 'Reemplazo')        byC[k].s++;
+    if(r.tipo === 'Sin efecto')       byC[k].se++;
+    if(r.tipo === 'Inicial/Suple') { byC[k].v++;  byC[k].primaC += parseFloat(r.primaCorregida)||0; }
   });
-  const sorted=Object.entries(byC).sort((a,b)=>b[1].v-a[1].v);
-  document.getElementById('bodyComerciales').innerHTML=sorted.length===0?
-    `<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">📊</div><p>Sin datos</p></div></td></tr>`:
-    sorted.map(([nombre,d],i)=>{
-      const neto=d.v-d.a+d.rh;
-      const ret=d.v>0?Math.round((1-d.a/d.v)*100):100;
-      return`<tr>
-        <td style="font-weight:700;color:var(--text-3);font-size:12px">${i+1}</td>
-        <td style="font-weight:600;display:flex;align-items:center;gap:8px;">${avatarHTML(nombre)} ${nombre}</td>
-        <td><span class="badge badge-sin-efecto">${d.oficina}</span></td>
-        <td style="color:var(--green);font-weight:700">${d.v}</td>
-        <td style="color:var(--red)">${d.a}</td>
-        <td style="color:var(--blue)">${d.rh}</td>
-        <td style="color:var(--amber)">${d.s}</td>
-        <td>${d.se}</td>
-        <td style="font-weight:800;color:${neto>=0?'var(--green)':'var(--red)'}">${neto>0?'+'+neto:neto}</td>
-        <td><div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="width:56px"><div class="progress-fill" style="width:${ret}%"></div></div><span style="font-size:11px;color:var(--text-3)">${ret}%</span></div></td>
-      </tr>`;
-    }).join('');
+
+  // Emisiones netas = emisiones - sin efecto
+  const sorted = Object.entries(byC)
+    .map(([nombre, d]) => ({ nombre, ...d, vNeto: d.v - d.se }))
+    .sort((a, b) => b.vNeto - a.vNeto);
+
+  const fmtPC = n => n > 0
+    ? n.toLocaleString('es-ES', { minimumFractionDigits:2, maximumFractionDigits:2 }) + ' €'
+    : '—';
+
+  document.getElementById('bodyComerciales').innerHTML = sorted.length === 0
+    ? `<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">📊</div><p>Sin datos</p></div></td></tr>`
+    : sorted.map(({ nombre, oficina, vNeto, a, rh, s, se, primaC }, i) => {
+        const neto = vNeto - a + rh;
+        return `<tr>
+          <td style="font-weight:700;color:var(--text-3);font-size:12px">${i+1}</td>
+          <td style="font-weight:600;display:flex;align-items:center;gap:8px;">${avatarHTML(nombre)} ${nombre}</td>
+          <td><span class="badge badge-sin-efecto">${oficina}</span></td>
+          <td style="color:var(--green);font-weight:700">${vNeto}</td>
+          <td style="color:var(--red)">${a}</td>
+          <td style="color:var(--blue)">${rh}</td>
+          <td style="color:var(--amber)">${s}</td>
+          <td style="color:var(--text-3)">${se}</td>
+          <td style="font-weight:800;color:${neto>=0?'var(--green)':'var(--red)'}">${neto>0?'+'+neto:neto}</td>
+          <td style="text-align:right;font-weight:700;color:var(--text-2)">${fmtPC(primaC)}</td>
+        </tr>`;
+      }).join('');
+
+  // Fila de totales
+  const tot = sorted.reduce((acc, d) => {
+    acc.vNeto += d.vNeto; acc.a += d.a; acc.rh += d.rh;
+    acc.s += d.s; acc.se += d.se; acc.primaC += d.primaC;
+    return acc;
+  }, { vNeto:0, a:0, rh:0, s:0, se:0, primaC:0 });
+  const totNeto = tot.vNeto - tot.a + tot.rh;
+
+  document.getElementById('footComerciales').innerHTML = sorted.length === 0 ? '' : `
+    <tr style="border-top:2px solid var(--border);background:var(--surface-2);">
+      <td colspan="2" style="font-weight:800;font-size:12px;color:var(--text-3);padding:10px 12px;text-transform:uppercase;letter-spacing:0.06em;">TOTAL</td>
+      <td></td>
+      <td style="color:var(--green);font-weight:800">${tot.vNeto}</td>
+      <td style="color:var(--red);font-weight:800">${tot.a}</td>
+      <td style="color:var(--blue);font-weight:800">${tot.rh}</td>
+      <td style="color:var(--amber);font-weight:800">${tot.s}</td>
+      <td style="color:var(--text-3);font-weight:800">${tot.se}</td>
+      <td style="font-weight:900;color:${totNeto>=0?'var(--green)':'var(--red)'}">${totNeto>0?'+'+totNeto:totNeto}</td>
+      <td style="text-align:right;font-weight:900;color:var(--red)">${fmtPC(tot.primaC)}</td>
+    </tr>`;
 }
 
 // ── REGISTROS PAGE ────────────────────────────────
