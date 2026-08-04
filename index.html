@@ -1640,6 +1640,13 @@ async function arrancarApp() {
 // ── CHANGELOG ────────────────────────────────────────────
 const CHANGELOG = [
   {
+    version: 'v1.7 · Agosto 2026',
+    items: [
+      { icon: '⬡', title: 'Por oficina: mismos datos que el ranking por agente', desc: 'La página "Por oficina" ahora muestra una tabla con las mismas columnas que el ranking por agente: emisiones netas, anulaciones, rehabilitaciones, reemplazos, sin efecto, neto y prima corregida. Incluye fila de totales al pie y al hacer clic en una oficina va directamente a sus registros filtrados. Facilita comparar el rendimiento entre oficinas con los mismos criterios que se usan para comparar agentes.' },
+      { icon: '🔧', title: 'Recalcular primas corregidas (Ajustes)', desc: 'Nueva herramienta en Ajustes que recalcula y guarda en Supabase la prima corregida de todos los registros que la tienen vacía o en cero, aplicando los coeficientes actuales por ramo y tipo. Solo afecta a los registros sin valor — no modifica los que ya tienen uno correcto. Útil para poner al día registros históricos grabados antes de que se configuraran los coeficientes.' },
+    ]
+  },
+  {
     version: 'v1.6 · Agosto 2026',
     items: [
       { icon: '✦', title: 'Sección Novedades', desc: 'Se añade esta misma sección al sidebar. Cada vez que Kompass se actualice, al entrar aparecerá automáticamente una pantalla central explicando los cambios. Un punto rojo en el menú avisa si hay novedades no leídas. Así todos los usuarios saben qué ha cambiado, cómo usarlo y por qué mejora su día a día, sin necesidad de preguntar.' },
