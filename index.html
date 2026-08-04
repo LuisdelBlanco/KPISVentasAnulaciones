@@ -5260,6 +5260,13 @@ async function cargarFotosAgentes() {
         .sort((a,b) => a.nombre.localeCompare(b.nombre));
       data.forEach(r => {
         if(r.nombre && r.foto) _fotosAgentes[r.nombre.toLowerCase()] = r.foto;
+        // Alias: si el userId está en AGENTES_70 o NOMBRES_EQUIPO, mapear también por ese nombre
+        if(r.user_id && r.foto) {
+          const nombreAgentes70 = AGENTES_70[r.user_id];
+          if(nombreAgentes70) _fotosAgentes[nombreAgentes70.toLowerCase()] = r.foto;
+          const nombreEquipo = NOMBRES_EQUIPO[r.user_id];
+          if(nombreEquipo) _fotosAgentes[nombreEquipo.toLowerCase()] = r.foto;
+        }
       });
     }
   } catch(e) { console.warn('Error cargando fotos:', e.message); }
