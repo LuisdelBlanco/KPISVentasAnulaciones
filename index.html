@@ -1894,6 +1894,7 @@ async function supaWrite(reg) {
     tomador: reg.tomador||'',
     prima: reg.prima||0,
     prima_corregida: reg.primaCorregida||0,
+    comision_occident: parseFloat(reg.comisionOccident||reg.comision_occident)||0,
     motivo: reg.motivo||'',
     notas: reg.notas||'',
     rehab_origen: reg.rehabOrigen||'',
@@ -3549,13 +3550,13 @@ async function guardarRegistro(){
     if(!continuar) return;
   }
 
-  // ── Detección de duplicados ──────────────────────────────
+  // ── Detección de duplicados (solo en registros NUEVOS) ───────
+  if(!editingRegistroId) {
   try {
     const polizaNorm = poliza.replace(/[\.\-\s]/g,'').toUpperCase();
 
-    // 1. Duplicado exacto (excluir el propio registro si estamos editando)
+    // 1. Duplicado exacto
     const exacto = registros.find(r =>
-      String(r.id) !== String(editingRegistroId||'') &&
       r.poliza && r.poliza.replace(/[\.\-\s]/g,'').toUpperCase() === polizaNorm &&
       r.tipo === tipo &&
       r.fecha === fecha
@@ -3573,10 +3574,9 @@ async function guardarRegistro(){
       if(!ok) return;
     }
 
-    // 2. Mismo movimiento: misma póliza + mismo tipo (fecha diferente, excluir el propio registro)
+    // 2. Mismo movimiento: misma póliza + mismo tipo (fecha diferente)
     if(!exacto) {
       const similar = registros.find(r =>
-        String(r.id) !== String(editingRegistroId||'') &&
         r.poliza && r.poliza.replace(/[\.\-\s]/g,'').toUpperCase() === polizaNorm &&
         r.tipo === tipo &&
         r.fecha !== fecha
@@ -3595,8 +3595,8 @@ async function guardarRegistro(){
     }
   } catch(e) {
     console.warn('Error en detección de duplicados:', e.message);
-    // Si falla la detección, se guarda igualmente
   }
+  } // fin if(!editingRegistroId)
 
   // Actualizar el campo visualmente con el valor corregido
   document.getElementById('mPoliza').value = poliza;
@@ -3607,24 +3607,28 @@ async function guardarRegistro(){
   const estadoRecibo = tipo==='Pte. Anular' ? (document.getElementById('mEstadoRecibo')?.value||'pendiente') : '';
 
   if(editingRegistroId) {
-    const idx = registros.findIndex(r => String(r.id) === editingRegistroId);
-    if(idx >= 0) {
-      const estadoPte = tipo==='Pte. Anular' ? 'pendiente' : '';
-      const estadoReciboPrev = tipo==='Pte. Anular' ? estadoRecibo : (registros[idx].estadoRecibo||'');
-      registros[idx] = {...registros[idx], fecha, tipo, poliza, ramo, gestora, oficina,
-        prima:parseFloat(prima)||0, primaCorregida:parseFloat(primaCorregida)||0, comision_occident:comisionOccident,
-        tomador, agente, motivo, notas:notasCompleto, rehabOrigen,
-        fechaVencimiento, fechaCaida, estadoPte, estadoRecibo:estadoReciboPrev};
-      const reg = registros[idx];
-      setBtnGuardar(true);
-      try {
-        await supaWrite(reg);
-        saveData(); closeModal(); renderAll();
-      } catch(e) {
-        setBtnGuardar(false);
-        alert('⚠️ No se pudo guardar en Supabase:\n' + e.message + '\n\nVerifica tu conexión o vuelve a iniciar sesión.');
-        return;
-      }
+    const idx = registros.findIndex(r => String(r.id) === String(editingRegistroId));
+    if(idx < 0) {
+      alert('⚠️ No se encontró el registro en memoria. Recarga la página e inténtalo de nuevo.');
+      editingRegistroId = null;
+      return;
+    }
+    const estadoPte = tipo==='Pte. Anular' ? 'pendiente' : '';
+    const estadoReciboPrev = tipo==='Pte. Anular' ? estadoRecibo : (registros[idx].estadoRecibo||'');
+    registros[idx] = {...registros[idx], fecha, tipo, poliza, ramo, gestora, oficina,
+      prima:parseFloat(prima)||0, primaCorregida:parseFloat(primaCorregida)||0, comision_occident:comisionOccident,
+      comisionOccident:comisionOccident,
+      tomador, agente, motivo, notas:notasCompleto, rehabOrigen,
+      fechaVencimiento, fechaCaida, estadoPte, estadoRecibo:estadoReciboPrev};
+    const reg = registros[idx];
+    setBtnGuardar(true);
+    try {
+      await supaWrite(reg);
+      saveData(); closeModal(); renderAll();
+    } catch(e) {
+      setBtnGuardar(false);
+      alert('⚠️ No se pudo guardar en Supabase:\n' + e.message + '\n\nVerifica tu conexión o vuelve a iniciar sesión.');
+      return;
     }
     editingRegistroId = null;
     return;
