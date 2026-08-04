@@ -1990,7 +1990,7 @@ async function cargarDatosSupabase() {
       id:r.id, fecha:r.fecha, tipo:r.tipo, poliza:r.poliza,
       ramo:r.ramo, gestora:r.gestora, oficina:r.oficina,
       agente:r.agente, tomador:r.tomador||'',
-      prima:r.prima||0, primaCorregida:r.prima_corregida||0, notas:r.notas||'',
+      prima:r.prima||0, primaCorregida:r.prima_corregida||0, comisionOccident:r.comision_occident||0, notas:r.notas||'',
       createdAt:r.created_at||'', rehabOrigen:r.rehab_origen||'',
       fechaVencimiento:r.fecha_vencimiento||'', fechaCaida:r.fecha_vencimiento?calcFechaCaidaStatic(r.fecha_vencimiento):'', estadoPte:r.estado_pte||'', estadoRecibo:r.estado_recibo||'pendiente'
     }));
@@ -4456,23 +4456,7 @@ function renderPanel70(anio, mes, isAdv, container) {
       </div>`;
     }).join('');
 
-    // Comparativa tramos (solo admin)
-    let compHtml = '';
-    if(isAdv) {
-      const r70 = calcularIncentivo70({tipo:'__dummy__'});
-      const tipComp = Object.keys(TIPOLOGIAS_INC).find(n => n === nombre);
-      if(tipComp) {
-        const rComp = calcularIncentivo(nombre, mes, anio);
-        const bonoComp = rComp?.bonoTotal || 0;
-        compHtml = `<div style="margin-top:8px;padding:8px;background:#F0FDF4;border-radius:6px;border:1px solid #86EFAC;font-size:11px;">
-          <span style="font-weight:700;color:#16A34A;">Comparativa tramos:</span>
-          <span style="color:var(--text-2);margin-left:6px;">Con sistema de tramos habría generado <strong>${bonoComp.toFixed(0)}€</strong></span>
-          <span style="color:var(--text-3);margin-left:6px;">vs <strong style="color:var(--red);">${totalInc.toFixed(2)}€</strong> con 70%</span>
-        </div>`;
-      } else {
-        compHtml = `<div style="margin-top:8px;padding:8px;background:#F7F7F6;border-radius:6px;font-size:10px;color:var(--text-3);">No tiene plan de tramos configurado para comparar.</div>`;
-      }
-    }
+
 
     html70 += `<div style="background:var(--surface);border-radius:12px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,0.05);overflow:hidden;">
       <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);">
@@ -4486,7 +4470,7 @@ function renderPanel70(anio, mes, isAdv, container) {
       <div style="padding:10px 14px;display:flex;flex-direction:column;gap:4px;max-height:240px;overflow-y:auto;">
         ${filas || '<span style="font-size:12px;color:var(--text-3);">Sin registros este mes</span>'}
       </div>
-      ${isAdv ? `<div style="padding:8px 14px 12px;">${compHtml}</div>` : ''}
+
     </div>`;
   });
 
@@ -5168,7 +5152,7 @@ let _todosUsuarios = [];
 // ── SISTEMA 70% BARCELONA ──────────────────────────────
 const AGENTES_70 = {
   '78060cbc-b66b-416d-a976-338edb759920': 'Irene Ruiz',
-  '9029663b-d1ab-4a01-a83c-f1b0ec6f23c7': 'Victoria Giménez',
+  '9029663b-d1ab-4a01-a83c-f1b0ec6f23c7': 'Vicky Giménez',
   '967fb75a-9686-40dd-98c9-ff1703932732': 'Marta Calcerrada',
   '4fb9dd85-ad99-4bb7-ae2e-acfd82e188c6': 'Cristina Egea',
 };
@@ -5233,7 +5217,7 @@ const NOMBRES_EQUIPO = {
   '967fb75a-9686-40dd-98c9-ff1703932732': 'Marta Calcerrada',
   'f42fe03f-8248-4c09-aa70-484701f25d05': 'Mary González',
   '0cb972cd-171b-46cf-8219-f17c3579c6d5': 'Raúl López',
-  '9029663b-d1ab-4a01-a83c-f1b0ec6f23c7': 'Victoria Giménez',
+  '9029663b-d1ab-4a01-a83c-f1b0ec6f23c7': 'Vicky Giménez',
 }; // { userId, nombre } cuando admin edita foto de otro
 let _validacionesInc = {}; // clave: "nombre_mes_anio" → {por, fecha, bono} // nombre agente → base64 foto
 
