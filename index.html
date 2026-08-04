@@ -606,11 +606,21 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-logo" onclick="location.reload()" title="Refrescar datos" style="cursor:pointer;">
-    <div class="sidebar-logo-mark" id="sidebarLogoMark">
-      <!-- Logo se inyecta por JS según usuario -->
+    <div class="sidebar-logo-mark">
+      <svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="38" height="38" rx="10" fill="#C2003F"/>
+        <polygon transform="translate(19,19)" points="12.4,0 8.8,8.8 0,12.4 -8.8,8.8 -12.4,0 -8.8,-8.8 0,-12.4 8.8,-8.8" fill="white"/>
+        <g transform="translate(19,19)">
+          <polygon points="0,-11.2 -2.8,-2.8 0,0 2.8,-2.8" fill="#C2003F"/>
+          <polygon points="0,11.2 -2.8,2.8 0,0 2.8,2.8" fill="#C2003F"/>
+          <polygon points="-11.2,0 -2.8,-2.8 0,0 -2.8,2.8" fill="#C2003F"/>
+          <polygon points="11.2,0 2.8,-2.8 0,0 2.8,2.8" fill="#C2003F"/>
+          <circle r="1.6" fill="#C2003F"/>
+        </g>
+      </svg>
     </div>
     <div class="sidebar-logo-text">
-      <div class="brand" id="sidebarBrandName">Kompass</div>
+      <div class="brand">Kompass</div>
       <div class="sub">SM Seguros</div>
     </div>
   </div>
@@ -1513,7 +1523,6 @@ async function loadUserRole() {
     _userFoto = data?.[0]?.foto || '';
     // Repintar nav ahora que tenemos el rol
     aplicarPermisos();
-    aplicarLogoSegunUsuario();
     // Re-renderizar Mi Área si está abierta
     if(currentPage === 'incentivos') { initIncentivosSelectors(); renderIncentivos(); }
     // Registrar el nombre del usuario en el mapa de fotos
@@ -2235,59 +2244,6 @@ const AVATAR_COLORS = [
   '#0891B2','#DB2777','#059669','#EA580C','#4F46E5',
   '#0284C7','#DC2626','#65A30D','#9333EA','#0D9488'
 ];
-// ── BROMA MONTORNÉS ─────────────────────────────────────────────
-const MONTORNES_IDS = [
-  '2beeddaf-8c14-4467-99bc-2dc0b80e7cbd', // Luis del Blanco
-  '98e153c7-c1ac-44c7-8200-9a41805ba179', // Carlos del Blanco
-  'e79cb1e7-a9d1-4f44-a5f4-f5fb47ed4d13', // María Linares
-  '0cb972cd-171b-46cf-8219-f17c3579c6d5', // Raúl López
-  'ecc5015e-471b-49df-bdc9-33378d263cd1', // Macarena Melero
-  '522e68ff-6570-4038-8561-2026ab9dd6ca', // Imma Franco
-];
-
-const SVG_KOMPASS = `<svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="38" height="38" rx="10" fill="#C2003F"/>
-  <polygon transform="translate(19,19)" points="12.4,0 8.8,8.8 0,12.4 -8.8,8.8 -12.4,0 -8.8,-8.8 0,-12.4 8.8,-8.8" fill="white"/>
-  <g transform="translate(19,19)">
-    <polygon points="0,-11.2 -2.8,-2.8 0,0 2.8,-2.8" fill="#C2003F"/>
-    <polygon points="0,11.2 -2.8,2.8 0,0 2.8,2.8" fill="#C2003F"/>
-    <polygon points="-11.2,0 -2.8,-2.8 0,0 -2.8,2.8" fill="#C2003F"/>
-    <polygon points="11.2,0 2.8,-2.8 0,0 2.8,2.8" fill="#C2003F"/>
-    <circle r="1.6" fill="#C2003F"/>
-  </g>
-</svg>`;
-
-// Logo OGT — pastilla granate, estrella 8 puntas tipo Claude simétrica blanca
-const SVG_OGT = `<svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="38" height="38" rx="10" fill="#7B1024"/>
-  <g transform="translate(19,19)">
-    <rect x="-1.8" y="-12" width="3.6" height="12" rx="1.8" fill="white" transform="rotate(0)"/>
-    <rect x="-1.8" y="-12" width="3.6" height="12" rx="1.8" fill="white" transform="rotate(45)"/>
-    <rect x="-1.8" y="-12" width="3.6" height="12" rx="1.8" fill="white" transform="rotate(90)"/>
-    <rect x="-1.8" y="-12" width="3.6" height="12" rx="1.8" fill="white" transform="rotate(135)"/>
-    <rect x="-1.8" y="-12" width="3.6" height="12" rx="1.8" fill="white" transform="rotate(180)"/>
-    <rect x="-1.8" y="-12" width="3.6" height="12" rx="1.8" fill="white" transform="rotate(225)"/>
-    <rect x="-1.8" y="-12" width="3.6" height="12" rx="1.8" fill="white" transform="rotate(270)"/>
-    <rect x="-1.8" y="-12" width="3.6" height="12" rx="1.8" fill="white" transform="rotate(315)"/>
-  </g>
-</svg>`;
-
-function aplicarLogoSegunUsuario() {
-  const esMontornes = MONTORNES_IDS.includes(currentUser?.id);
-  const mark = document.getElementById('sidebarLogoMark');
-  const brand = document.getElementById('sidebarBrandName');
-  if(!mark || !brand) return;
-  if(esMontornes) {
-    mark.innerHTML = SVG_OGT;
-    brand.textContent = 'OGT';
-    document.title = 'OGT · SM Seguros';
-  } else {
-    mark.innerHTML = SVG_KOMPASS;
-    brand.textContent = 'Kompass';
-    document.title = 'Kompass · SM Seguros';
-  }
-}
-
 function hashColor(str, offset) {
   let h = 0;
   for(let i = 0; i < str.length; i++) h = str.charCodeAt(i) + ((h << 5) - h);
