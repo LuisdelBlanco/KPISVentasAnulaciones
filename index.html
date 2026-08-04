@@ -2964,20 +2964,21 @@ function editRegistro(id) {
   const r = registros.find(r => String(r.id) === String(id));
   if(!r) return;
   editingRegistroId = String(id);
-  // Abrir modal con datos del registro
+
+  // 1. Campos simples
   document.getElementById('mFecha').value = r.fecha || '';
   document.getElementById('mPoliza').value = r.poliza || '';
   document.getElementById('mPrima').value = r.prima || '';
-  const mComOcc = document.getElementById('mComisionOcc');
-  if(mComOcc) mComOcc.value = r.comisionOccident || r.comision_occident || '';
   document.getElementById('mPrimaCorregida').value = r.primaCorregida || '';
   document.getElementById('mTomador').value = r.tomador || '';
-  // Tipo
+  const mComOcc = document.getElementById('mComisionOcc');
+  if(mComOcc) mComOcc.value = r.comisionOccident || r.comision_occident || '';
+
+  // 2. Tipo
   const mTipo = document.getElementById('mTipo');
   if(mTipo) mTipo.value = r.tipo || 'Emisión';
-  actualizarMotivos();
 
-  // Separar motivo de notas (se guardan como "Motivo — Notas")
+  // 3. Motivo y notas
   const mMotivoSel = document.getElementById('mMotivo');
   const mNotasEl = document.getElementById('mNotas');
   const notasCompleto = r.notas || '';
@@ -2985,21 +2986,17 @@ function editRegistro(id) {
   let motivoCargado = '';
   let notasCargadas = notasCompleto;
   if(motivosPosibles.length > 0) {
-    // Buscar si el texto empieza por algún motivo conocido
     const encontrado = motivosPosibles.find(m => notasCompleto === m || notasCompleto.startsWith(m + ' — '));
     if(encontrado) {
       motivoCargado = encontrado;
-      notasCargadas = notasCompleto.startsWith(encontrado + ' — ')
-        ? notasCompleto.slice(encontrado.length + 3)
-        : '';
+      notasCargadas = notasCompleto.startsWith(encontrado + ' — ') ? notasCompleto.slice(encontrado.length + 3) : '';
     }
   }
-  // Si tiene campo motivo propio, úsalo; si no, extráelo de notas (compatibilidad)
   const motivoFinal = r.motivo || motivoCargado;
   if(mMotivoSel) mMotivoSel.value = motivoFinal;
   if(mNotasEl) mNotasEl.value = r.motivo ? (r.notas||'') : notasCargadas;
 
-  // Cargar origen rehabilitación
+  // 4. Rehabilitación
   if(r.tipo === 'Rehabilitación' && r.rehabOrigen) {
     const radio = document.querySelector(`input[name="rehabOrigen"][value="${r.rehabOrigen}"]`);
     if(radio) radio.checked = true;
@@ -3007,14 +3004,15 @@ function editRegistro(id) {
     document.querySelectorAll('input[name="rehabOrigen"]').forEach(rd => rd.checked = false);
   }
 
-  // Cargar campos Pte. Anular
+  // 5. Pte. Anular
   const mFechaV = document.getElementById('mFechaVencimiento');
   const mFechaC = document.getElementById('mFechaCaida');
   const mEstRec = document.getElementById('mEstadoRecibo');
   if(mFechaV) mFechaV.value = r.fechaVencimiento || '';
   if(mFechaC) mFechaC.value = r.fechaCaida || (r.fechaVencimiento ? calcFechaCaidaStatic(r.fechaVencimiento) : '');
   if(mEstRec) mEstRec.value = r.estadoRecibo || 'pendiente';
-  // Searchable selects
+
+  // 6. Searchable selects — PRIMERO poblar, luego setear valores
   updateOficinaSelect();
   ssPopulate('mAgente', [{value:'',label:'(sin asignar)'}].concat(comerciales.map(c=>({value:c.nombre,label:c.nombre+' — '+c.oficina}))));
   ssPopulate('mOficina', oficinas.map(o=>({value:o,label:o})));
@@ -3023,20 +3021,26 @@ function editRegistro(id) {
     getGestorasOrdenadas(r.oficina).map(g => g.sep ? {value:'__sep__',label:g.sep,disabled:true} : g)
   );
   ssPopulate('mGestora', gesOpts);
-  // Setear valores en los searchable selects
   [['mAgente', r.agente||''],['mOficina', r.oficina||''],['mRamo', r.ramo||''],['mGestora', r.gestora||'']].forEach(([id, val]) => {
     const hidden = document.getElementById(id);
     const input = document.getElementById(id+'Input');
     if(hidden) hidden.value = val;
     if(input) input.value = val;
   });
-  // Cambiar título del modal
+
+  // 7. AHORA que todos los campos están cargados → actualizar motivos y correcciones
+  actualizarMotivos();
+  // Restaurar prima corregida guardada (actualizarMotivos puede haberla sobreescrito)
+  document.getElementById('mPrimaCorregida').value = r.primaCorregida || '';
+
+  // 8. Título y abrir modal
   const title = document.getElementById('modalTitleText');
   if(title) title.textContent = 'Editar registro';
   const saveBtn = document.querySelector('#modalOverlay .btn-primary');
   if(saveBtn) saveBtn.textContent = 'Guardar cambios';
   document.getElementById('modalOverlay').classList.add('open');
-  // Actualizar campo comisión Occident para agentes Barcelona
+
+  // 9. Campo comisión Occident (con delay para que el DOM esté listo)
   setTimeout(() => actualizarCampoComision(), 50);
 }
 
