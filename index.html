@@ -920,6 +920,16 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
           </div>
         </div>
 
+        <div class="table-card" style="border-left:3px solid var(--amber);">
+          <div class="table-card-header"><span class="table-card-title">🔧 Recalcular primas corregidas</span></div>
+          <div style="padding:16px;">
+            <p style="font-size:13px;color:var(--text-2);margin-bottom:6px;">Recalcula y guarda la prima corregida en <strong>todos los registros</strong> que no la tienen o que la tienen en cero, aplicando los coeficientes actuales por ramo y tipo.</p>
+            <p style="font-size:11px;color:var(--text-3);margin-bottom:14px;">Solo afecta a registros con prima corregida vacía o cero. No modifica los que ya tienen valor.</p>
+            <button class="btn btn-primary" onclick="recalcularPrimasCorregidas()" id="btnRecalcular">⚙️ Ejecutar recálculo</button>
+            <div id="recalcMsg" style="margin-top:10px;font-size:12px;"></div>
+          </div>
+        </div>
+
         <p class="section-label">Importar desde Excel / CSV</p>
         <div class="import-drop" onclick="document.getElementById('csvInput').click()">
           <div class="import-drop-icon">📄</div>
@@ -3236,7 +3246,7 @@ function calcularPrimaCorregida() {
     coef = COEF_RAMOS[ramo];
   }
 
-  // Sin coeficiente definido
+
   if(!coef) {
     if(campo) campo.value = '';
     if(ramo && label) {
@@ -3457,6 +3467,76 @@ async function guardarRegistro(){
 }
 
 // ── IMPORT CSV ────────────────────────────────────
+function calcPrimaCorregidaLogica(tipo, ramo, prima) {
+  if(!ramo || !prima || prima <= 0) return 0;
+  let coef;
+  if(tipo === 'Inicial/Suple') {
+    coef = COEF_SUPLE[ramo];
+  } else {
+    coef = COEF_RAMOS[ramo];
+  }
+  if(!coef) return 0;
+  return Math.round(prima * coef * 100) / 100;
+}
+
+async function recalcularPrimasCorregidas() {
+  const btn = document.getElementById('btnRecalcular');
+  const msg = document.getElementById('recalcMsg');
+  if(!confirm('¿Recalcular primas corregidas de todos los registros sin valor? Esta operación actualiza Supabase.')) return;
+  btn.disabled = true;
+  btn.textContent = '⏳ Calculando...';
+  msg.innerHTML = '';
+
+  // Registros sin prima corregida o con valor 0
+  const sinCorr = registros.filter(r =>
+    (r.tipo === 'Emisión' || r.tipo === 'Inicial/Suple') &&
+    (!r.primaCorregida || parseFloat(r.primaCorregida) === 0)
+  );
+
+  if(sinCorr.length === 0) {
+    msg.innerHTML = '<span style="color:var(--green)">✓ Todos los registros ya tienen prima corregida.</span>';
+    btn.disabled = false; btn.textContent = '⚙️ Ejecutar recálculo';
+    return;
+  }
+
+  msg.innerHTML = `Procesando ${sinCorr.length} registros...`;
+  let ok = 0, err = 0;
+
+  for(const r of sinCorr) {
+    const nueva = calcPrimaCorregidaLogica(r.tipo, r.ramo, parseFloat(r.prima)||0);
+    if(!nueva) continue; // sin coeficiente, no tocar
+    try {
+      const res = await fetch(SUPA_URL + '/rest/v1/registros?id=eq.' + encodeURIComponent(r.id), {
+        method: 'PATCH',
+        headers: {
+          'apikey': SUPA_KEY,
+          'Authorization': 'Bearer ' + (accessToken || SUPA_KEY),
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({ prima_corregida: nueva })
+      });
+      if(res.ok) {
+        r.primaCorregida = nueva; // actualizar en memoria
+        ok++;
+      } else {
+        err++;
+      }
+    } catch(e) {
+      err++;
+    }
+    // Actualizar progreso cada 10
+    if((ok + err) % 10 === 0) {
+      msg.innerHTML = `Procesando... ${ok + err} / ${sinCorr.length}`;
+    }
+  }
+
+  renderAll();
+  msg.innerHTML = `<span style="color:var(--green)">✓ ${ok} registros actualizados.</span>${err > 0 ? ` <span style="color:var(--red)">${err} errores.</span>` : ''}`;
+  btn.disabled = false;
+  btn.textContent = '⚙️ Ejecutar recálculo';
+}
+
 function exportarBackup(){
   const datos = {
     version: 1,
