@@ -4471,9 +4471,9 @@ function renderPanel70(anio, mes, isAdv, container) {
 
 
     html70 += `<div style="background:var(--surface);border-radius:12px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,0.05);overflow:hidden;">
-      <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);">
+      <div onclick="irARegistrosAgente('${nombre.replace(/'/g,"\\'")}',${mes},${anio})" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background=''">
         ${avatarHTML(nombre, 32)}
-        <div style="flex:1;"><div style="font-size:13px;font-weight:800;">${nombre}</div><div style="font-size:10px;color:var(--text-3);">Sistema 70% · Barcelona</div></div>
+        <div style="flex:1;"><div style="font-size:13px;font-weight:800;">${nombre}</div><div style="font-size:10px;color:var(--text-3);">Sistema 70% · Barcelona · ver registros →</div></div>
         <div style="text-align:right;">
           <div style="font-size:22px;font-weight:900;color:${totalInc>=0?'var(--red)':'#BE123C'};">${totalInc.toFixed(2)}€</div>
           <div style="font-size:9px;color:var(--text-3);">incentivo estimado</div>
