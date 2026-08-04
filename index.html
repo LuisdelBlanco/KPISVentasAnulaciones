@@ -1891,7 +1891,7 @@ async function cargarDatosSupabase() {
       (cfg||[]).forEach(row => {
         if(row.clave==='oficinas') oficinas=row.valor;
         if(row.clave==='comerciales') comerciales=row.valor;
-        if(row.clave==='ramos') ramos=row.valor;
+        if(row.clave==='ramos') ramos=[...new Set([...row.valor, ...DEFAULTS.ramos])];
         if(row.clave==='gestoras') gestoras=row.valor;
         if(row.clave==='objetivo') objetivo=row.valor;
         if(row.clave==='objetivosPorOficina') objetivosPorOficina=row.valor;
@@ -1966,7 +1966,7 @@ try {
     const p = JSON.parse(raw);
     if(p.oficinas) oficinas = p.oficinas;
     if(p.comerciales) comerciales = p.comerciales;
-    if(p.ramos) ramos = [...new Set(p.ramos)];
+    if(p.ramos) ramos = [...new Set([...p.ramos, ...DEFAULTS.ramos])];
     if(p.gestoras) gestoras = p.gestoras;
     if(p.objetivo) objetivo = p.objetivo;
     if(p.objetivosPorOficina) objetivosPorOficina = p.objetivosPorOficina;
@@ -3497,7 +3497,7 @@ function importarBackup(input){
       if(!confirm('¿Restaurar la copia de seguridad? Se reemplazarán TODOS los datos actuales.\n\n' + datos.registros.length + ' registros encontrados.')) return;
       oficinas = datos.oficinas || oficinas;
       comerciales = datos.comerciales || comerciales;
-      ramos = datos.ramos || ramos;
+      ramos = datos.ramos ? [...new Set([...datos.ramos, ...DEFAULTS.ramos])] : ramos;
       gestoras = datos.gestoras || gestoras;
       objetivo = datos.objetivo || objetivo;
       objetivosPorOficina = datos.objetivosPorOficina || objetivosPorOficina;
