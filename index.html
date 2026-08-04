@@ -1238,6 +1238,7 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
           <option value="Rehabilitación">Rehabilitación</option>
           <option value="Inicial/Suple">Inicial/Suple</option>
           <option value="Pte. Anular">Pte. Anular</option>
+          <option value="Aumento prevista" class="opt-aumento-prevista" style="display:none;">Aumento prevista</option>
         </select>
       </div>
       <div class="form-group">
@@ -1262,7 +1263,12 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
       </div>
       <div class="form-group">
         <label>Prima neta (€)</label>
-        <input type="number" id="mPrima" placeholder="0.00" min="0" step="0.01" oninput="calcularPrimaCorregida()">
+        <input type="number" id="mPrima" placeholder="0.00" min="0" step="0.01" oninput="calcularPrimaCorregida();actualizarCampoComision()">
+      </div>
+      <div class="form-group" id="wrapComisionOcc" style="display:none;">
+        <label id="labelComisionOcc">Comisión Occident (€) <span style="font-size:10px;color:var(--text-3);" id="infoComision70"></span></label>
+        <input type="number" id="mComisionOcc" placeholder="0.00" min="0" step="0.01" oninput="actualizarCampoComision()">
+        <div id="incentivo70Preview" style="margin-top:5px;font-size:11px;color:var(--green);font-weight:700;display:none;"></div>
       </div>
       <div class="form-group">
         <label>Prima corregida (€) <span id="coefLabel" style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;display:none;"></span></label>
@@ -1814,7 +1820,7 @@ function iniciarPolling() {
             id:r.id, fecha:r.fecha, tipo:r.tipo, poliza:r.poliza,
             ramo:r.ramo, gestora:r.gestora, oficina:r.oficina,
             agente:r.agente, tomador:r.tomador||'',
-            prima:r.prima||0, primaCorregida:r.prima_corregida||0,
+            prima:r.prima||0, primaCorregida:r.prima_corregida||0, comisionOccident:r.comision_occident||0,
             notas:r.notas||'', createdAt:r.created_at||''
           }));
           if(!window._registrosNuevosIds) window._registrosNuevosIds = new Set();
@@ -2081,6 +2087,11 @@ function getFiltered() {
   const dOf = document.getElementById('dashOficina')?.value || '';
   const dAg = document.getElementById('dashAgente')?.value || '';
   return registros.filter(r => {
+    if(r.tipo === 'Aumento prevista') {
+      const esAdmin70 = currentRole === 'advanced';
+      const esPropioAgente = _nombreActual70 && r.agente === _nombreActual70;
+      if(!esAdmin70 && !esPropioAgente) return false;
+    }
     if (!r.fecha) return false;
     if (r.tipo === 'Pte. Anular') return false; // nunca en KPIs ni gráficos
     const d = new Date(r.fecha);
@@ -2092,6 +2103,8 @@ function getFiltered() {
   });
 }
 function getFilteredRegistros() {
+  // "Aumento prevista" solo visible para el propio agente o admins
+  const _nombreActual70 = AGENTES_70[currentUser?.id] || '';
   let data = getFiltered();
   data = data.filter(r => r.tipo !== 'Pte. Anular');
   const fOf = document.getElementById('fOficina')?.value||'';
@@ -2954,6 +2967,8 @@ function editRegistro(id) {
   document.getElementById('mFecha').value = r.fecha || '';
   document.getElementById('mPoliza').value = r.poliza || '';
   document.getElementById('mPrima').value = r.prima || '';
+  const mComOcc = document.getElementById('mComisionOcc');
+  if(mComOcc) mComOcc.value = r.comisionOccident || r.comision_occident || '';
   document.getElementById('mPrimaCorregida').value = r.primaCorregida || '';
   document.getElementById('mTomador').value = r.tomador || '';
   // Tipo
@@ -3029,6 +3044,9 @@ function openModal(){
   document.getElementById('mPoliza').value='';
   document.getElementById('mPrima').value='';
   document.getElementById('mPrimaCorregida').value='';
+  const _mco=document.getElementById('mComisionOcc');if(_mco)_mco.value='';
+  const _wco=document.getElementById('wrapComisionOcc');if(_wco)_wco.style.display='none';
+  const _p70=document.getElementById('incentivo70Preview');if(_p70)_p70.style.display='none';
   document.getElementById('mTomador').value='';
   document.getElementById('mNotas').value='';
   if(document.getElementById('mMotivo')) document.getElementById('mMotivo').value='';
@@ -3145,7 +3163,7 @@ function ssSelect(id, el) {
   if(hidden) hidden.value = value;
   if(input) input.value = label;
   if(list) list.classList.remove('open');
-  if(id==='mRamo') calcularPrimaCorregida();
+  if(id==='mRamo') { calcularPrimaCorregida(); actualizarCampoComision(); }
   if(id==='mAgente') autoRellenarOficina();
 }
 
@@ -3326,6 +3344,86 @@ function actualizarMotivos() {
   calcularPrimaCorregida();
 }
 
+
+// ── CAMPO COMISIÓN OCCIDENT (sistema 70% Barcelona) ──────────
+function actualizarCampoComision() {
+  const agente = document.getElementById('mAgente')?.value || '';
+  const tipo   = document.getElementById('mTipo')?.value   || '';
+  const ramo   = document.getElementById('mRamo')?.value   || '';
+  const prima  = parseFloat(document.getElementById('mPrima')?.value) || 0;
+  const wrap   = document.getElementById('wrapComisionOcc');
+  const label  = document.getElementById('labelComisionOcc');
+  const info   = document.getElementById('infoComision70');
+  const prev   = document.getElementById('incentivo70Preview');
+  const optAP  = document.querySelector('.opt-aumento-prevista');
+
+  // Mostrar/ocultar "Aumento prevista" según agente
+  if(optAP) optAP.style.display = esAgente70(agente) ? '' : 'none';
+
+  if(!esAgente70(agente) || !wrap) return;
+
+  const ahorro = esRamoAhorro70(ramo);
+  const autos  = esRamoAutos70(ramo);
+
+  // ¿Necesita campo de comisión manual?
+  const necesitaCampo = (
+    (tipo === 'Emisión'      && !ahorro) ||
+    (tipo === 'Inicial/Suple'&& !ahorro) ||
+    (tipo === 'Sin efecto'   && !ahorro) ||
+    (tipo === 'Reemplazo'    &&  autos)
+  );
+
+  wrap.style.display = necesitaCampo ? '' : 'none';
+
+  if(tipo === 'Reemplazo' && autos) {
+    if(label) label.childNodes[0].textContent = 'Diferencia de comisión (€) ';
+    if(info)  info.textContent = '(comisión nueva − comisión anterior)';
+  } else {
+    if(label) label.childNodes[0].textContent = 'Comisión Occident (€) ';
+    if(info)  info.textContent = '';
+  }
+
+  // Preview del incentivo
+  const comOcc = parseFloat(document.getElementById('mComisionOcc')?.value) || 0;
+  if(prev) {
+    const reg = { tipo, ramo, prima, comisionOccident: comOcc };
+    const inc = calcularIncentivo70(reg);
+    if(inc !== 0) {
+      prev.textContent = `→ Incentivo: ${inc >= 0 ? '+' : ''}${inc.toFixed(2)} €`;
+      prev.style.display = 'block';
+      prev.style.color = inc >= 0 ? 'var(--green)' : 'var(--red)';
+    } else {
+      prev.style.display = 'none';
+    }
+  }
+
+  // Incentivo automático para ahorro
+  if(ahorro && (tipo === 'Emisión' || tipo === 'Aumento prevista') && prima > 0) {
+    const inc = calcularIncentivo70({ tipo, ramo, prima });
+    if(prev) {
+      prev.textContent = `→ Prima anual ${prima}€ ÷ 12 ÷ 10 = ${inc.toFixed(2)} €/mes incentivo`;
+      prev.style.display = 'block';
+      prev.style.color = 'var(--green)';
+    }
+  }
+  if(ahorro && tipo === 'Inicial/Suple' && prima > 0) {
+    const inc = calcularIncentivo70({ tipo, ramo, prima });
+    if(prev) {
+      prev.textContent = `→ ${prima}€ ÷ 1.000 = ${inc.toFixed(2)} € incentivo`;
+      prev.style.display = 'block';
+      prev.style.color = 'var(--green)';
+    }
+  }
+  if(ahorro && tipo === 'Sin efecto' && prima > 0) {
+    const inc = calcularIncentivo70({ tipo, ramo, prima });
+    if(prev) {
+      prev.textContent = `→ Descuento: ${inc.toFixed(2)} €`;
+      prev.style.display = 'block';
+      prev.style.color = 'var(--red)';
+    }
+  }
+}
+
 function calcularPrimaCorregida() {
   const ramo = document.getElementById('mRamo')?.value || '';
   const prima = parseFloat(document.getElementById('mPrima')?.value) || 0;
@@ -3429,6 +3527,7 @@ async function guardarRegistro(){
   const oficina=document.getElementById('mOficina').value;
   const prima=document.getElementById('mPrima').value;
   const primaCorregida=document.getElementById('mPrimaCorregida').value;
+  const comisionOccident=parseFloat(document.getElementById('mComisionOcc')?.value)||0;
   const tomador=document.getElementById('mTomador').value;
   const agente=document.getElementById('mAgente').value;
   const motivo=document.getElementById('mMotivo')?.value||'';
@@ -3511,7 +3610,7 @@ async function guardarRegistro(){
       const estadoPte = tipo==='Pte. Anular' ? 'pendiente' : '';
       const estadoReciboPrev = tipo==='Pte. Anular' ? estadoRecibo : (registros[idx].estadoRecibo||'');
       registros[idx] = {...registros[idx], fecha, tipo, poliza, ramo, gestora, oficina,
-        prima:parseFloat(prima)||0, primaCorregida:parseFloat(primaCorregida)||0,
+        prima:parseFloat(prima)||0, primaCorregida:parseFloat(primaCorregida)||0, comision_occident:comisionOccident,
         tomador, agente, motivo, notas:notasCompleto, rehabOrigen,
         fechaVencimiento, fechaCaida, estadoPte, estadoRecibo:estadoReciboPrev};
       const reg = registros[idx];
@@ -3531,7 +3630,7 @@ async function guardarRegistro(){
 
   // NUEVO REGISTRO
   const estadoPteNuevo = tipo==='Pte. Anular' ? 'pendiente' : '';
-  const reg = {id:String(Date.now()+Math.random()),fecha,tipo,poliza,ramo,gestora,oficina,prima:parseFloat(prima)||0,primaCorregida:parseFloat(primaCorregida)||0,tomador,agente,motivo,notas:notasCompleto,rehabOrigen,fechaVencimiento,fechaCaida,estadoPte:estadoPteNuevo,estadoRecibo};
+  const reg = {id:String(Date.now()+Math.random()),fecha,tipo,poliza,ramo,gestora,oficina,prima:parseFloat(prima)||0,primaCorregida:parseFloat(primaCorregida)||0,comisionOccident:comisionOccident,tomador,agente,motivo,notas:notasCompleto,rehabOrigen,fechaVencimiento,fechaCaida,estadoPte:estadoPteNuevo,estadoRecibo};
 
   setBtnGuardar(true);
   try {
@@ -4303,6 +4402,99 @@ function calcularIncentivo(nombre, mes, anio) {
   };
 }
 
+
+// ── PANEL INCENTIVOS 70% BARCELONA ───────────────────────────
+function renderPanel70(anio, mes, isAdv, container) {
+  const agentes70 = isAdv ? Object.values(AGENTES_70) : [AGENTES_70[currentUser?.id]].filter(Boolean);
+  if(!agentes70.length) return;
+
+  const target = container || document.getElementById('incCards');
+  if(!target) return;
+
+  // Filtrar registros del mes para estos agentes
+  const regs70 = registros.filter(r => {
+    if(!agentes70.includes(r.agente)) return false;
+    if(!r.fecha) return false;
+    const [y,m] = r.fecha.split('-').map(Number);
+    return y === anio && m === mes &&
+      ['Emisión','Inicial/Suple','Aumento prevista','Sin efecto','Reemplazo'].includes(r.tipo);
+  });
+
+  // Agrupar por agente
+  let html70 = `<div style="margin-bottom:16px;">
+    <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">
+      💶 Sistema comisional Barcelona (70%)${isAdv?'':' — Mi área'}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(480px,1fr));gap:12px;">`;
+
+  agentes70.forEach(nombre => {
+    const regsAgente = regs70.filter(r => r.agente === nombre);
+    let totalInc = 0;
+
+    const filas = regsAgente.map(r => {
+      const inc = calcularIncentivo70(r);
+      totalInc += inc;
+      const ahorro = esRamoAhorro70(r.ramo);
+      const autos  = esRamoAutos70(r.ramo);
+      let detalle = '';
+      if(r.tipo === 'Emisión' || r.tipo === 'Aumento prevista') {
+        detalle = ahorro
+          ? `${r.prima}€/año ÷ 12 ÷ 10`
+          : `${(parseFloat(r.comisionOccident)||0).toFixed(2)}€ × 70%`;
+      } else if(r.tipo === 'Inicial/Suple') {
+        detalle = ahorro ? `${r.prima}€ ÷ 1.000` : `${(parseFloat(r.comisionOccident)||0).toFixed(2)}€ × 70%`;
+      } else if(r.tipo === 'Sin efecto') {
+        detalle = ahorro ? `−(${r.prima}€/año ÷ 12 ÷ 10)` : `−${(parseFloat(r.comisionOccident)||0).toFixed(2)}€ × 70%`;
+      } else if(r.tipo === 'Reemplazo') {
+        detalle = `Dif. ${(parseFloat(r.comisionOccident)||0).toFixed(2)}€ × 70%`;
+      }
+      return `<div style="display:grid;grid-template-columns:70px 1fr 80px 80px;gap:6px;align-items:center;padding:5px 8px;border-radius:6px;font-size:11px;background:${inc < 0?'#FFF1F3':'var(--surface-2)'};">
+        <span style="font-weight:700;color:var(--text-3);">${r.fecha?.slice(5)||''}</span>
+        <span style="color:var(--text);">${r.poliza||'—'} <span style="color:var(--text-3);">${r.tipo}</span></span>
+        <span style="color:var(--text-3);font-size:10px;">${detalle}</span>
+        <span style="font-weight:800;text-align:right;color:${inc>=0?'var(--green)':'var(--red)'};">${inc>=0?'+':''}${inc.toFixed(2)}€</span>
+      </div>`;
+    }).join('');
+
+    // Comparativa tramos (solo admin)
+    let compHtml = '';
+    if(isAdv) {
+      const r70 = calcularIncentivo70({tipo:'__dummy__'});
+      const tipComp = Object.keys(TIPOLOGIAS_INC).find(n => n === nombre);
+      if(tipComp) {
+        const rComp = calcularIncentivo(nombre, mes, anio);
+        const bonoComp = rComp?.bonoTotal || 0;
+        compHtml = `<div style="margin-top:8px;padding:8px;background:#F0FDF4;border-radius:6px;border:1px solid #86EFAC;font-size:11px;">
+          <span style="font-weight:700;color:#16A34A;">Comparativa tramos:</span>
+          <span style="color:var(--text-2);margin-left:6px;">Con sistema de tramos habría generado <strong>${bonoComp.toFixed(0)}€</strong></span>
+          <span style="color:var(--text-3);margin-left:6px;">vs <strong style="color:var(--red);">${totalInc.toFixed(2)}€</strong> con 70%</span>
+        </div>`;
+      } else {
+        compHtml = `<div style="margin-top:8px;padding:8px;background:#F7F7F6;border-radius:6px;font-size:10px;color:var(--text-3);">No tiene plan de tramos configurado para comparar.</div>`;
+      }
+    }
+
+    html70 += `<div style="background:var(--surface);border-radius:12px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,0.05);overflow:hidden;">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);">
+        ${avatarHTML(nombre, 32)}
+        <div style="flex:1;"><div style="font-size:13px;font-weight:800;">${nombre}</div><div style="font-size:10px;color:var(--text-3);">Sistema 70% · Barcelona</div></div>
+        <div style="text-align:right;">
+          <div style="font-size:22px;font-weight:900;color:${totalInc>=0?'var(--red)':'#BE123C'};">${totalInc.toFixed(2)}€</div>
+          <div style="font-size:9px;color:var(--text-3);">incentivo estimado</div>
+        </div>
+      </div>
+      <div style="padding:10px 14px;display:flex;flex-direction:column;gap:4px;max-height:240px;overflow-y:auto;">
+        ${filas || '<span style="font-size:12px;color:var(--text-3);">Sin registros este mes</span>'}
+      </div>
+      ${isAdv ? `<div style="padding:8px 14px 12px;">${compHtml}</div>` : ''}
+    </div>`;
+  });
+
+  html70 += '</div></div>';
+  if(container) { container.innerHTML = html70; }
+  else { target.innerHTML = html70; }
+}
+
 function renderIncentivos() {
   const anio = parseInt(document.getElementById('incYear')?.value) || new Date().getFullYear();
   const mes = parseInt(document.getElementById('incMonth')?.value) || new Date().getMonth()+1;
@@ -4321,6 +4513,37 @@ function renderIncentivos() {
   const comercialesVer = isAdv
     ? Object.keys(TIPOLOGIAS_INC).filter(n => !fOficina || TIPOLOGIAS_INC[n].oficina === fOficina)
     : (TIPOLOGIAS_INC[nombreActual] ? [nombreActual] : []);
+
+  // ── Sistema 70% Barcelona ──────────────────────────────
+  const esAgente70actual = !!AGENTES_70[currentUser?.id];
+  const nombreAgente70   = AGENTES_70[currentUser?.id] || '';
+  const esSoloBarcelona  = esAgente70actual && !isAdv;
+
+  if(esSoloBarcelona || (isAdv && comercialesVer.length === 0)) {
+    // Renderizar panel 70% para las agentes de Barcelona
+    renderPanel70(anio, mes, isAdv);
+    // Para admin también renderizar comparativa
+    if(isAdv) {
+      if(comercialesVer.length === 0) {
+        cards.innerHTML = '';
+        return;
+      }
+    } else {
+      cards.innerHTML = '';
+      return;
+    }
+  }
+
+  // Si es admin, añadir panel 70% para las Barcelona antes de las cards normales
+  if(isAdv) {
+    const div70 = document.getElementById('panel70Barcelona') || (() => {
+      const d = document.createElement('div');
+      d.id = 'panel70Barcelona';
+      cards.parentNode.insertBefore(d, cards);
+      return d;
+    })();
+    renderPanel70(anio, mes, true, div70);
+  }
 
   if(comercialesVer.length === 0) {
     cards.innerHTML = '<p style="color:var(--text-3);font-size:14px;">No tienes incentivos configurados para este mes.</p>';
@@ -4941,6 +5164,56 @@ function mostrarNotificacionSistema(reg) {
 let _fotosAgentes = {};
 let _editingAgente = null;
 let _todosUsuarios = [];
+
+// ── SISTEMA 70% BARCELONA ──────────────────────────────
+const AGENTES_70 = {
+  '78060cbc-b66b-416d-a976-338edb759920': 'Irene Ruiz',
+  '9029663b-d1ab-4a01-a83c-f1b0ec6f23c7': 'Victoria Giménez',
+  '967fb75a-9686-40dd-98c9-ff1703932732': 'Marta Calcerrada',
+  '4fb9dd85-ad99-4bb7-ae2e-acfd82e188c6': 'Cristina Egea',
+};
+const NOMBRES_70 = Object.values(AGENTES_70);
+const RAMOS_AHORRO_70 = [
+  '1354 - Ahorro Creciente','384 - PPA','1364 - Universal PIAS Garantizado',
+  '1337 - Sialp','935 - Catalana Occidente Patrimonio, F.I.','1310 - Inversión multifondos',
+  'Planes Pensiones y EPSV','2386 - Ahorro capital','1328 - Cuenta Cliente',
+  'Fondos de Inversión','370 - Universal Vida y Jubilación','390 - Universal Vida y Pensión',
+  '375 - Universal Jubilación'
+];
+const RAMOS_AUTOS_70 = ['1800 - Automóviles','1802 - Vehículos','1803 - Motos'];
+
+function esAgente70(nombreOUserId) {
+  return NOMBRES_70.includes(nombreOUserId) || Object.keys(AGENTES_70).includes(nombreOUserId);
+}
+function esRamoAhorro70(ramo) { return RAMOS_AHORRO_70.includes(ramo); }
+function esRamoAutos70(ramo)  { return RAMOS_AUTOS_70.includes(ramo); }
+
+function calcularIncentivo70(reg) {
+  const tipo = reg.tipo || '';
+  const ramo = reg.ramo || '';
+  const prima = parseFloat(reg.prima) || 0;
+  const comOcc = parseFloat(reg.comisionOccident || reg.comision_occident) || 0;
+  const ahorro = esRamoAhorro70(ramo);
+  const autos  = esRamoAutos70(ramo);
+
+  if (tipo === 'Emisión') {
+    return ahorro ? (prima / 12) / 10 : comOcc * 0.70;
+  }
+  if (tipo === 'Inicial/Suple') {
+    return ahorro ? prima / 1000 : comOcc * 0.70;
+  }
+  if (tipo === 'Aumento prevista') {
+    return ahorro ? (prima / 12) / 10 : 0;
+  }
+  if (tipo === 'Sin efecto') {
+    const base = ahorro ? (prima / 12) / 10 : comOcc * 0.70;
+    return -base;
+  }
+  if (tipo === 'Reemplazo' && autos) {
+    return comOcc > 0 ? comOcc * 0.70 : 0;
+  }
+  return 0;
+}
 
 // Mapa completo de todos los usuarios — fallback si nombre está vacío en Supabase
 const NOMBRES_EQUIPO = {
