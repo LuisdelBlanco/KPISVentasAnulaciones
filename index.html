@@ -678,7 +678,7 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
         <option value="9">Septiembre</option><option value="10">Octubre</option>
         <option value="11">Noviembre</option><option value="12">Diciembre</option>
       </select>
-      <button class="btn btn-primary" onclick="openModal()">+ Nueva póliza</button>
+      <button class="btn btn-primary" onclick="openModal()">+ Nuevo registro</button>
     </div>
   </div>
 
@@ -884,7 +884,6 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
         <div class="table-card">
           <div class="table-card-header">
             <span class="table-card-title">Movimientos</span>
-            <button class="btn btn-primary btn-sm" onclick="openModal()">+ Añadir</button>
           </div>
           <div class="table-scroll">
             <table>
@@ -2216,10 +2215,27 @@ function renderKPIs() {
     { label:'Objetivo mensual', value: obj, accent:'var(--amber)', delta:`${ventas} emisiones registradas` },
     { label:'Oportunidades mes', value: oportunidadesMes(), accent:'#7C3AED', delta:`Objetivo: ${obj*3} (×3 ventas)` },
   ];
-  document.getElementById('kpiGrid').innerHTML = kpis.map(k =>
-    `<div class="kpi-card" style="--accent:${k.accent}">
+  // Mapeo label KPI → tipo de registro para filtrar
+  const kpiTipoMap = {
+    'Emisiones':          'Emisión',
+    'Anulaciones':        'Anulación',
+    'Sin efecto':         'Sin efecto',
+    'Neto pólizas':       '',
+    'Prima neta (€)':     'Emisión',
+    'Prima corregida (€)':'Emisión',
+    'Objetivo mensual':   '',
+    'Oportunidades mes':  '',
+  };
+
+  document.getElementById('kpiGrid').innerHTML = kpis.map(k => {
+    const tipoFiltro = kpiTipoMap[k.label];
+    const clicable = tipoFiltro !== undefined && k.label !== 'Neto pólizas' && k.label !== 'Objetivo mensual' && k.label !== 'Oportunidades mes';
+    const cursor = clicable ? 'cursor:pointer;' : '';
+    const onclick = clicable ? `onclick="irARegistrosPorTipo('${tipoFiltro}')"` : '';
+    const hover = clicable ? `onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='var(--shadow-md)'" onmouseout="this.style.transform='';this.style.boxShadow=''"` : '';
+    return `<div class="kpi-card" style="--accent:${k.accent};${cursor}" ${onclick} ${hover} title="${clicable?'Ver en Registros':''}">
       <div class="kpi-card-accent"></div>
-      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-label">${k.label}${clicable?' <span style="font-size:9px;opacity:0.5;">↗</span>':''}</div>
       <div class="kpi-value">${k.value}</div>
       ${k.delta?`<div class="kpi-delta">${k.delta}</div>`:''}
       ${k.progress ? `
@@ -2229,13 +2245,35 @@ function renderKPIs() {
           </div>
           <div style="font-size:10px;color:var(--text-3);margin-top:4px;">${k.progress.label} objetivo</div>
         </div>` : ''}
-    </div>`
-  ).join('');
+    </div>`;
+  }).join('');
 }
 function fmtK(n) {
   if (n>=1000000) return (n/1000000).toFixed(1)+'M';
   if (n>=1000) return (n/1000).toFixed(1)+'k';
   return Math.round(n).toString();
+}
+
+// ── NAVEGACIÓN RÁPIDA HACIA REGISTROS ─────────────────────────
+function irARegistrosPorTipo(tipo) {
+  goPage('registros');
+  setTimeout(() => {
+    const fTipo = document.getElementById('fTipo');
+    if(fTipo) { fTipo.value = tipo; guardarFiltros(); }
+    renderRegistros();
+  }, 80);
+}
+
+function irARegistrosAgente(agente, year, month) {
+  goPage('registros');
+  setTimeout(() => {
+    const fAg = document.getElementById('fAgente');
+    if(fAg) fAg.value = agente;
+    if(year) { const fY = document.getElementById('fYear'); if(fY) fY.value = year; }
+    if(month) { const fM = document.getElementById('fMonth'); if(fM) fM.value = month; }
+    guardarFiltros();
+    renderRegistros();
+  }, 80);
 }
 
 // ── CHARTS ────────────────────────────────────────
@@ -2485,7 +2523,7 @@ function renderComerciales() {
     ? `<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">📊</div><p>Sin datos</p></div></td></tr>`
     : sorted.map(({ nombre, oficina, vNeto, a, rh, s, se, primaC }, i) => {
         const neto = vNeto - a + rh;
-        return `<tr>
+        return `<tr onclick="irARegistrosAgente('${nombre.replace(/'/g,"\\'")}','','')" style="cursor:pointer;" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background=''">
           <td style="font-weight:700;color:var(--text-3);font-size:12px">${i+1}</td>
           <td style="font-weight:600;display:flex;align-items:center;gap:8px;">${avatarHTML(nombre)} ${nombre}</td>
           <td><span class="badge badge-sin-efecto">${oficina}</span></td>
@@ -2540,7 +2578,6 @@ function renderContadoresTipo() {
   const mesActual = now.getMonth() + 1;
   const anioActual = now.getFullYear();
 
-  // Filtrar solo mes en curso, brutos (sin filtros de tabla)
   const delMes = registros.filter(r => {
     if(!r.fecha) return false;
     const [y, m] = r.fecha.split('-').map(Number);
@@ -2557,13 +2594,17 @@ function renderContadoresTipo() {
     'Inicial/Suple':  {bg:'#F0FDF4', color:'#16A34A', border:'#BBF7D0'},
   };
 
-  const tipos = ['Emisión','Anulación','Sin efecto','Reemplazo','Rehabilitación','Inicial/Suple'];
+  const tipos = ['Emisión','Anulación','Sin efecto','Reemplazo','Rehabilitación','Inicial/Suple','Suspenso'];
+  // Obtener también tipos presentes en datos no listados arriba
+  const tiposPresentes = [...new Set(delMes.map(r=>r.tipo).filter(Boolean))];
+  const todosTipos = [...new Set([...tipos, ...tiposPresentes])];
+
   let html = '';
-  tipos.forEach(tipo => {
+  todosTipos.forEach(tipo => {
     const count = delMes.filter(r => r.tipo === tipo).length;
     if(count === 0) return;
     const c = colores[tipo] || {bg:'#F7F7F6', color:'#52524E', border:'#E8E8E4'};
-    html += `<div style="display:inline-flex;align-items:center;gap:5px;background:${c.bg};border:1px solid ${c.border};border-radius:20px;padding:4px 10px;">
+    html += `<div onclick="irARegistrosPorTipo('${tipo}')" style="display:inline-flex;align-items:center;gap:5px;background:${c.bg};border:1px solid ${c.border};border-radius:20px;padding:4px 10px;cursor:pointer;transition:opacity 0.15s;" onmouseover="this.style.opacity='0.75'" onmouseout="this.style.opacity='1'">
       <span style="font-size:11px;font-weight:600;color:${c.color};">${tipo}</span>
       <span style="font-size:13px;font-weight:800;color:${c.color};">${count}</span>
     </div>`;
@@ -2573,7 +2614,7 @@ function renderContadoresTipo() {
     el.innerHTML = '<span style="font-size:12px;color:var(--text-3);">Sin movimientos este mes</span>';
   } else {
     const total = delMes.length;
-    el.innerHTML = html + `<div style="display:inline-flex;align-items:center;gap:5px;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:4px 10px;margin-left:4px;">
+    el.innerHTML = html + `<div onclick="irARegistrosPorTipo('')" style="display:inline-flex;align-items:center;gap:5px;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:4px 10px;margin-left:4px;cursor:pointer;transition:opacity 0.15s;" onmouseover="this.style.opacity='0.75'" onmouseout="this.style.opacity='1'">
       <span style="font-size:11px;font-weight:600;color:var(--text-2);">Total mes</span>
       <span style="font-size:13px;font-weight:800;color:var(--text);">${total}</span>
     </div>`;
@@ -2818,7 +2859,7 @@ function openModal(){
   updateOficinaSelect();
   editingRegistroId = null;
   const modalTitle = document.getElementById('modalTitleText');
-  if(modalTitle) modalTitle.textContent = 'Nueva póliza';
+  if(modalTitle) modalTitle.textContent = 'Nuevo registro';
   const saveBtn = document.querySelector('#modalOverlay .btn-primary');
   if(saveBtn) saveBtn.textContent = 'Guardar';
   document.getElementById('modalOverlay').classList.add('open');
