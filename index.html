@@ -634,14 +634,14 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
   <div class="nav-group">
     <div class="nav-group-label">Datos</div>
     <div class="nav-item" onclick="goPage('registros')"><span class="nav-icon">☰</span> Registros</div>
-    <div class="nav-item" onclick="goPage('importar')"><span class="nav-icon">↓</span> Importar</div>
-    <div class="nav-item" onclick="goPage('actividad')"><span class="nav-icon">◎</span> Actividad comercial</div>
+    <div class="nav-item" id="navImportar" onclick="goPage('importar')"><span class="nav-icon">↓</span> Importar</div>
+    <div class="nav-item" id="navActividad" onclick="goPage('actividad')"><span class="nav-icon">◎</span> Actividad comercial</div>
   </div>
   <div class="nav-group">
     <div class="nav-group-label">Sistema</div>
     <div class="nav-item" id="navIncentivos" onclick="goPage('incentivos')"><span class="nav-icon">🔐</span> Mi Área</div>
     <div class="nav-item" id="navNovedades" onclick="goPage('novedades')"><span class="nav-icon">✦</span> Novedades <span id="noveltyDot" style="display:none;width:7px;height:7px;background:#C2003F;border-radius:50%;display:inline-block;margin-left:4px;vertical-align:middle;"></span></div>
-    <div class="nav-item" onclick="goPage('config')"><span class="nav-icon">◈</span> Ajustes</div>
+    <div class="nav-item" id="navConfig" onclick="goPage('config')"><span class="nav-icon">◈</span> Ajustes</div>
   </div>
 
   <div class="sidebar-foot">
@@ -1594,8 +1594,12 @@ async function doLogout() {
 
 function aplicarPermisos() {
   const isAdvanced = currentRole === 'advanced';
-  const ajustesLink = null; // permisos vía data-page
-  if(ajustesLink) ajustesLink.style.display = ''; // todos pueden acceder a Ajustes (foto)
+  // Ocultar secciones de admin en el sidebar
+  const adminNavIds = ['navImportar', 'navActividad', 'navConfig'];
+  adminNavIds.forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.style.display = isAdvanced ? '' : 'none';
+  });
   const ajAvanzados = document.getElementById('ajustesAvanzados');
   if(ajAvanzados) ajAvanzados.style.display = isAdvanced ? 'grid' : 'none';
   const userInfo = document.getElementById('sidebarUser');
@@ -4215,7 +4219,7 @@ function calcularIncentivo(nombre, mes, anio) {
   if(vida.length > 0) {
     const importe = enMargen ? bonoBase * 1 : 0;    // +1× base → total ×2
     if(enMargen) bonusTotal += importe;
-    multiplicadores.push({ label: '🛡️ Vida Temporal', factor: '+1×base', importe, alcanzado: true, enMargen });
+    multiplicadores.push({ label: '❤️ Vida Temporal', factor: '+1×base', importe, alcanzado: true, enMargen });
   }
 
   // Ahorro: al menos 1 póliza con prima >= 1200€
@@ -4223,7 +4227,7 @@ function calcularIncentivo(nombre, mes, anio) {
   if(ahorro.length > 0) {
     const importe = enMargen ? bonoBase * 0.5 : 0;  // +0.5× base → total ×1.5
     if(enMargen) bonusTotal += importe;
-    multiplicadores.push({ label: '💼 Ahorro', factor: '+0.5×base', importe, alcanzado: true, enMargen });
+    multiplicadores.push({ label: '€ Ahorro', factor: '+0.5×base', importe, alcanzado: true, enMargen });
   }
 
   // Salud: al menos 1 póliza con prima >= 200€
@@ -4231,7 +4235,7 @@ function calcularIncentivo(nombre, mes, anio) {
   if(salud.length > 0) {
     const importe = enMargen ? bonoBase * 0.75 : 0; // +0.75× base → total ×1.75
     if(enMargen) bonusTotal += importe;
-    multiplicadores.push({ label: '🏥 Salud', factor: '+0.75×base', importe, alcanzado: true, enMargen });
+    multiplicadores.push({ label: '✚ Salud', factor: '+0.75×base', importe, alcanzado: true, enMargen });
   }
 
   const bonoTotal = enMargen ? bonoBase + bonusTotal : 0;
@@ -4315,9 +4319,9 @@ function renderIncentivos() {
 
     // Insignias de multiplicadores
     const multTypes = [
-      { key: 'vida', icon: '🛡️', label: 'Vida', hint: 'prima ≥200€', conseguido: r.multiplicadores.some(m => m.label.includes('Vida')) },
-      { key: 'ahorro', icon: '💼', label: 'Ahorro', hint: 'prima ≥1.200€', conseguido: r.multiplicadores.some(m => m.label.includes('Ahorro')) },
-      { key: 'salud', icon: '🏥', label: 'Salud', hint: 'prima ≥200€', conseguido: r.multiplicadores.some(m => m.label.includes('Salud')) },
+      { key: 'vida', icon: '❤️', label: 'Vida', hint: 'prima ≥200€', conseguido: r.multiplicadores.some(m => m.label.includes('Vida')) },
+      { key: 'ahorro', icon: '€', label: 'Ahorro', hint: 'prima ≥1.200€', conseguido: r.multiplicadores.some(m => m.label.includes('Ahorro')) },
+      { key: 'salud', icon: '✚', label: 'Salud', hint: 'prima ≥200€', conseguido: r.multiplicadores.some(m => m.label.includes('Salud')) },
     ];
 
     const bonoConSiguienteTramo = r.siguienteTramo && r.tramoNum < r.tip.tramoMax
@@ -4355,6 +4359,7 @@ function renderIncentivos() {
             <div style="text-align:center;"><div style="font-size:18px;font-weight:800;color:#BE123C;">${r.sinEfectos}</div><div style="font-size:9px;color:var(--text-3);">sin efecto</div></div>
             <div style="text-align:center;"><div style="font-size:18px;font-weight:800;color:var(--text);">${r.tramo ? 'T'+r.tramoNum : '—'}</div><div style="font-size:9px;color:var(--text-3);">tramo</div></div>
             <div style="text-align:center;"><div style="font-size:18px;font-weight:800;color:${r.enMargen ? '#16A34A' : '#BE123C'};">${r.enMargen ? '✓' : '✗'}</div><div style="font-size:9px;color:var(--text-3);">margen</div></div>
+            <div style="text-align:center;"><div style="font-size:18px;font-weight:800;color:var(--blue);">${actividad.filter(a=>a.agente===nombre&&a.mes===mes&&a.anio===anio).reduce((s,a)=>s+(a.oportunidades||0),0)}</div><div style="font-size:9px;color:var(--text-3);">oportun.</div></div>
           </div>
           <!-- Multiplicadores como badges compactos -->
           <div style="display:flex;gap:5px;">
