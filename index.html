@@ -3035,6 +3035,8 @@ function editRegistro(id) {
   const saveBtn = document.querySelector('#modalOverlay .btn-primary');
   if(saveBtn) saveBtn.textContent = 'Guardar cambios';
   document.getElementById('modalOverlay').classList.add('open');
+  // Actualizar campo comisión Occident para agentes Barcelona
+  setTimeout(() => actualizarCampoComision(), 50);
 }
 
 function openModal(){
@@ -4406,9 +4408,7 @@ function calcularIncentivo(nombre, mes, anio) {
 // ── PANEL INCENTIVOS 70% BARCELONA ───────────────────────────
 
 function editarRegistro70(id) {
-  const r = registros.find(x => x.id == id);
-  if(!r) return;
-  openModal(r);
+  editRegistro(id);
 }
 
 function renderPanel70(anio, mes, isAdv, container) {
