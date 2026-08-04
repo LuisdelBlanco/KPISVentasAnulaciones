@@ -1072,6 +1072,10 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
                   style="background:var(--red);color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;opacity:0.4;">
                   💾 Guardar
                 </button>
+                <button id="btnEliminarFoto" onclick="eliminarFotoPerfil()"
+                  style="background:var(--surface-2);color:var(--text-3);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">
+                  🗑 Eliminar
+                </button>
               </div>
               <p id="fotoStatus" style="font-size:10px;color:var(--text-3);text-align:center;"></p>
             </div>
@@ -4465,12 +4469,14 @@ function initIncentivosSelectors() {
   if(panelNotif) panelNotif.style.display = isAdv ? '' : 'none';
 
   if(isAdv) {
-    // Poblar selector con todos los agentes
+    // Poblar selector con TODOS los usuarios del equipo
     const sel = document.getElementById('selectAgenteFoto');
-    if(sel && sel.options.length <= 1) {
-      Object.keys(TIPOLOGIAS_INC).forEach(nombre => {
+    if(sel) {
+      sel.innerHTML = '<option value="">— Yo mismo —</option>';
+      _todosUsuarios.forEach(u => {
+        if(u.userId === currentUser?.id) return; // yo mismo ya está
         const opt = document.createElement('option');
-        opt.value = nombre; opt.textContent = nombre;
+        opt.value = u.nombre; opt.textContent = u.nombre;
         sel.appendChild(opt);
       });
     }
@@ -4835,13 +4841,26 @@ function mostrarNotificacionSistema(reg) {
 // ── AVATAR DE USUARIO ────────────────────────────────────
 
 let _fotosAgentes = {};
-let _editingAgente = null; // { userId, nombre } cuando admin edita foto de otro
+let _editingAgente = null;
+let _todosUsuarios = []; // {userId, nombre, foto, notif_enabled} — todos los de user_roles // { userId, nombre } cuando admin edita foto de otro
 let _validacionesInc = {}; // clave: "nombre_mes_anio" → {por, fecha, bono} // nombre agente → base64 foto
 
 async function cargarFotosAgentes() {
   try {
-    const data = await supaFetch('/rest/v1/user_roles?select=nombre,foto');
+    const data = await supaFetch('/rest/v1/user_roles?select=nombre,foto,user_id,notif_enabled&order=nombre.asc');
     if(Array.isArray(data)) {
+      _todosUsuarios = data
+        .filter(r => r.user_id)
+        .map(r => ({
+          userId: r.user_id,
+          nombre: r.nombre || (() => {
+            // Fallback: buscar en TIPOLOGIAS_INC por userId
+            const found = Object.keys(TIPOLOGIAS_INC).find(n => TIPOLOGIAS_INC[n].userId === r.user_id);
+            return found || r.user_id.slice(0,8);
+          })(),
+          foto: r.foto || '', notif_enabled: r.notif_enabled || false
+        }))
+        .sort((a,b) => a.nombre.localeCompare(b.nombre));
       data.forEach(r => {
         if(r.nombre && r.foto) _fotosAgentes[r.nombre.toLowerCase()] = r.foto;
       });
@@ -4986,6 +5005,41 @@ function confirmarCrop() {
   cancelarCrop();
 }
 
+async function eliminarFotoPerfil() {
+  const sel = document.getElementById('selectAgenteFoto');
+  const nombreSel = sel?.value || '';
+  const esOtro = nombreSel && currentRole === 'advanced';
+  const quien = esOtro ? nombreSel : 'tu perfil';
+  if(!confirm('¿Eliminar la foto de ' + quien + '?')) return;
+
+  let userId = currentUser?.id;
+  if(esOtro) {
+    const u = _todosUsuarios.find(u => u.nombre === nombreSel);
+    if(!u?.userId) { mostrarToast('⚠️ Usuario no encontrado'); return; }
+    userId = u.userId;
+  }
+
+  try {
+    const res = await fetch(SUPA_URL + '/rest/v1/user_roles?user_id=eq.' + userId, {
+      method: 'PATCH',
+      headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + (accessToken||SUPA_KEY), 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ foto: '' })
+    });
+    if(res.ok) {
+      if(!esOtro) { _userFoto = ''; actualizarAvatarSidebar(); }
+      else { _fotosAgentes[nombreSel.toLowerCase()] = ''; renderAll(); }
+      // Limpiar preview
+      const prev = document.getElementById('fotoPreview');
+      const ini = document.getElementById('fotoPreviewIni');
+      if(prev) { prev.src = ''; prev.style.display = 'none'; }
+      if(ini) { ini.textContent = '?'; ini.style.display = ''; }
+      mostrarToast('✅ Foto eliminada');
+    } else {
+      mostrarToast('⚠️ Error al eliminar la foto');
+    }
+  } catch(e) { mostrarToast('⚠️ Error: ' + e.message); }
+}
+
 async function guardarFotoDeAgente(userId, nombre, base64) {
   mostrarToast('⏳ Guardando foto de ' + nombre + '...');
   try {
@@ -5039,9 +5093,9 @@ async function guardarFotoDesdeInput() {
   try {
     if(nombreSel && currentRole === 'advanced') {
       // Guardar foto de otro agente
-      const tip = TIPOLOGIAS_INC[nombreSel];
-      if(!tip?.userId) throw new Error('userId no encontrado para ' + nombreSel);
-      await guardarFotoDeAgente(tip.userId, nombreSel, _fotoBase64Pendiente);
+      const usuario = _todosUsuarios.find(u => u.nombre === nombreSel);
+      if(!usuario?.userId) throw new Error('userId no encontrado para ' + nombreSel);
+      await guardarFotoDeAgente(usuario.userId, nombreSel, _fotoBase64Pendiente);
       // Actualizar preview
       const prev = document.getElementById('fotoPreview');
       if(prev) { prev.src = _fotoBase64Pendiente; prev.style.display = 'block'; }
