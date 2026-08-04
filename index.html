@@ -743,12 +743,20 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
 
     <!-- PAGE: OFICINAS -->
     <div class="page" id="page-oficinas">
-      <div class="oficinas-grid" id="oficinasGrid"></div>
       <div class="table-card">
         <div class="table-card-header">
-          <span class="table-card-title">Detalle por oficina</span>
+          <span class="table-card-title">Ranking por oficina</span>
         </div>
-        <div class="table-scroll"><table id="tablaOficinas"><thead></thead><tbody></tbody></table></div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr>
+              <th>#</th><th>Oficina</th>
+              <th>Emisiones netas</th><th>Anulaciones</th><th>Rehab.</th><th>Reempl.</th><th>Sin efecto</th><th>Neto</th><th style="text-align:right">Prima corregida</th>
+            </tr></thead>
+            <tbody id="bodyOficinas"></tbody>
+            <tfoot id="footOficinas"></tfoot>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -2545,34 +2553,80 @@ function renderCharts() {
 
 // ── OFICINAS PAGE ─────────────────────────────────
 function renderOficinas() {
-  const data=getFiltered();
-  const byOf={};
-  oficinas.forEach(o=>{byOf[o]={ventas:0,anulan:0,rehab:0,sust:0,sinEf:0,prima:0};});
-  data.forEach(r=>{
-    if(!byOf[r.oficina])byOf[r.oficina]={ventas:0,anulan:0,rehab:0,sust:0,sinEf:0,prima:0};
-    if(r.tipo==='Emisión'){byOf[r.oficina].ventas++;byOf[r.oficina].prima+=parseFloat(r.prima)||0;}
-    if(r.tipo==='Anulación')byOf[r.oficina].anulan++;
-    if(r.tipo==='Rehabilitación')byOf[r.oficina].rehab++;
-    if(r.tipo==='Reemplazo')byOf[r.oficina].sust++;
-    if(r.tipo==='Sin efecto')byOf[r.oficina].sinEf++;
+  const data = getFiltered();
+  const byOf = {};
+  oficinas.forEach(o => { byOf[o] = { v:0, a:0, rh:0, s:0, se:0, primaC:0 }; });
+  data.forEach(r => {
+    const o = r.oficina || '(sin asignar)';
+    if(!byOf[o]) byOf[o] = { v:0, a:0, rh:0, s:0, se:0, primaC:0 };
+    if(r.tipo === 'Emisión')       { byOf[o].v++;  byOf[o].primaC += parseFloat(r.primaCorregida)||0; }
+    if(r.tipo === 'Anulación')       byOf[o].a++;
+    if(r.tipo === 'Rehabilitación')  byOf[o].rh++;
+    if(r.tipo === 'Reemplazo')       byOf[o].s++;
+    if(r.tipo === 'Sin efecto')      byOf[o].se++;
+    if(r.tipo === 'Inicial/Suple') { byOf[o].v++;  byOf[o].primaC += parseFloat(r.primaCorregida)||0; }
   });
-  document.getElementById('oficinasGrid').innerHTML=Object.entries(byOf).map(([of,d])=>{
-    const neto=d.ventas-d.anulan+d.rehab;
-    const ret=d.ventas>0?Math.round((1-d.anulan/d.ventas)*100):100;
-    return`<div class="oficina-card">
-      <div class="oficina-card-name">⬡ ${of}</div>
-      <div class="oficina-stat"><span>Emisiones</span><span style="color:var(--green)">${d.ventas}</span></div>
-      <div class="oficina-stat"><span>Anulaciones</span><span style="color:var(--red)">${d.anulan}</span></div>
-      <div class="oficina-stat"><span>Rehabilitaciones</span><span style="color:var(--blue)">${d.rehab}</span></div>
-      <div class="oficina-stat"><span>Reemplazos</span><span style="color:var(--amber)">${d.sust}</span></div>
-      <div class="oficina-stat"><span>Sin efecto</span><span>${d.sinEf}</span></div>
-      <div class="oficina-stat"><span>Neto</span><span style="color:${neto>=0?'var(--green)':'var(--red)'};font-weight:800">${neto>0?'+'+neto:neto}</span></div>
-      <div style="margin-top:10px;">
-        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-3);margin-bottom:4px;"><span>Retención</span><span>${ret}%</span></div>
-        <div class="progress-bar"><div class="progress-fill" style="width:${ret}%"></div></div>
-      </div>
-    </div>`;
-  }).join('');
+
+  const fmtPC = n => n > 0
+    ? n.toLocaleString('es-ES', { minimumFractionDigits:2, maximumFractionDigits:2 }) + ' €'
+    : '—';
+
+  const sorted = Object.entries(byOf)
+    .map(([of, d]) => ({ of, ...d, vNeto: d.v - d.se }))
+    .sort((a, b) => b.vNeto - a.vNeto);
+
+  const body = document.getElementById('bodyOficinas');
+  const foot = document.getElementById('footOficinas');
+  if(!body) return;
+
+  body.innerHTML = sorted.length === 0
+    ? `<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">📊</div><p>Sin datos</p></div></td></tr>`
+    : sorted.map(({ of, vNeto, a, rh, s, se, primaC }, i) => {
+        const neto = vNeto - a + rh;
+        return `<tr onclick="irARegistrosPorOficina('${of.replace(/'/g,"\\'")}'")" style="cursor:pointer;" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background=''">
+          <td style="font-weight:700;color:var(--text-3);font-size:12px">${i+1}</td>
+          <td style="font-weight:700">⬡ ${of}</td>
+          <td style="color:var(--green);font-weight:700">${vNeto}</td>
+          <td style="color:var(--red)">${a}</td>
+          <td style="color:var(--blue)">${rh}</td>
+          <td style="color:var(--amber)">${s}</td>
+          <td style="color:var(--text-3)">${se}</td>
+          <td style="font-weight:800;color:${neto>=0?'var(--green)':'var(--red)'}">${neto>0?'+'+neto:neto}</td>
+          <td style="text-align:right;font-weight:700;color:var(--text-2)">${fmtPC(primaC)}</td>
+        </tr>`;
+      }).join('');
+
+  // Fila de totales
+  const tot = sorted.reduce((acc, d) => {
+    acc.vNeto += d.vNeto; acc.a += d.a; acc.rh += d.rh;
+    acc.s += d.s; acc.se += d.se; acc.primaC += d.primaC;
+    return acc;
+  }, { vNeto:0, a:0, rh:0, s:0, se:0, primaC:0 });
+  const totNeto = tot.vNeto - tot.a + tot.rh;
+
+  if(foot) foot.innerHTML = sorted.length === 0 ? '' : `
+    <tr style="border-top:2px solid var(--border);background:var(--surface-2);">
+      <td colspan="2" style="font-weight:800;font-size:12px;color:var(--text-3);padding:10px 12px;text-transform:uppercase;letter-spacing:0.06em;">TOTAL</td>
+      <td style="color:var(--green);font-weight:800">${tot.vNeto}</td>
+      <td style="color:var(--red);font-weight:800">${tot.a}</td>
+      <td style="color:var(--blue);font-weight:800">${tot.rh}</td>
+      <td style="color:var(--amber);font-weight:800">${tot.s}</td>
+      <td style="color:var(--text-3);font-weight:800">${tot.se}</td>
+      <td style="font-weight:900;color:${totNeto>=0?'var(--green)':'var(--red)'}">${totNeto>0?'+'+totNeto:totNeto}</td>
+      <td style="text-align:right;font-weight:900;color:var(--red)">${fmtPC(tot.primaC)}</td>
+    </tr>`;
+}
+
+function irARegistrosPorOficina(oficina) {
+  goPage('registros');
+  setTimeout(() => {
+    const fOf = document.getElementById('fOficina');
+    if(fOf) fOf.value = oficina;
+    const fAg = document.getElementById('fAgente');
+    if(fAg) fAg.value = '';
+    guardarFiltros();
+    renderRegistros();
+  }, 80);
 }
 
 // ── COMERCIALES PAGE ──────────────────────────────
