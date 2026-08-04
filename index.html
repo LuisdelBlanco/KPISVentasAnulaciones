@@ -2264,18 +2264,6 @@ function irARegistrosPorTipo(tipo) {
   }, 80);
 }
 
-function irARegistrosAgente(agente, year, month) {
-  goPage('registros');
-  setTimeout(() => {
-    const fAg = document.getElementById('fAgente');
-    if(fAg) fAg.value = agente;
-    if(year) { const fY = document.getElementById('fYear'); if(fY) fY.value = year; }
-    if(month) { const fM = document.getElementById('fMonth'); if(fM) fM.value = month; }
-    guardarFiltros();
-    renderRegistros();
-  }, 80);
-}
-
 // ── CHARTS ────────────────────────────────────────
 // ── AVATARES ──────────────────────────────────────
 const AVATAR_COLORS = [
@@ -2523,7 +2511,9 @@ function renderComerciales() {
     ? `<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">📊</div><p>Sin datos</p></div></td></tr>`
     : sorted.map(({ nombre, oficina, vNeto, a, rh, s, se, primaC }, i) => {
         const neto = vNeto - a + rh;
-        return `<tr onclick="irARegistrosAgente('${nombre.replace(/'/g,"\\'")}','','')" style="cursor:pointer;" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background=''">
+        const mesAct  = document.getElementById('monthFilter')?.value || '';
+        const anioAct = document.getElementById('yearFilter')?.value  || '';
+        return `<tr onclick="irARegistrosAgente('${nombre.replace(/'/g,"\\'")}','${mesAct}','${anioAct}')" style="cursor:pointer;" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background=''">
           <td style="font-weight:700;color:var(--text-3);font-size:12px">${i+1}</td>
           <td style="font-weight:600;display:flex;align-items:center;gap:8px;">${avatarHTML(nombre)} ${nombre}</td>
           <td><span class="badge badge-sin-efecto">${oficina}</span></td>
