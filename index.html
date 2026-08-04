@@ -4235,7 +4235,7 @@ function calcularIncentivo(nombre, mes, anio) {
   if(salud.length > 0) {
     const importe = enMargen ? bonoBase * 0.75 : 0; // +0.75× base → total ×1.75
     if(enMargen) bonusTotal += importe;
-    multiplicadores.push({ label: '✚ Salud', factor: '+0.75×base', importe, alcanzado: true, enMargen });
+    multiplicadores.push({ label: '<span style="color:#BE123C;font-weight:900;">✚</span> Salud', factor: '+0.75×base', importe, alcanzado: true, enMargen });
   }
 
   const bonoTotal = enMargen ? bonoBase + bonusTotal : 0;
@@ -4321,7 +4321,7 @@ function renderIncentivos() {
     const multTypes = [
       { key: 'vida', icon: '❤️', label: 'Vida', hint: 'prima ≥200€', conseguido: r.multiplicadores.some(m => m.label.includes('Vida')) },
       { key: 'ahorro', icon: '€', label: 'Ahorro', hint: 'prima ≥1.200€', conseguido: r.multiplicadores.some(m => m.label.includes('Ahorro')) },
-      { key: 'salud', icon: '✚', label: 'Salud', hint: 'prima ≥200€', conseguido: r.multiplicadores.some(m => m.label.includes('Salud')) },
+      { key: 'salud', icon: '<span style="color:#BE123C;font-weight:900;font-size:14px;">✚</span>', label: 'Salud', hint: 'prima ≥200€', conseguido: r.multiplicadores.some(m => m.label.includes('Salud')) },
     ];
 
     const bonoConSiguienteTramo = r.siguienteTramo && r.tramoNum < r.tip.tramoMax
