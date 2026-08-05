@@ -1610,10 +1610,12 @@ async function guardarNuevaContrasena() {
   btn.textContent = '⏳ Guardando...'; btn.disabled = true; err.textContent = '';
   try {
     // Cambiar contraseña en Supabase Auth
-    await supaFetch('/auth/v1/user', {
+    const userData = await supaFetch('/auth/v1/user', {
       method: 'PUT',
       body: JSON.stringify({ password: p1 })
     });
+    // Si no teníamos currentUser (recovery desde email), cargarlo ahora
+    if(!currentUser && userData?.id) currentUser = userData;
     // Desactivar force_password_change si aplica
     if(currentUser?.id && !_recoveryMode) {
       await fetch(SUPA_URL + '/rest/v1/user_roles?user_id=eq.' + currentUser.id, {
@@ -1659,19 +1661,36 @@ async function mostrarOlvidePass() {
 
 // Detectar si venimos de un enlace de recuperación (hash #access_token=...&type=recovery)
 function checkRecoveryToken() {
-  const hash = window.location.hash;
-  if(!hash.includes('type=recovery') && !hash.includes('type=invite')) return;
-  const params = new URLSearchParams(hash.slice(1));
-  const token = params.get('access_token');
+  // Supabase puede enviar el token en el hash (#) o en la query string (?)
+  const hash   = window.location.hash;
+  const search = window.location.search;
+  const source = (hash.includes('type=recovery') || hash.includes('type=invite'))
+    ? hash.slice(1)
+    : (search.includes('type=recovery') || search.includes('type=invite') || search.includes('code='))
+      ? search.slice(1)
+      : null;
+
+  if(!source) return;
+
+  const params = new URLSearchParams(source);
+  const token  = params.get('access_token');
   const refresh = params.get('refresh_token');
-  if(!token) return;
-  accessToken = token;
-  if(refresh) refreshToken = refresh;
+  const type   = params.get('type');
+  const code   = params.get('code');
+
+  // PKCE flow: si hay un code pero no access_token directo, no podemos manejarlo sin JS SDK
+  // En ese caso mostramos igualmente la pantalla de cambio con el token de sesión actual
+  if(!token && !code) return;
+
+  if(token) {
+    accessToken = token;
+    if(refresh) refreshToken = refresh;
+    currentUser = null; // se cargará al guardar
+  }
   _recoveryMode = true;
-  // Limpiar el hash de la URL
+  // Limpiar URL
   history.replaceState(null, '', window.location.pathname);
   // Mostrar pantalla de cambio de contraseña
-  document.getElementById('loginScreen').style.display = 'none';
   mostrarPantallaPassword('Introduce tu nueva contraseña para acceder a Kompass.');
 }
 
