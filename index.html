@@ -1576,7 +1576,6 @@ async function supaFetch(path, options={}, useAuth=true) {
   return text ? JSON.parse(text) : null;
 }
 
-async 
 // ── CAMBIO DE CONTRASEÑA ─────────────────────────────────────
 let _recoveryMode = false; // true si venimos de un enlace de recuperación
 
@@ -1586,7 +1585,13 @@ function toggleNewPass(n) {
 }
 
 function mostrarPantallaPassword(subtitulo) {
-  document.getElementById('changePassScreen').style.display = 'flex';
+  // Ocultar todo lo demás
+  document.getElementById('loginScreen').style.display = 'none';
+  const overlay = document.getElementById('loadingOverlay');
+  if(overlay) overlay.style.display = 'none';
+  // Mostrar pantalla de cambio
+  const screen = document.getElementById('changePassScreen');
+  if(screen) screen.style.display = 'flex';
   if(subtitulo) document.getElementById('changePassSubtitle').textContent = subtitulo;
   document.getElementById('newPass1').value = '';
   document.getElementById('newPass2').value = '';
@@ -5923,16 +5928,28 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   const mSel = document.getElementById('monthFilter');
   if(mSel) mSel.value = now.getMonth()+1;
 
+  // Detectar si venimos de enlace de recuperación de contraseña
+  try { checkRecoveryToken(); } catch(e) {}
+  if(document.getElementById('changePassScreen')?.style.display === 'flex') return;
+
   // Comprobar sesión guardada en localStorage
   const session = getSession();
   if(session?.access_token) {
     accessToken = session.access_token;
     refreshToken = session.refresh_token || null;
     currentUser = session.user;
-  // Forzar rol admin por UUID antes de cualquier render
-  if(currentUser.id === '2beeddaf-8c14-4467-99bc-2dc0b80e7cbd') currentRole = 'advanced';
+    // Forzar rol admin por UUID antes de cualquier render
+    if(currentUser.id === '2beeddaf-8c14-4467-99bc-2dc0b80e7cbd') currentRole = 'advanced';
     await loadUserRole();
     iniciarRenovacionToken();
+    // Comprobar force_password_change también al restaurar sesión
+    try {
+      const pwdData = await supaFetch('/rest/v1/user_roles?select=force_password_change&user_id=eq.' + currentUser.id);
+      if(pwdData?.[0]?.force_password_change === true) {
+        mostrarPantallaPassword('Por seguridad, elige tu contraseña personal antes de continuar.');
+        return;
+      }
+    } catch(e) {}
     await arrancarApp();
   } else {
     document.getElementById('loginScreen').style.display = 'flex';
