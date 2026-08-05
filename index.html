@@ -631,22 +631,22 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
 
   <div class="nav-group">
     <div class="nav-group-label">Análisis</div>
-    <div class="nav-item active" onclick="goPage('dashboard')"><span class="nav-icon">⬡</span> Resumen general</div>
-    <div class="nav-item" onclick="goPage('oficinas')"><span class="nav-icon">⊞</span> Por oficina</div>
-    <div class="nav-item" onclick="goPage('comerciales')"><span class="nav-icon">≡</span> Por agente</div>
+    <div class="nav-item active" onclick="goPage('dashboard')" style="display:flex;align-items:center;gap:6px;"><span class="nav-icon">⬡</span> Resumen general<span style="width:6px;height:6px;border-radius:50%;background:#16A34A;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
+    <div class="nav-item" onclick="goPage('oficinas')" style="display:flex;align-items:center;gap:6px;"><span class="nav-icon">⊞</span> Por oficina<span style="width:6px;height:6px;border-radius:50%;background:#16A34A;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
+    <div class="nav-item" onclick="goPage('comerciales')" style="display:flex;align-items:center;gap:6px;"><span class="nav-icon">≡</span> Por agente<span style="width:6px;height:6px;border-radius:50%;background:#16A34A;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
   </div>
   <div class="nav-group">
     <div class="nav-group-label">Datos</div>
-    <div class="nav-item" onclick="goPage('registros')"><span class="nav-icon">☰</span> Registros</div>
-    <div class="nav-item" id="navDefensa" onclick="goPage('defensa')" style="display:none;"><span class="nav-icon">🛡️</span> Defensa cartera</div>
-    <div class="nav-item" id="navImportar" onclick="goPage('importar')"><span class="nav-icon">↓</span> Importar</div>
-    <div class="nav-item" id="navActividad" onclick="goPage('actividad')"><span class="nav-icon">◎</span> Actividad comercial</div>
+    <div class="nav-item" onclick="goPage('registros')" style="display:flex;align-items:center;gap:6px;"><span class="nav-icon">☰</span> Registros<span style="width:6px;height:6px;border-radius:50%;background:#16A34A;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
+    <div class="nav-item" id="navDefensa" onclick="goPage('defensa')" style="display:none;display:flex;align-items:center;gap:6px;"><span class="nav-icon">🛡️</span> Defensa cartera<span style="width:6px;height:6px;border-radius:50%;background:#C2003F;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
+    <div class="nav-item" id="navImportar" onclick="goPage('importar')" style="display:flex;align-items:center;gap:6px;"><span class="nav-icon">↓</span> Importar<span style="width:6px;height:6px;border-radius:50%;background:#2563EB;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
+    <div class="nav-item" id="navActividad" onclick="goPage('actividad')" style="display:flex;align-items:center;gap:6px;"><span class="nav-icon">◎</span> Actividad comercial<span style="width:6px;height:6px;border-radius:50%;background:#2563EB;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
   </div>
   <div class="nav-group">
     <div class="nav-group-label">Sistema</div>
-    <div class="nav-item" id="navIncentivos" onclick="goPage('incentivos')"><span class="nav-icon">🔐</span> Mi Área</div>
-    <div class="nav-item" id="navNovedades" onclick="goPage('novedades')"><span class="nav-icon">✦</span> Novedades <span id="noveltyDot" style="display:none;width:7px;height:7px;background:#C2003F;border-radius:50%;display:inline-block;margin-left:4px;vertical-align:middle;"></span></div>
-    <div class="nav-item" id="navConfig" onclick="goPage('config')"><span class="nav-icon">◈</span> Ajustes</div>
+    <div class="nav-item" id="navIncentivos" onclick="goPage('incentivos')" style="display:flex;align-items:center;gap:6px;"><span class="nav-icon">🔐</span> Mi Área<span style="width:6px;height:6px;border-radius:50%;background:#16A34A;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
+    <div class="nav-item" id="navNovedades" onclick="goPage('novedades')" style="display:flex;align-items:center;gap:6px;"><span class="nav-icon">✦</span> Novedades <span id="noveltyDot" style="display:none;width:7px;height:7px;background:#C2003F;border-radius:50%;display:inline-block;margin-left:4px;vertical-align:middle;"></span><span style="width:6px;height:6px;border-radius:50%;background:#16A34A;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
+    <div class="nav-item" id="navConfig" onclick="goPage('config')" style="display:flex;align-items:center;gap:6px;"><span class="nav-icon">◈</span> Ajustes<span style="width:6px;height:6px;border-radius:50%;background:#2563EB;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
   </div>
 
   <div class="sidebar-foot">
@@ -1059,7 +1059,10 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
 
             <!-- COL 1: Edición del agente seleccionado -->
             <div>
-              <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px;" id="editandoLabel">Tu perfil</div>
+              <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px;display:flex;align-items:center;gap:6px;" id="editandoLabel">
+                Tu perfil
+                <span style="width:6px;height:6px;border-radius:50%;background:#16A34A;display:inline-block;margin-left:4px;flex-shrink:0;"></span>
+              </div>
 
               <!-- Foto -->
               <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">
@@ -1088,16 +1091,23 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
 
               <!-- Notificaciones -->
               <div style="margin-bottom:14px;padding:12px;background:var(--surface-2);border-radius:8px;border:1px solid var(--border);">
-                <div style="font-size:11px;font-weight:700;color:var(--text-2);margin-bottom:8px;">🔔 Notificaciones</div>
+                <div style="font-size:11px;font-weight:700;color:var(--text-2);margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+                  🔔 Notificaciones
+                  <span style="width:6px;height:6px;border-radius:50%;background:#16A34A;display:inline-block;margin-left:4px;flex-shrink:0;"></span>
+                </div>
                 <button id="btnActivarNotif" onclick="pedirPermisoNotificaciones()"
                   style="background:var(--red);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:100%;">
                   🔔 Activar notificaciones
                 </button>
               </div>
 
-              <!-- Rol (solo admin, y no puede cambiar su propio rol) -->
+              <!-- Rol -->
               <div id="panelRol" style="display:none;padding:12px;background:var(--surface-2);border-radius:8px;border:1px solid var(--border);">
-                <div style="font-size:11px;font-weight:700;color:var(--text-2);margin-bottom:8px;">👤 Rol</div>
+                <div style="font-size:11px;font-weight:700;color:var(--text-2);margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+                  👤 Rol
+                  <span style="width:6px;height:6px;border-radius:50%;background:#16A34A;display:inline-block;margin-left:4px;flex-shrink:0;"></span>
+                  <span id="rolAdminBadge" style="display:none;"><span style="width:6px;height:6px;border-radius:50%;background:#2563EB;display:inline-block;margin-left:4px;flex-shrink:0;"></span></span>
+                </div>
                 <div style="display:flex;gap:8px;">
                   <button id="btnRolAgente" onclick="cambiarRol('basic')"
                     style="flex:1;padding:6px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border:2px solid var(--border);background:var(--surface);">
@@ -1114,7 +1124,10 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
 
             <!-- COL 2: Lista equipo con scroll (solo admin) -->
             <div id="panelNotifEquipo" style="display:none;">
-              <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">Equipo — clic para seleccionar</div>
+              <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+                Equipo — clic para seleccionar
+                <span style="width:6px;height:6px;border-radius:50%;background:#2563EB;display:inline-block;margin-left:4px;flex-shrink:0;"></span>
+              </div>
               <div id="listaNotifAgentes" style="display:flex;flex-direction:column;gap:3px;max-height:360px;overflow-y:auto;"></div>
               <div id="resetMsg" style="font-size:11px;margin-top:8px;"></div>
             </div>
@@ -5551,8 +5564,10 @@ function cargarPreviewAgente(u) {
   // Rol (solo para otros usuarios, no para uno mismo)
   const panelRol = document.getElementById('panelRol');
   if(panelRol) {
+    const rolAdminBadge = document.getElementById('rolAdminBadge');
     if(u && u.userId !== currentUser?.id) {
       // Editando otro agente: mostrar botones de cambio de rol
+      if(rolAdminBadge) rolAdminBadge.style.display = '';
       panelRol.style.display = currentRole === 'advanced' ? '' : 'none';
       const rolStatus = document.getElementById('rolStatus');
       const btnA = document.getElementById('btnRolAgente');
@@ -5563,6 +5578,8 @@ function cargarPreviewAgente(u) {
       if(rolStatus) rolStatus.textContent = `Rol actual: ${esAdmin ? 'Administrador' : 'Agente'}`;
     } else {
       // Perfil propio: mostrar rol como texto fijo
+      const rolAdminBadge2 = document.getElementById('rolAdminBadge');
+      if(rolAdminBadge2) rolAdminBadge2.style.display = 'none';
       panelRol.style.display = '';
       const rolStatus = document.getElementById('rolStatus');
       const btnA = document.getElementById('btnRolAgente');
