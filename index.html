@@ -1116,23 +1116,9 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
             <div id="panelNotifEquipo" style="display:none;">
               <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">Equipo — clic para seleccionar</div>
               <div id="listaNotifAgentes" style="display:flex;flex-direction:column;gap:3px;max-height:360px;overflow-y:auto;"></div>
+              <div id="resetMsg" style="font-size:11px;margin-top:8px;"></div>
             </div>
 
-          </div>
-        </div>
-
-        <!-- Forzar contraseña: solo Luis -->
-        <div id="panelForzarPass" style="display:none;margin-bottom:20px;">
-          <div class="table-card" style="border-left:3px solid #2563EB;">
-            <div class="table-card-header"><span class="table-card-title">🔑 Gestión de contraseñas</span></div>
-            <div style="padding:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-              <select id="selectResetUser" style="height:34px;border:1px solid var(--border);border-radius:8px;padding:0 10px;font-size:13px;font-family:inherit;flex:1;min-width:160px;">
-                <option value="">Selecciona un agente</option>
-              </select>
-              <button onclick="forzarCambioContrasena()" style="height:34px;background:#2563EB;color:#fff;border:none;border-radius:8px;padding:0 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">🔑 Forzar cambio</button>
-              <button onclick="enviarResetEmail()" style="height:34px;background:var(--surface-2);color:var(--text-2);border:1px solid var(--border);border-radius:8px;padding:0 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">📧 Email reset</button>
-              <div id="resetMsg" style="font-size:11px;color:var(--text-3);width:100%;"></div>
-            </div>
           </div>
         </div>
 
@@ -4838,6 +4824,43 @@ async function poblarSelectResetUser() {
   });
 }
 
+async function forzarCambioContrasenaDirecto(userId, nombre, btn) {
+  const msg = document.getElementById('resetMsg');
+  const orig = btn.textContent;
+  btn.textContent = '⏳'; btn.disabled = true;
+  try {
+    await fetch(SUPA_URL + '/rest/v1/user_roles?user_id=eq.' + userId, {
+      method: 'PATCH',
+      headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ force_password_change: true })
+    });
+    if(msg) { msg.style.color = 'var(--green)'; msg.textContent = '✅ ' + nombre + ': deberá cambiar contraseña al entrar.'; }
+    mostrarToast('🔑 ' + nombre + ': cambio de contraseña forzado');
+  } catch(e) {
+    if(msg) { msg.style.color = 'var(--red)'; msg.textContent = '⚠️ Error: ' + e.message; }
+  } finally { btn.textContent = orig; btn.disabled = false; }
+}
+
+async function enviarResetEmailDirecto(nombre, btn) {
+  const emailInput = prompt('Email de ' + nombre + ':');
+  if(!emailInput) return;
+  const msg = document.getElementById('resetMsg');
+  const orig = btn.textContent;
+  btn.textContent = '⏳'; btn.disabled = true;
+  try {
+    const res = await fetch(SUPA_URL + '/auth/v1/recover', {
+      method: 'POST',
+      headers: { 'apikey': SUPA_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: emailInput, redirect_to: 'https://luisdelblanco.github.io/KPISVentasAnulaciones/' })
+    });
+    if(!res.ok) throw new Error((await res.text()).slice(0,80));
+    if(msg) { msg.style.color = 'var(--green)'; msg.textContent = '✅ Email enviado a ' + emailInput; }
+    mostrarToast('📧 Email de reset enviado a ' + nombre);
+  } catch(e) {
+    if(msg) { msg.style.color = 'var(--red)'; msg.textContent = '⚠️ ' + e.message; }
+  } finally { btn.textContent = orig; btn.disabled = false; }
+}
+
 async function forzarCambioContrasena() {
   const sel = document.getElementById('selectResetUser');
   const userId = sel?.value;
@@ -5474,10 +5497,7 @@ function initIncentivosSelectors() {
   if(panelNotif) panelNotif.style.display = isAdv ? '' : 'none';
   if(panelRol) panelRol.style.display = 'none';
 
-  // Panel forzar contraseña: solo Luis
-  const panelPass = document.getElementById('panelForzarPass');
-  if(panelPass) panelPass.style.display = currentUser?.id === '2beeddaf-8c14-4467-99bc-2dc0b80e7cbd' ? '' : 'none';
-  if(panelPass?.style.display !== 'none') poblarSelectResetUser();
+  // Panel forzar contraseña integrado en lista equipo — visible para admins via renderListaEquipo
 
   // Cargar foto propia en preview por defecto
   cargarPreviewAgente(null);
@@ -5581,15 +5601,20 @@ async function cambiarRol(nuevoRol) {
 function renderListaEquipo() {
   const lista = document.getElementById('listaNotifAgentes');
   if(!lista) return;
+  const esAdmin = currentRole === 'advanced';
   lista.innerHTML = _todosUsuarios.map(u => {
     const selec = _agenteSeleccionado?.userId === u.userId;
     const enabled = u.notif_enabled === true;
-    const esAdmin = u.role === 'advanced';
+    const esAdminU = u.role === 'advanced';
     return `<div onclick="seleccionarAgenteEquipo('${u.userId}')" style="display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;cursor:pointer;background:${selec?'#FFF1F3':'transparent'};border:1.5px solid ${selec?'var(--red)':'transparent'};" onmouseover="if(!${selec})this.style.background='var(--surface-2)'" onmouseout="if(!${selec})this.style.background='transparent'">
       ${avatarHTML(u.nombre, 28)}
       <span style="flex:1;font-size:12px;font-weight:${selec?'800':'600'};color:${selec?'var(--red)':'var(--text)'};">${u.nombre}</span>
       <span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;background:${enabled?'#F0FDF4':'var(--surface-2)'};color:${enabled?'#16A34A':'var(--text-3)'};border:1px solid ${enabled?'#86EFAC':'var(--border)'};">${enabled?'🔔':'🔕'}</span>
-      <span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;background:${esAdmin?'#FFF1F3':'var(--surface-2)'};color:${esAdmin?'var(--red)':'var(--text-3)'};border:1px solid ${esAdmin?'#FECDD3':'var(--border)'};">${esAdmin?'Admin':'Agente'}</span>
+      <span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;background:${esAdminU?'#FFF1F3':'var(--surface-2)'};color:${esAdminU?'var(--red)':'var(--text-3)'};border:1px solid ${esAdminU?'#FECDD3':'var(--border)'};">${esAdminU?'Admin':'Agente'}</span>
+      ${esAdmin && u.userId !== currentUser?.id ? `
+        <button onclick="event.stopPropagation();forzarCambioContrasenaDirecto('${u.userId}','${u.nombre.replace(/'/g,"\\'")}',this)" title="Forzar cambio de contraseña" style="background:none;border:1px solid #BFDBFE;border-radius:6px;padding:2px 6px;font-size:10px;cursor:pointer;color:#2563EB;white-space:nowrap;">🔑</button>
+        <button onclick="event.stopPropagation();enviarResetEmailDirecto('${u.nombre.replace(/'/g,"\\'")}',this)" title="Enviar email de reset" style="background:none;border:1px solid var(--border);border-radius:6px;padding:2px 6px;font-size:10px;cursor:pointer;color:var(--text-3);white-space:nowrap;">📧</button>
+      ` : ''}
     </div>`;
   }).join('');
 }
