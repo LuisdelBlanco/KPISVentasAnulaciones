@@ -644,6 +644,7 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
   <div class="nav-group">
     <div class="nav-group-label">Sistema</div>
     <div class="nav-item" id="navIncentivos" onclick="goPage('incentivos')"><span class="nav-icon">🔐</span> Mi Área</div>
+    <div class="nav-item" id="navDefensa" onclick="goPage('defensa')" style="display:none;"><span class="nav-icon">🛡️</span> Defensa cartera</div>
     <div class="nav-item" id="navNovedades" onclick="goPage('novedades')"><span class="nav-icon">✦</span> Novedades <span id="noveltyDot" style="display:none;width:7px;height:7px;background:#C2003F;border-radius:50%;display:inline-block;margin-left:4px;vertical-align:middle;"></span></div>
     <div class="nav-item" id="navConfig" onclick="goPage('config')"><span class="nav-icon">◈</span> Ajustes</div>
   </div>
@@ -1144,6 +1145,160 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
           </div>
         </div>
         <div id="changelogTimeline"></div>
+      </div>
+    </div>
+
+
+    <div class="page" id="page-defensa">
+      <div style="max-width:1100px;">
+
+        <!-- CABECERA -->
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:20px;">
+          <div>
+            <h2 style="font-size:20px;font-weight:800;color:var(--text);margin:0;">🛡️ Defensa de cartera · Autos</h2>
+            <div style="font-size:12px;color:var(--text-3);margin-top:3px;" id="defensaMesLabel">Cargando...</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button id="btnNuevaDefensa" onclick="abrirModalDefensa()" class="btn btn-primary">+ Nueva defensa</button>
+            <button id="btnAdminDefensa" onclick="abrirAdminSaldo()" class="btn btn-ghost" style="display:none;">⚙️ Gestionar saldo</button>
+          </div>
+        </div>
+
+        <!-- KPI CARDS -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px;" id="defensaKpis"></div>
+
+        <!-- SALDO POR UNIDAD -->
+        <div class="table-card" style="margin-bottom:16px;">
+          <div class="table-card-header"><span class="table-card-title">Saldo por unidad</span></div>
+          <div style="padding:14px;display:flex;flex-direction:column;gap:10px;" id="defensaUnidades"></div>
+        </div>
+
+        <!-- TABLA DEFENSAS -->
+        <div class="table-card">
+          <div class="table-card-header">
+            <span class="table-card-title">Defensas del mes</span>
+            <div style="display:flex;gap:8px;">
+              <select id="filtroDefensaUnidad" onchange="renderDefensas()" style="height:30px;border:1px solid var(--border);border-radius:6px;padding:0 8px;font-size:12px;font-family:inherit;background:var(--surface);">
+                <option value="">Todas las unidades</option>
+                <option value="Montornés + Polígono">Montornés + Polígono</option>
+                <option value="Barcelona">Barcelona</option>
+                <option value="Mataró">Mataró</option>
+              </select>
+              <select id="filtroDefensaEstado" onchange="renderDefensas()" style="height:30px;border:1px solid var(--border);border-radius:6px;padding:0 8px;font-size:12px;font-family:inherit;background:var(--surface);">
+                <option value="">Todos los estados</option>
+                <option value="pendiente">Pendiente RAC</option>
+                <option value="validada">Validada</option>
+                <option value="ejecutada">Ejecutada</option>
+                <option value="rechazada">Rechazada</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead><tr>
+                <th>Fecha</th><th>Póliza / Cliente</th><th>Unidad</th><th>Seg.</th><th>Motivo</th><th style="text-align:right">Bono</th><th>Estado</th><th>Agente</th><th></th>
+              </tr></thead>
+              <tbody id="bodyDefensas"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL NUEVA DEFENSA -->
+    <div id="defensaModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9999;align-items:center;justify-content:center;">
+      <div style="background:var(--surface);border-radius:16px;padding:24px;max-width:560px;width:calc(100% - 32px);max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+        <div style="font-size:16px;font-weight:800;color:var(--text);margin-bottom:20px;">🛡️ <span id="defensaModalTitle">Nueva defensa de cartera</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div>
+            <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Nº Póliza *</label>
+            <input type="text" id="dPoliza" placeholder="8-12.345.678-A" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Cliente / tomador</label>
+            <input type="text" id="dTomador" placeholder="Nombre del cliente" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Unidad *</label>
+            <select id="dUnidad" onchange="actualizarAlertaDefensa()" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);">
+              <option value="">Selecciona…</option>
+              <option>Montornés + Polígono</option>
+              <option>Barcelona</option>
+              <option>Mataró</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Segmento Occident *</label>
+            <select id="dSegmento" onchange="actualizarAlertaDefensa()" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);">
+              <option value="">Selecciona…</option>
+              <option value="A">A — Máxima prioridad</option>
+              <option value="B">B — Alta prioridad</option>
+              <option value="C">C — Defensa selectiva</option>
+              <option value="D">D — Sin defensa económica</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Motivo *</label>
+            <select id="dMotivo" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);">
+              <option value="">Selecciona…</option>
+              <option>Recibo devuelto</option>
+              <option>Solicitud de baja</option>
+              <option>Señal de fuga</option>
+              <option>Petición expresa</option>
+              <option>Proactiva (mes siguiente)</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Bono a aplicar (€) *</label>
+            <input type="number" id="dBono" placeholder="0" min="0" step="0.01" oninput="actualizarAlertaDefensa()" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Prima actual (€)</label>
+            <input type="number" id="dPrimaActual" placeholder="0" min="0" step="0.01" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Prima nueva (€)</label>
+            <input type="number" id="dPrimaNueva" placeholder="0" min="0" step="0.01" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
+          </div>
+        </div>
+        <!-- Alerta protocolo -->
+        <div id="defensaAlerta" style="display:none;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px;"></div>
+        <div>
+          <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Observaciones</label>
+          <textarea id="dNotas" placeholder="Detalles adicionales…" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;min-height:60px;"></textarea>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">
+          <button onclick="cerrarModalDefensa()" class="btn btn-ghost">Cancelar</button>
+          <button onclick="guardarDefensa()" id="btnGuardarDefensa" class="btn btn-primary">Guardar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL ADMIN SALDO -->
+    <div id="adminSaldoModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9999;align-items:center;justify-content:center;">
+      <div style="background:var(--surface);border-radius:16px;padding:24px;max-width:420px;width:calc(100% - 32px);box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+        <div style="font-size:16px;font-weight:800;color:var(--text);margin-bottom:20px;">⚙️ Gestionar saldo</div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div>
+            <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Saldo mensual (€)</label>
+            <input type="number" id="adminSaldoTotal" placeholder="2700" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;">
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Derivaciones Autopresto (este mes)</label>
+            <input type="number" id="adminAutopresto" placeholder="0" min="0" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;">
+          </div>
+          <div style="background:var(--surface-2);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--text-3);">
+            <div style="font-weight:700;color:var(--text-2);margin-bottom:6px;">Distribución (pesos fijos)</div>
+            <div>Montornés + Polígono: <strong>60%</strong></div>
+            <div>Barcelona: <strong>25%</strong></div>
+            <div>Mataró: <strong>15%</strong></div>
+          </div>
+          <div id="adminSaldoMsg" style="font-size:12px;"></div>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">
+          <button onclick="cerrarAdminSaldo()" class="btn btn-ghost">Cancelar</button>
+          <button onclick="guardarAdminSaldo()" class="btn btn-primary">Guardar</button>
+        </div>
       </div>
     </div>
 
@@ -1802,6 +1957,10 @@ async function doLogout() {
 function aplicarPermisos() {
   const isAdvanced = currentRole === 'advanced';
   // Ocultar secciones de admin en el sidebar
+  // Defensa cartera: solo visible para Luis por ahora
+  const navDefensa = document.getElementById('navDefensa');
+  if(navDefensa) navDefensa.style.display = currentUser?.id === '2beeddaf-8c14-4467-99bc-2dc0b80e7cbd' ? '' : 'none';
+
   const adminNavIds = ['navImportar', 'navActividad', 'navConfig'];
   adminNavIds.forEach(id => {
     const el = document.getElementById(id);
@@ -1847,6 +2006,7 @@ async function arrancarApp() {
   poblarFiltrosDash();
   renderConfig();
   try { await cargarFotosAgentes(); } catch(e) { console.warn('Fotos no cargadas:', e.message); }
+  try { await cargarDefensas(); } catch(e) { console.warn('Defensas no cargadas:', e.message); }
   actualizarBtnNotif();
   aplicarPermisos();
   restaurarFiltros();
@@ -2311,7 +2471,8 @@ const pageNames = {
   actividad: ['Actividad comercial','Datos mensuales'],
   config: ['Ajustes','Configuración del sistema'],
   incentivos: ['Mi Área','Incentivos y área personal'],
-  novedades: ['Novedades','Historial de actualizaciones']
+  novedades: ['Novedades','Historial de actualizaciones'],
+  defensa: ['Defensa cartera','Defensa de cartera · Autos']
 };
 let currentRegistrosTab = 'registros';
 
@@ -4709,6 +4870,378 @@ async function enviarResetEmail() {
       msg.textContent = '✅ Email de reset enviado a ' + emailInput;
     } catch(e) { msg.style.color = 'var(--red)'; msg.textContent = '⚠️ Error: ' + e.message; }
   }
+}
+
+
+// ── DEFENSA DE CARTERA AUTOS ──────────────────────────────────
+let defensas = [];
+let defensaConfig = {
+  saldo: 2700,
+  autopresto: 0,
+  pesos: { 'Montornés + Polígono': 0.60, 'Barcelona': 0.25, 'Mataró': 0.15 }
+};
+let _editingDefensaId = null;
+
+const PESOS_DEFENSA = {
+  'Montornés + Polígono': 0.60,
+  'Barcelona': 0.25,
+  'Mataró': 0.15
+};
+
+const UNIDADES_DEFENSA = Object.keys(PESOS_DEFENSA);
+
+// Oficina → unidad
+function oficina2Unidad(oficina) {
+  if(['Montornés','Polígono','Montornés + Polígono'].includes(oficina)) return 'Montornés + Polígono';
+  if(oficina === 'Barcelona') return 'Barcelona';
+  if(oficina === 'Mataró') return 'Mataró';
+  return oficina;
+}
+
+// Límites por segmento según protocolo
+function limiteDefensa(segmento) {
+  if(segmento === 'A') return { autonomo: 100, rac: Infinity };
+  if(segmento === 'B') return { autonomo: 50, rac: Infinity };
+  if(segmento === 'C') return { autonomo: 25, rac: Infinity };
+  return { autonomo: 0, rac: 0 }; // D: siempre RAC
+}
+
+function requiereRAC(segmento, bono) {
+  const lim = limiteDefensa(segmento);
+  return bono > lim.autonomo;
+}
+
+async function cargarDefensas() {
+  const hoy = new Date();
+  const mes = hoy.getMonth() + 1;
+  const anio = hoy.getFullYear();
+  try {
+    const data = await supaFetch(`/rest/v1/defensa_cartera?select=*&order=created_at.desc`);
+    if(Array.isArray(data)) defensas = data.map(r => ({
+      id: r.id, fecha: r.fecha, poliza: r.poliza, tomador: r.tomador,
+      unidad: r.unidad, oficina: r.oficina, agente: r.agente,
+      segmento: r.segmento, motivo: r.motivo, bono: r.bono||0,
+      primaActual: r.prima_actual||0, primaNueva: r.prima_nueva||0,
+      estado: r.estado||'pendiente', notas: r.notas||'',
+      validadoPor: r.validado_por||'', fechaValidacion: r.fecha_validacion||''
+    }));
+    // Cargar config saldo
+    const cfg = await supaFetch(`/rest/v1/defensa_config?select=clave,valor`);
+    if(Array.isArray(cfg)) cfg.forEach(r => {
+      if(r.clave === 'saldo_mes') defensaConfig.saldo = r.valor?.importe || 2700;
+      if(r.clave === 'autopresto') defensaConfig.autopresto = r.valor?.derivaciones || 0;
+    });
+  } catch(e) { console.warn('Error cargando defensas:', e.message); }
+}
+
+function saldoTotal() {
+  return defensaConfig.saldo + (defensaConfig.autopresto * 40);
+}
+
+function saldoPorUnidad() {
+  const total = saldoTotal();
+  const consumido = {};
+  UNIDADES_DEFENSA.forEach(u => { consumido[u] = 0; });
+  const hoy = new Date();
+  defensas.filter(d => {
+    if(!d.fecha) return false;
+    const [y,m] = d.fecha.split('-').map(Number);
+    return y === hoy.getFullYear() && m === (hoy.getMonth()+1) &&
+      (d.estado === 'ejecutada' || d.estado === 'validada');
+  }).forEach(d => {
+    const u = d.unidad || 'Montornés + Polígono';
+    if(consumido[u] !== undefined) consumido[u] += parseFloat(d.bono)||0;
+  });
+  const result = {};
+  UNIDADES_DEFENSA.forEach(u => {
+    const asignado = Math.round(total * PESOS_DEFENSA[u] * 100) / 100;
+    result[u] = { asignado, consumido: consumido[u], disponible: asignado - consumido[u] };
+  });
+  return result;
+}
+
+function renderDefensaKpis() {
+  const el = document.getElementById('defensaKpis');
+  if(!el) return;
+  const total = saldoTotal();
+  const hoy = new Date();
+  const mes = hoy.getMonth() + 1;
+  const anio = hoy.getFullYear();
+  const delMes = defensas.filter(d => {
+    if(!d.fecha) return false;
+    const [y,m] = d.fecha.split('-').map(Number);
+    return y === anio && m === mes;
+  });
+  const consumido = delMes.filter(d => d.estado === 'ejecutada' || d.estado === 'validada')
+    .reduce((s,d) => s + (parseFloat(d.bono)||0), 0);
+  const pendientes = delMes.filter(d => d.estado === 'pendiente').length;
+  const label = document.getElementById('defensaMesLabel');
+  if(label) label.textContent = `${['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'][mes-1]} ${anio}`;
+
+  el.innerHTML = [
+    { label: 'Saldo total', value: total.toLocaleString('es-ES',{minimumFractionDigits:0})+'€', color:'var(--green)', border:'var(--green)' },
+    { label: 'Consumido', value: consumido.toLocaleString('es-ES',{minimumFractionDigits:0})+'€', color:'var(--red)', border:'var(--red)' },
+    { label: 'Disponible', value: (total-consumido).toLocaleString('es-ES',{minimumFractionDigits:0})+'€', color:'#2563EB', border:'#2563EB' },
+    { label: 'Autopresto +'+defensaConfig.autopresto+'×40€', value: '+'+(defensaConfig.autopresto*40)+'€', color:'#D97706', border:'#D97706' },
+    { label: 'Pendientes RAC', value: pendientes, color:'var(--text)', border:'var(--border)' },
+  ].map(k => `<div class="table-card" style="border-top:3px solid ${k.border};padding:14px;">
+    <div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px;">${k.label}</div>
+    <div style="font-size:22px;font-weight:900;color:${k.color};">${k.value}</div>
+  </div>`).join('');
+}
+
+function renderDefensaUnidades() {
+  const el = document.getElementById('defensaUnidades');
+  if(!el) return;
+  const saldo = saldoPorUnidad();
+  el.innerHTML = UNIDADES_DEFENSA.map(u => {
+    const d = saldo[u];
+    const pct = d.asignado > 0 ? Math.min(100, Math.round(d.consumido/d.asignado*100)) : 0;
+    const color = pct > 80 ? 'var(--red)' : pct > 50 ? '#D97706' : 'var(--green)';
+    return `<div style="display:grid;grid-template-columns:200px 1fr 130px 50px;align-items:center;gap:10px;">
+      <span style="font-size:13px;font-weight:700;color:var(--text);">${u}</span>
+      <div style="background:var(--surface-2);border-radius:99px;height:7px;overflow:hidden;">
+        <div style="width:${pct}%;height:100%;background:${color};border-radius:99px;transition:width 0.5s;"></div>
+      </div>
+      <span style="font-size:12px;color:var(--text-2);text-align:right;">${d.consumido.toFixed(0)} / ${d.asignado.toFixed(0)} €</span>
+      <span style="font-size:11px;color:var(--text-3);text-align:right;">${PESOS_DEFENSA[u]*100}%</span>
+    </div>`;
+  }).join('');
+}
+
+function estadoBadge(estado) {
+  const map = {
+    'pendiente': 'background:#FEF3C7;color:#D97706;',
+    'validada':  'background:#F0FDF4;color:#16A34A;',
+    'ejecutada': 'background:#EFF6FF;color:#2563EB;',
+    'rechazada': 'background:#FFF1F3;color:#BE123C;',
+  };
+  const labels = { pendiente:'⏳ Pendiente RAC', validada:'✓ Validada', ejecutada:'✔ Ejecutada', rechazada:'✗ Rechazada' };
+  return `<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;${map[estado]||''}">${labels[estado]||estado}</span>`;
+}
+
+function segBadge(seg) {
+  const colors = { A:'#16A34A', B:'#2563EB', C:'#D97706', D:'#BE123C' };
+  return `<span style="font-size:11px;font-weight:800;padding:2px 8px;border-radius:99px;background:${colors[seg]||'#888'}22;color:${colors[seg]||'#888'};">${seg}</span>`;
+}
+
+function renderDefensas() {
+  const body = document.getElementById('bodyDefensas');
+  if(!body) return;
+  const filtroUnidad = document.getElementById('filtroDefensaUnidad')?.value || '';
+  const filtroEstado = document.getElementById('filtroDefensaEstado')?.value || '';
+  const isAdv = currentRole === 'advanced';
+  const nombreAgente = NOMBRES_EQUIPO[currentUser?.id] || '';
+  const hoy = new Date();
+
+  let lista = defensas.filter(d => {
+    if(filtroUnidad && d.unidad !== filtroUnidad) return false;
+    if(filtroEstado && d.estado !== filtroEstado) return false;
+    // Solo agentes ven sus propias defensas
+    if(!isAdv && d.agente !== nombreAgente) return false;
+    return true;
+  });
+
+  if(lista.length === 0) {
+    body.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--text-3);">Sin defensas registradas</td></tr>`;
+    return;
+  }
+
+  body.innerHTML = lista.map(d => `<tr>
+    <td style="font-size:12px;color:var(--text-3);">${d.fecha||'—'}</td>
+    <td><div style="font-size:13px;font-weight:600;">${d.poliza||'—'}</div><div style="font-size:11px;color:var(--text-3);">${d.tomador||''}</div></td>
+    <td style="font-size:12px;color:var(--text-2);">${d.unidad||'—'}</td>
+    <td>${segBadge(d.segmento)}</td>
+    <td style="font-size:12px;color:var(--text-2);">${d.motivo||'—'}</td>
+    <td style="text-align:right;font-weight:700;">${d.bono>0?d.bono.toFixed(0)+' €':'—'}</td>
+    <td>${estadoBadge(d.estado)}</td>
+    <td style="font-size:12px;color:var(--text-2);">${d.agente||'—'}</td>
+    <td style="white-space:nowrap;">
+      ${(isAdv || d.agente === nombreAgente) ? `<button onclick="editarDefensa('${d.id}')" style="background:none;border:none;cursor:pointer;color:var(--text-3);font-size:14px;padding:2px 4px;">✏️</button>` : ''}
+      ${isAdv && d.estado === 'pendiente' ? `<button onclick="validarDefensa('${d.id}','validada')" style="background:none;border:none;cursor:pointer;color:#16A34A;font-size:14px;padding:2px 4px;" title="Validar">✓</button><button onclick="validarDefensa('${d.id}','rechazada')" style="background:none;border:none;cursor:pointer;color:#BE123C;font-size:14px;padding:2px 4px;" title="Rechazar">✗</button>` : ''}
+      ${isAdv && d.estado === 'validada' ? `<button onclick="validarDefensa('${d.id}','ejecutada')" style="background:none;border:none;cursor:pointer;color:#2563EB;font-size:14px;padding:2px 4px;" title="Marcar ejecutada">⚡</button>` : ''}
+    </td>
+  </tr>`).join('');
+}
+
+function actualizarAlertaDefensa() {
+  const seg = document.getElementById('dSegmento')?.value;
+  const bono = parseFloat(document.getElementById('dBono')?.value)||0;
+  const unidad = document.getElementById('dUnidad')?.value;
+  const alerta = document.getElementById('defensaAlerta');
+  const btnG = document.getElementById('btnGuardarDefensa');
+  if(!alerta) return;
+
+  if(!seg || !bono) { alerta.style.display='none'; return; }
+
+  const rac = requiereRAC(seg, bono);
+  const saldo = saldoPorUnidad();
+  const disp = unidad ? (saldo[unidad]?.disponible||0) : 0;
+  const sinSaldo = unidad && bono > disp;
+
+  if(seg === 'D') {
+    alerta.style.display='block';
+    alerta.style.cssText='display:block;background:#FFF1F3;border:1px solid #FECDD3;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#BE123C;';
+    alerta.innerHTML='⚠️ <strong>Segmento D — Sin defensa económica.</strong> Solo en casos excepcionales con justificación y visto bueno del RAC.';
+    if(btnG) btnG.textContent = 'Enviar a RAC';
+  } else if(sinSaldo) {
+    alerta.style.display='block';
+    alerta.style.cssText='display:block;background:#FFF1F3;border:1px solid #FECDD3;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#BE123C;';
+    alerta.innerHTML=`⚠️ <strong>Saldo insuficiente en ${unidad}.</strong> Disponible: ${disp.toFixed(0)}€, bono solicitado: ${bono.toFixed(0)}€.`;
+    if(btnG) btnG.textContent = 'Guardar igualmente';
+  } else if(rac) {
+    alerta.style.display='block';
+    alerta.style.cssText='display:block;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#2563EB;';
+    alerta.innerHTML=`ℹ️ <strong>Segmento ${seg} · ${bono.toFixed(0)}€ → requiere visto bueno del RAC</strong> antes de ejecutar.`;
+    if(btnG) btnG.textContent = 'Enviar a RAC';
+  } else {
+    alerta.style.display='block';
+    alerta.style.cssText='display:block;background:#F0FDF4;border:1px solid #86EFAC;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#16A34A;';
+    alerta.innerHTML=`✓ <strong>Segmento ${seg} · ${bono.toFixed(0)}€ → ejecución autónoma.</strong> Puedes ejecutar sin consultar al RAC.`;
+    if(btnG) btnG.textContent = 'Guardar';
+  }
+}
+
+function abrirModalDefensa(d=null) {
+  _editingDefensaId = d ? d.id : null;
+  document.getElementById('defensaModalTitle').textContent = d ? 'Editar defensa' : 'Nueva defensa de cartera';
+  document.getElementById('dPoliza').value = d?.poliza||'';
+  document.getElementById('dTomador').value = d?.tomador||'';
+  document.getElementById('dUnidad').value = d?.unidad||'';
+  document.getElementById('dSegmento').value = d?.segmento||'';
+  document.getElementById('dMotivo').value = d?.motivo||'';
+  document.getElementById('dBono').value = d?.bono||'';
+  document.getElementById('dPrimaActual').value = d?.primaActual||'';
+  document.getElementById('dPrimaNueva').value = d?.primaNueva||'';
+  document.getElementById('dNotas').value = d?.notas||'';
+  document.getElementById('defensaAlerta').style.display='none';
+  document.getElementById('btnGuardarDefensa').textContent='Guardar';
+  // Preseleccionar unidad del agente actual si no es admin
+  if(!d && currentRole !== 'advanced') {
+    const miOficina = comerciales.find(c=>c.nombre===NOMBRES_EQUIPO[currentUser?.id])?.oficina||'';
+    document.getElementById('dUnidad').value = oficina2Unidad(miOficina);
+  }
+  document.getElementById('defensaModal').style.display='flex';
+  actualizarAlertaDefensa();
+}
+
+function cerrarModalDefensa() {
+  document.getElementById('defensaModal').style.display='none';
+  _editingDefensaId = null;
+}
+
+function editarDefensa(id) {
+  const d = defensas.find(x=>x.id===id);
+  if(d) abrirModalDefensa(d);
+}
+
+async function guardarDefensa() {
+  const seg = document.getElementById('dSegmento')?.value;
+  const bono = parseFloat(document.getElementById('dBono')?.value)||0;
+  const poliza = document.getElementById('dPoliza')?.value.trim();
+  const unidad = document.getElementById('dUnidad')?.value;
+  const motivo = document.getElementById('dMotivo')?.value;
+  if(!poliza||!seg||!unidad||!motivo) { alert('Completa los campos obligatorios.'); return; }
+
+  const rac = requiereRAC(seg, bono) || seg === 'D';
+  const estado = _editingDefensaId
+    ? (defensas.find(d=>d.id===_editingDefensaId)?.estado||'pendiente')
+    : (rac ? 'pendiente' : 'validada');
+
+  const hoy = new Date().toISOString().split('T')[0];
+  const agente = NOMBRES_EQUIPO[currentUser?.id] || currentUser?.email?.split('@')[0] || 'Desconocido';
+
+  const payload = {
+    fecha: hoy,
+    poliza: poliza,
+    tomador: document.getElementById('dTomador').value.trim(),
+    unidad: unidad,
+    agente: agente,
+    segmento: seg,
+    motivo: motivo,
+    bono: bono,
+    prima_actual: parseFloat(document.getElementById('dPrimaActual').value)||0,
+    prima_nueva: parseFloat(document.getElementById('dPrimaNueva').value)||0,
+    estado: estado,
+    notas: document.getElementById('dNotas').value.trim()
+  };
+
+  try {
+    if(_editingDefensaId) {
+      await fetch(SUPA_URL+'/rest/v1/defensa_cartera?id=eq.'+_editingDefensaId, {
+        method:'PATCH', headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+accessToken,'Content-Type':'application/json','Prefer':'return=minimal'},
+        body:JSON.stringify(payload)
+      });
+      const idx = defensas.findIndex(d=>d.id===_editingDefensaId);
+      if(idx>=0) defensas[idx] = {...defensas[idx],...payload,primaActual:payload.prima_actual,primaNueva:payload.prima_nueva};
+    } else {
+      const res = await fetch(SUPA_URL+'/rest/v1/defensa_cartera', {
+        method:'POST', headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+accessToken,'Content-Type':'application/json','Prefer':'return=representation'},
+        body:JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if(Array.isArray(data)&&data[0]) defensas.unshift({...data[0],primaActual:data[0].prima_actual,primaNueva:data[0].prima_nueva,bono:data[0].bono||0});
+    }
+    cerrarModalDefensa();
+    renderDefensaPage();
+    mostrarToast(rac?'⏳ Defensa enviada al RAC para validación':'✅ Defensa guardada');
+  } catch(e) { alert('Error al guardar: '+e.message); }
+}
+
+async function validarDefensa(id, nuevoEstado) {
+  const agente = NOMBRES_EQUIPO[currentUser?.id]||'Admin';
+  try {
+    await fetch(SUPA_URL+'/rest/v1/defensa_cartera?id=eq.'+id, {
+      method:'PATCH', headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+accessToken,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify({estado:nuevoEstado, validado_por:agente, fecha_validacion:new Date().toISOString()})
+    });
+    const d = defensas.find(x=>x.id===id);
+    if(d) { d.estado=nuevoEstado; d.validadoPor=agente; }
+    renderDefensaPage();
+    const msgs = {validada:'✅ Defensa validada', rechazada:'✗ Defensa rechazada', ejecutada:'⚡ Marcada como ejecutada'};
+    mostrarToast(msgs[nuevoEstado]||'Actualizado');
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+function abrirAdminSaldo() {
+  document.getElementById('adminSaldoTotal').value = defensaConfig.saldo;
+  document.getElementById('adminAutopresto').value = defensaConfig.autopresto;
+  document.getElementById('adminSaldoMsg').textContent='';
+  document.getElementById('adminSaldoModal').style.display='flex';
+}
+
+function cerrarAdminSaldo() {
+  document.getElementById('adminSaldoModal').style.display='none';
+}
+
+async function guardarAdminSaldo() {
+  const saldo = parseFloat(document.getElementById('adminSaldoTotal').value)||0;
+  const autopresto = parseInt(document.getElementById('adminAutopresto').value)||0;
+  const hoy = new Date();
+  try {
+    await fetch(SUPA_URL+'/rest/v1/defensa_config?clave=eq.saldo_mes', {
+      method:'PATCH', headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+accessToken,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify({valor:{importe:saldo,mes:hoy.getMonth()+1,anio:hoy.getFullYear()}})
+    });
+    await fetch(SUPA_URL+'/rest/v1/defensa_config?clave=eq.autopresto', {
+      method:'PATCH', headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+accessToken,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify({valor:{derivaciones:autopresto,importe_por_derivacion:40}})
+    });
+    defensaConfig.saldo = saldo;
+    defensaConfig.autopresto = autopresto;
+    cerrarAdminSaldo();
+    renderDefensaPage();
+    mostrarToast('✅ Saldo actualizado');
+  } catch(e) { document.getElementById('adminSaldoMsg').textContent='Error: '+e.message; }
+}
+
+function renderDefensaPage() {
+  renderDefensaKpis();
+  renderDefensaUnidades();
+  renderDefensas();
+  // Mostrar botón admin
+  const btnAdmin = document.getElementById('btnAdminDefensa');
+  if(btnAdmin) btnAdmin.style.display = currentRole==='advanced' ? '' : 'none';
 }
 
 function renderIncentivos() {
