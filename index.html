@@ -586,7 +586,10 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
     </div>
     <div style="margin-bottom:20px;">
       <label style="font-size:12px;font-weight:600;color:#52524E;display:block;margin-bottom:5px;">Contraseña</label>
-      <input type="password" id="loginPassword" placeholder="••••••••" style="width:100%;padding:10px 12px;border:1px solid #E8E8E4;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;" onkeydown="if(event.key==='Enter')doLogin()">
+      <div style="position:relative;">
+        <input type="password" id="loginPassword" placeholder="••••••••" style="width:100%;padding:10px 40px 10px 12px;border:1px solid #E8E8E4;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;" onkeydown="if(event.key==='Enter')doLogin()">
+        <button type="button" onclick="togglePasswordVisibility()" id="btnOjoPass" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:0;color:#A3A39E;font-size:16px;line-height:1;" title="Mostrar/ocultar contraseña">👁</button>
+      </div>
     </div>
     <button onclick="doLogin()" id="loginBtn" style="width:100%;background:#C2003F;color:#fff;border:none;border-radius:8px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Entrar</button>
     <div id="loginError" style="margin-top:10px;font-size:12px;color:#C2003F;text-align:center;"></div>
@@ -1562,7 +1565,19 @@ async function supaFetch(path, options={}, useAuth=true) {
   return text ? JSON.parse(text) : null;
 }
 
-async function doLogin() {
+async function togglePasswordVisibility() {
+  const input = document.getElementById('loginPassword');
+  const btn = document.getElementById('btnOjoPass');
+  if(input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁';
+  }
+}
+
+function doLogin() {
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
   const btn = document.getElementById('loginBtn');
