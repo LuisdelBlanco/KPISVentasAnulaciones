@@ -1663,20 +1663,29 @@ async function arrancarApp() {
   const overlay = document.getElementById('loadingOverlay');
   if(overlay) { overlay.style.display = 'flex'; }
   document.getElementById('mainLayout').style.display = '';
-  await cargarDatosSupabase();
+  try {
+    await cargarDatosSupabase();
+  } catch(e) {
+    if(overlay) overlay.style.display = 'none';
+    const err = document.getElementById('loginError');
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('mainLayout').style.display = 'none';
+    if(err) err.textContent = '⚠️ Error al conectar con Supabase: ' + e.message + '. Comprueba tu conexión o vuelve a iniciar sesión.';
+    clearSession();
+    return;
+  }
   if(overlay) overlay.style.display = 'none';
   aplicarPermisos();
   resaltarRegistrosNuevos();
   renderAll();
   poblarFiltrosDash();
   renderConfig();
-  await cargarFotosAgentes();
+  try { await cargarFotosAgentes(); } catch(e) { console.warn('Fotos no cargadas:', e.message); }
   actualizarBtnNotif();
   aplicarPermisos();
   restaurarFiltros();
   renderAll();
   iniciarPolling();
-  // Restaurar última página visitada
   const ultimaPagina = localStorage.getItem('kompass_last_page') || 'dashboard';
   goPage(ultimaPagina);
   setTimeout(mostrarChangelogSiHayNovedades, 800);
