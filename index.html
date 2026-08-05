@@ -638,13 +638,13 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
   <div class="nav-group">
     <div class="nav-group-label">Datos</div>
     <div class="nav-item" onclick="goPage('registros')"><span class="nav-icon">☰</span> Registros</div>
+    <div class="nav-item" id="navDefensa" onclick="goPage('defensa')" style="display:none;"><span class="nav-icon">🛡️</span> Defensa cartera</div>
     <div class="nav-item" id="navImportar" onclick="goPage('importar')"><span class="nav-icon">↓</span> Importar</div>
     <div class="nav-item" id="navActividad" onclick="goPage('actividad')"><span class="nav-icon">◎</span> Actividad comercial</div>
   </div>
   <div class="nav-group">
     <div class="nav-group-label">Sistema</div>
     <div class="nav-item" id="navIncentivos" onclick="goPage('incentivos')"><span class="nav-icon">🔐</span> Mi Área</div>
-    <div class="nav-item" id="navDefensa" onclick="goPage('defensa')" style="display:none;"><span class="nav-icon">🛡️</span> Defensa cartera</div>
     <div class="nav-item" id="navNovedades" onclick="goPage('novedades')"><span class="nav-icon">✦</span> Novedades <span id="noveltyDot" style="display:none;width:7px;height:7px;background:#C2003F;border-radius:50%;display:inline-block;margin-left:4px;vertical-align:middle;"></span></div>
     <div class="nav-item" id="navConfig" onclick="goPage('config')"><span class="nav-icon">◈</span> Ajustes</div>
   </div>
@@ -1121,6 +1121,21 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
           </div>
         </div>
 
+        <!-- Forzar contraseña: solo Luis -->
+        <div id="panelForzarPass" style="display:none;margin-bottom:20px;">
+          <div class="table-card" style="border-left:3px solid #2563EB;">
+            <div class="table-card-header"><span class="table-card-title">🔑 Gestión de contraseñas</span></div>
+            <div style="padding:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+              <select id="selectResetUser" style="height:34px;border:1px solid var(--border);border-radius:8px;padding:0 10px;font-size:13px;font-family:inherit;flex:1;min-width:160px;">
+                <option value="">Selecciona un agente</option>
+              </select>
+              <button onclick="forzarCambioContrasena()" style="height:34px;background:#2563EB;color:#fff;border:none;border-radius:8px;padding:0 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">🔑 Forzar cambio</button>
+              <button onclick="enviarResetEmail()" style="height:34px;background:var(--surface-2);color:var(--text-2);border:1px solid var(--border);border-radius:8px;padding:0 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">📧 Email reset</button>
+              <div id="resetMsg" style="font-size:11px;color:var(--text-3);width:100%;"></div>
+            </div>
+          </div>
+        </div>
+
         <!-- Sección incentivos -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
           <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em;">💰 Incentivos comerciales</div>
@@ -1360,17 +1375,7 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
             <input type="hidden" id="objetivoMensual">
           </div>
         </div>
-        <div class="table-card" style="grid-column:span 2;border-left:3px solid #2563EB;">
-          <div class="table-card-header"><span class="table-card-title">🔑 Forzar cambio de contraseña</span></div>
-          <div style="padding:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
-            <select id="selectResetUser" style="height:36px;border:1px solid var(--border);border-radius:8px;padding:0 10px;font-size:13px;font-family:inherit;flex:1;min-width:180px;">
-              <option value="">Selecciona un agente</option>
-            </select>
-            <button onclick="forzarCambioContrasena()" style="height:36px;background:#2563EB;color:#fff;border:none;border-radius:8px;padding:0 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">🔑 Forzar cambio</button>
-            <button onclick="enviarResetEmail()" style="height:36px;background:var(--surface-2);color:var(--text-2);border:1px solid var(--border);border-radius:8px;padding:0 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">📧 Enviar email de reset</button>
-            <div id="resetMsg" style="font-size:12px;color:var(--text-3);width:100%;"></div>
-          </div>
-        </div>
+
         <div class="table-card" style="grid-column:span 2;border-left:3px solid var(--amber);">
           <div class="table-card-header"><span class="table-card-title">🔧 Recalcular primas corregidas</span></div>
           <div style="padding:16px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;">
@@ -5467,7 +5472,12 @@ function initIncentivosSelectors() {
   const panelNotif = document.getElementById('panelNotifEquipo');
   const panelRol = document.getElementById('panelRol');
   if(panelNotif) panelNotif.style.display = isAdv ? '' : 'none';
-  if(panelRol) panelRol.style.display = 'none'; // se muestra al seleccionar agente
+  if(panelRol) panelRol.style.display = 'none';
+
+  // Panel forzar contraseña: solo Luis
+  const panelPass = document.getElementById('panelForzarPass');
+  if(panelPass) panelPass.style.display = currentUser?.id === '2beeddaf-8c14-4467-99bc-2dc0b80e7cbd' ? '' : 'none';
+  if(panelPass?.style.display !== 'none') poblarSelectResetUser();
 
   // Cargar foto propia en preview por defecto
   cargarPreviewAgente(null);
