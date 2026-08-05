@@ -1195,7 +1195,17 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
         <div class="table-card">
           <div class="table-card-header">
             <span class="table-card-title">Todos los cambios</span>
-            <div style="display:flex;gap:8px;">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <select id="filtroCambioAnio" onchange="renderCambiosAgente()" style="height:30px;border:1px solid var(--border);border-radius:6px;padding:0 8px;font-size:12px;font-family:inherit;background:var(--surface);">
+                <option value="">Todos los años</option>
+              </select>
+              <select id="filtroCambioMes" onchange="renderCambiosAgente()" style="height:30px;border:1px solid var(--border);border-radius:6px;padding:0 8px;font-size:12px;font-family:inherit;background:var(--surface);">
+                <option value="">Todos los meses</option>
+                <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
+                <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
+                <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
+                <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+              </select>
               <select id="filtroCambioTipo" onchange="renderCambiosAgente()" style="height:30px;border:1px solid var(--border);border-radius:6px;padding:0 8px;font-size:12px;font-family:inherit;background:var(--surface);">
                 <option value="">Todos</option>
                 <option value="Entrada">Entradas</option>
@@ -1210,7 +1220,7 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
             <table>
               <thead><tr>
                 <th>Fecha</th><th>Tipo</th><th>Póliza</th><th>Ramo</th><th>Tomador</th>
-                <th style="text-align:right">Prima</th><th>Agente SM</th><th>Agente externo</th><th>Oficina</th><th></th>
+                <th style="text-align:right">Prima neta</th><th>Agente SM</th><th>Agente externo</th><th>Oficina</th><th></th>
               </tr></thead>
               <tbody id="bodyCambiosAgente"></tbody>
             </table>
@@ -1251,7 +1261,7 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
             <input type="text" id="cTomador" placeholder="Nombre del cliente" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
           </div>
           <div>
-            <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Prima (€)</label>
+            <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Prima neta (€)</label>
             <input type="number" id="cPrima" placeholder="0" min="0" step="0.01" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
           </div>
           <div>
@@ -5494,27 +5504,65 @@ function renderRankingsCambios() {
       </div>`).join('');
 }
 
+function fmtFechaCambio(fecha) {
+  if(!fecha) return '—';
+  const [y,m,d] = fecha.split('-');
+  return `${d}/${m}/${y}`;
+}
+
 function renderCambiosAgente() {
   const body = document.getElementById('bodyCambiosAgente');
   if(!body) return;
   const filtroTipo    = document.getElementById('filtroCambioTipo')?.value||'';
   const filtroOficina = document.getElementById('filtroCambioOficina')?.value||'';
+  const filtroAnio    = document.getElementById('filtroCambioAnio')?.value||'';
+  const filtroMes     = document.getElementById('filtroCambioMes')?.value||'';
 
   const lista = cambiosAgente.filter(c => {
     if(filtroTipo && c.tipo !== filtroTipo) return false;
     if(filtroOficina && c.oficina !== filtroOficina) return false;
+    if(c.fecha) {
+      const [y,m] = c.fecha.split('-').map(Number);
+      if(filtroAnio && y != filtroAnio) return false;
+      if(filtroMes && m != filtroMes) return false;
+    }
     return true;
-  });
+  }).sort((a,b) => (b.fecha||'') > (a.fecha||'') ? 1 : -1);
 
   if(lista.length === 0) {
     body.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--text-3);">Sin registros</td></tr>`;
     return;
   }
 
-  body.innerHTML = lista.map(c => {
+  const MESES_CA = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  let htmlRows = '';
+  let mesActual = '';
+
+  lista.forEach(c => {
+    const mesClave = c.fecha ? c.fecha.slice(0,7) : '';
+    if(mesClave !== mesActual) {
+      mesActual = mesClave;
+      let mesLabel = '—';
+      if(c.fecha) {
+        const [y,m] = c.fecha.split('-').map(Number);
+        mesLabel = MESES_CA[m-1] + ' ' + y;
+      }
+      // Totales del mes
+      const delMes = lista.filter(x => x.fecha?.startsWith(mesClave));
+      const entMes = delMes.filter(x=>x.tipo==='Entrada').length;
+      const salMes = delMes.filter(x=>x.tipo==='Salida').length;
+      const primaMes = delMes.reduce((s,x)=>s+(x.prima||0),0);
+      htmlRows += `<tr style="background:var(--surface-2);">
+        <td colspan="5" style="padding:8px 12px;font-size:12px;font-weight:800;color:var(--red);border-top:2px solid var(--border);">${mesLabel}</td>
+        <td style="padding:8px 12px;text-align:right;font-size:12px;font-weight:700;border-top:2px solid var(--border);">${primaMes>0?'+'+primaMes.toLocaleString('es-ES',{maximumFractionDigits:0})+' €':''}</td>
+        <td colspan="4" style="padding:8px 12px;font-size:11px;color:var(--text-3);border-top:2px solid var(--border);">
+          <span style="color:#16A34A;font-weight:700;">${entMes} ent.</span> · <span style="color:#BE123C;font-weight:700;">${salMes} sal.</span>
+        </td>
+      </tr>`;
+    }
     const esEntrada = c.tipo === 'Entrada';
-    return `<tr>
-      <td style="font-size:12px;color:var(--text-3);">${c.fecha||'—'}</td>
+    htmlRows += `<tr>
+      <td style="font-size:12px;color:var(--text-3);">${fmtFechaCambio(c.fecha)}</td>
       <td><span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:${esEntrada?'#F0FDF4':'#FFF1F3'};color:${esEntrada?'#16A34A':'#BE123C'};">${esEntrada?'🟢 Entrada':'🔴 Salida'}</span></td>
       <td style="font-size:12px;font-weight:600;">${c.poliza||'—'}</td>
       <td style="font-size:12px;color:var(--text-2);">${c.ramo||'—'}</td>
@@ -5526,7 +5574,8 @@ function renderCambiosAgente() {
       <td><button onclick="editarCambio('${c.id}')" style="background:none;border:none;cursor:pointer;color:var(--text-3);font-size:14px;">✏️</button>
           <button onclick="eliminarCambio('${c.id}')" style="background:none;border:none;cursor:pointer;color:#BE123C;font-size:14px;">✕</button></td>
     </tr>`;
-  }).join('');
+  });
+  body.innerHTML = htmlRows;
 }
 
 function renderCambiosPage() {
@@ -5537,6 +5586,16 @@ function renderCambiosPage() {
   const filtOf = document.getElementById('filtroCambioOficina');
   if(filtOf && filtOf.options.length <= 1) {
     oficinas.forEach(o => { const opt=document.createElement('option'); opt.value=o; opt.textContent=o; filtOf.appendChild(opt); });
+  }
+  // Poblar filtro de años
+  const filtAn = document.getElementById('filtroCambioAnio');
+  if(filtAn && filtAn.options.length <= 1) {
+    const years = [...new Set(cambiosAgente.map(c=>c.fecha?.slice(0,4)).filter(Boolean))].sort().reverse();
+    const hoy = new Date().getFullYear().toString();
+    if(!years.includes(hoy)) years.unshift(hoy);
+    years.forEach(y => { const o=document.createElement('option');o.value=y;o.textContent=y;filtAn.appendChild(o); });
+    // Seleccionar año actual por defecto
+    filtAn.value = hoy;
   }
 }
 
