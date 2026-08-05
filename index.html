@@ -2532,6 +2532,7 @@ function goPage(id) {
   if (id==='config') renderConfig();
   if (id==='actividad') { renderActividad(); preseleccionarMesActividad(); }
   if (id==='incentivos') { initIncentivosSelectors(); setTimeout(renderIncentivos, 200); }
+  if (id==='defensa') { renderDefensaPage(); cargarDefensas().then(() => renderDefensaPage()); }
   renderAll();
 }
 function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
