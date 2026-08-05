@@ -639,6 +639,7 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
     <div class="nav-group-label">Datos</div>
     <div class="nav-item" onclick="goPage('registros')" style="display:flex;align-items:center;gap:6px;"><span class="nav-icon">☰</span> Registros<span style="width:6px;height:6px;border-radius:50%;background:#16A34A;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
     <div class="nav-item" id="navDefensa" onclick="goPage('defensa')" style="display:none;display:flex;align-items:center;gap:6px;"><span class="nav-icon">🛡️</span> Defensa cartera<span style="width:6px;height:6px;border-radius:50%;background:#C2003F;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
+    <div class="nav-item" id="navCambiosAgente" onclick="goPage('cambiosagente')" style="display:none;display:flex;align-items:center;gap:6px;"><span class="nav-icon">🔄</span> Cambios de agente<span style="width:6px;height:6px;border-radius:50%;background:#C2003F;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
     <div class="nav-item" id="navActividad" onclick="goPage('actividad')" style="display:flex;align-items:center;gap:6px;"><span class="nav-icon">◎</span> Actividad comercial<span style="width:6px;height:6px;border-radius:50%;background:#2563EB;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
   </div>
   <div class="nav-group">
@@ -1162,6 +1163,124 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
       </div>
     </div>
 
+
+
+    <div class="page" id="page-cambiosagente">
+      <div style="max-width:1100px;">
+
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:20px;">
+          <div>
+            <h2 style="font-size:20px;font-weight:800;color:var(--text);margin:0;">🔄 Cambios de agente</h2>
+            <div style="font-size:12px;color:var(--text-3);margin-top:3px;">Entradas y salidas de pólizas por cambio de agente</div>
+          </div>
+          <button onclick="abrirModalCambio()" class="btn btn-primary">+ Nuevo cambio</button>
+        </div>
+
+        <!-- KPIs -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px;" id="cambiosKpis"></div>
+
+        <!-- Rankings -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+          <div class="table-card">
+            <div class="table-card-header"><span class="table-card-title">⭐ Agentes internos con más entradas</span></div>
+            <div style="padding:0;" id="rankingInternoSalidas"></div>
+          </div>
+          <div class="table-card">
+            <div class="table-card-header"><span class="table-card-title">🎯 Agentes externos que más nos quitan</span></div>
+            <div style="padding:0;" id="rankingExternoSalidas"></div>
+          </div>
+        </div>
+
+        <!-- Tabla -->
+        <div class="table-card">
+          <div class="table-card-header">
+            <span class="table-card-title">Todos los cambios</span>
+            <div style="display:flex;gap:8px;">
+              <select id="filtroCambioTipo" onchange="renderCambiosAgente()" style="height:30px;border:1px solid var(--border);border-radius:6px;padding:0 8px;font-size:12px;font-family:inherit;background:var(--surface);">
+                <option value="">Todos</option>
+                <option value="Entrada">Entradas</option>
+                <option value="Salida">Salidas</option>
+              </select>
+              <select id="filtroCambioOficina" onchange="renderCambiosAgente()" style="height:30px;border:1px solid var(--border);border-radius:6px;padding:0 8px;font-size:12px;font-family:inherit;background:var(--surface);">
+                <option value="">Todas las oficinas</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead><tr>
+                <th>Fecha</th><th>Tipo</th><th>Póliza</th><th>Ramo</th><th>Tomador</th>
+                <th style="text-align:right">Prima</th><th>Agente SM</th><th>Agente externo</th><th>Oficina</th><th></th>
+              </tr></thead>
+              <tbody id="bodyCambiosAgente"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL CAMBIO AGENTE -->
+    <div id="cambioModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9999;align-items:center;justify-content:center;">
+      <div style="background:var(--surface);border-radius:16px;padding:24px;max-width:540px;width:calc(100% - 32px);max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+        <div style="font-size:16px;font-weight:800;color:var(--text);margin-bottom:20px;">🔄 <span id="cambioModalTitle">Nuevo cambio de agente</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+          <div>
+            <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Tipo *</label>
+            <select id="cTipo" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);">
+              <option value="">Selecciona…</option>
+              <option value="Entrada">🟢 Entrada — nos llega</option>
+              <option value="Salida">🔴 Salida — nos va</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Fecha *</label>
+            <input type="date" id="cFecha" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Nº Póliza</label>
+            <input type="text" id="cPoliza" placeholder="8-12.345.678-A" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Ramo</label>
+            <select id="cRamo" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);">
+              <option value="">Selecciona…</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Tomador</label>
+            <input type="text" id="cTomador" placeholder="Nombre del cliente" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Prima (€)</label>
+            <input type="number" id="cPrima" placeholder="0" min="0" step="0.01" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Agente SM Seguros *</label>
+            <select id="cAgenteSM" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);">
+              <option value="">Selecciona…</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Agente externo</label>
+            <input type="text" id="cAgenteExterno" placeholder="Nombre del agente/correduría" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
+          </div>
+          <div style="grid-column:span 2;">
+            <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Oficina</label>
+            <select id="cOficina" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);">
+              <option value="">Selecciona…</option>
+            </select>
+          </div>
+          <div style="grid-column:span 2;">
+            <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Notas / Motivo</label>
+            <textarea id="cNotas" placeholder="Motivo del cambio, observaciones…" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;min-height:56px;"></textarea>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;">
+          <button onclick="cerrarModalCambio()" class="btn btn-ghost">Cancelar</button>
+          <button onclick="guardarCambio()" class="btn btn-primary">Guardar</button>
+        </div>
+      </div>
+    </div>
 
     <div class="page" id="page-defensa">
       <div style="max-width:1100px;">
@@ -1964,6 +2083,8 @@ function aplicarPermisos() {
   // Defensa cartera: solo visible para Luis por ahora
   const navDefensa = document.getElementById('navDefensa');
   if(navDefensa) navDefensa.style.display = currentUser?.id === '2beeddaf-8c14-4467-99bc-2dc0b80e7cbd' ? '' : 'none';
+  const navCambios = document.getElementById('navCambiosAgente');
+  if(navCambios) navCambios.style.display = currentUser?.id === '2beeddaf-8c14-4467-99bc-2dc0b80e7cbd' ? '' : 'none';
 
   const adminNavIds = ['navImportar', 'navActividad', 'navConfig'];
   adminNavIds.forEach(id => {
@@ -2011,6 +2132,7 @@ async function arrancarApp() {
   renderConfig();
   try { await cargarFotosAgentes(); } catch(e) { console.warn('Fotos no cargadas:', e.message); }
   try { await cargarDefensas(); } catch(e) { console.warn('Defensas no cargadas:', e.message); }
+  try { await cargarCambiosAgente(); } catch(e) { console.warn('Cambios agente no cargados:', e.message); }
   actualizarBtnNotif();
   aplicarPermisos();
   restaurarFiltros();
@@ -2476,7 +2598,8 @@ const pageNames = {
   config: ['Ajustes','Configuración del sistema'],
   incentivos: ['Mi Área','Incentivos y área personal'],
   novedades: ['Novedades','Historial de actualizaciones'],
-  defensa: ['Defensa cartera','Defensa de cartera · Autos']
+  defensa: ['Defensa cartera','Defensa de cartera · Autos'],
+  cambiosagente: ['Cambios de agente','Entradas y salidas por cambio de agente']
 };
 let currentRegistrosTab = 'registros';
 
@@ -2537,6 +2660,7 @@ function goPage(id) {
   if (id==='actividad') { renderActividad(); preseleccionarMesActividad(); }
   if (id==='incentivos') { initIncentivosSelectors(); setTimeout(renderIncentivos, 200); }
   if (id==='defensa') { renderDefensaPage(); cargarDefensas().then(() => renderDefensaPage()); }
+  if (id==='cambiosagente') { renderCambiosPage(); cargarCambiosAgente().then(() => renderCambiosPage()); }
   renderAll();
 }
 function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
@@ -5284,6 +5408,224 @@ function renderDefensaPage() {
   // Mostrar botón admin
   const btnAdmin = document.getElementById('btnAdminDefensa');
   if(btnAdmin) btnAdmin.style.display = currentRole==='advanced' ? '' : 'none';
+}
+
+
+// ── CAMBIOS DE AGENTE ─────────────────────────────────────────
+let cambiosAgente = [];
+let _editingCambioId = null;
+
+async function cargarCambiosAgente() {
+  try {
+    const data = await supaFetch('/rest/v1/cambios_agente?select=*&order=fecha.desc');
+    if(Array.isArray(data)) cambiosAgente = data.map(r => ({
+      id: r.id, fecha: r.fecha, tipo: r.tipo, poliza: r.poliza,
+      ramo: r.ramo, tomador: r.tomador, prima: r.prima||0,
+      agenteSM: r.agente_sm||'', agenteExterno: r.agente_externo||'',
+      oficina: r.oficina||'', notas: r.notas||''
+    }));
+  } catch(e) { console.warn('Error cargando cambios agente:', e.message); }
+}
+
+function renderCambiosKpis() {
+  const el = document.getElementById('cambiosKpis');
+  if(!el) return;
+  const entradas = cambiosAgente.filter(c => c.tipo === 'Entrada');
+  const salidas  = cambiosAgente.filter(c => c.tipo === 'Salida');
+  const primaEnt = entradas.reduce((s,c) => s+(c.prima||0), 0);
+  const primaSal = salidas.reduce((s,c)  => s+(c.prima||0), 0);
+  const balance  = primaEnt - primaSal;
+  const fmt = n => n.toLocaleString('es-ES',{minimumFractionDigits:0,maximumFractionDigits:0})+'€';
+
+  el.innerHTML = [
+    { label:'Entradas', value: entradas.length, sub: fmt(primaEnt), color:'var(--green)', border:'var(--green)' },
+    { label:'Salidas',  value: salidas.length,  sub: fmt(primaSal), color:'var(--red)',   border:'var(--red)' },
+    { label:'Balance prima', value: (balance>=0?'+':'')+fmt(balance), sub: 'entradas − salidas',
+      color: balance>=0?'var(--green)':'var(--red)', border: balance>=0?'var(--green)':'var(--red)' },
+    { label:'Agentes externos', value: new Set(cambiosAgente.filter(c=>c.tipo==='Salida'&&c.agenteExterno).map(c=>c.agenteExterno)).size,
+      sub:'distintos que nos quitan', color:'#D97706', border:'#D97706' },
+  ].map(k => `<div class="table-card" style="border-top:3px solid ${k.border};padding:14px;">
+    <div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px;">${k.label}</div>
+    <div style="font-size:22px;font-weight:900;color:${k.color};">${k.value}</div>
+    <div style="font-size:11px;color:var(--text-3);margin-top:2px;">${k.sub}</div>
+  </div>`).join('');
+}
+
+function renderRankingsCambios() {
+  // Ranking agentes internos con más salidas
+  const elInt = document.getElementById('rankingInternoSalidas');
+  const entradas = cambiosAgente.filter(c => c.tipo === 'Entrada');
+  const byAgenteSM = {};
+  entradas.forEach(c => {
+    const k = c.agenteSM || '(sin asignar)';
+    if(!byAgenteSM[k]) byAgenteSM[k] = { count:0, prima:0 };
+    byAgenteSM[k].count++;
+    byAgenteSM[k].prima += c.prima||0;
+  });
+  const sortedSM = Object.entries(byAgenteSM).sort((a,b)=>b[1].count-a[1].count).slice(0,8);
+  if(elInt) elInt.innerHTML = sortedSM.length === 0
+    ? '<div style="padding:16px;font-size:12px;color:var(--text-3);">Sin datos</div>'
+    : sortedSM.map(([nombre,d],i) => `<div style="display:flex;align-items:center;gap:10px;padding:8px 14px;border-top:${i>0?'1px solid var(--border)':'none'};">
+        <span style="font-size:12px;font-weight:700;color:var(--text-3);width:16px;">${i+1}</span>
+        ${avatarHTML(nombre,24)}
+        <span style="flex:1;font-size:12px;font-weight:600;">${nombre}</span>
+        <span style="font-size:12px;font-weight:800;color:var(--green);">${d.count} ent.</span>
+        <span style="font-size:11px;color:var(--text-3);">${d.prima.toLocaleString('es-ES',{maximumFractionDigits:0})}€</span>
+      </div>`).join('');
+
+  // Ranking agentes externos que más nos quitan
+  const elExt = document.getElementById('rankingExternoSalidas');
+  const byAgenteExt = {};
+  salidas.filter(c=>c.agenteExterno).forEach(c => {
+    const k = c.agenteExterno;
+    if(!byAgenteExt[k]) byAgenteExt[k] = { count:0, prima:0 };
+    byAgenteExt[k].count++;
+    byAgenteExt[k].prima += c.prima||0;
+  });
+  const sortedExt = Object.entries(byAgenteExt).sort((a,b)=>b[1].count-a[1].count).slice(0,8);
+  if(elExt) elExt.innerHTML = sortedExt.length === 0
+    ? '<div style="padding:16px;font-size:12px;color:var(--text-3);">Sin datos aún</div>'
+    : sortedExt.map(([nombre,d],i) => `<div style="display:flex;align-items:center;gap:10px;padding:8px 14px;border-top:${i>0?'1px solid var(--border)':'none'};">
+        <span style="font-size:12px;font-weight:700;color:var(--text-3);width:16px;">${i+1}</span>
+        <span style="flex:1;font-size:12px;font-weight:600;">${nombre}</span>
+        <span style="font-size:12px;font-weight:800;color:var(--red);">${d.count} sal.</span>
+        <span style="font-size:11px;color:var(--text-3);">${d.prima.toLocaleString('es-ES',{maximumFractionDigits:0})}€</span>
+      </div>`).join('');
+}
+
+function renderCambiosAgente() {
+  const body = document.getElementById('bodyCambiosAgente');
+  if(!body) return;
+  const filtroTipo    = document.getElementById('filtroCambioTipo')?.value||'';
+  const filtroOficina = document.getElementById('filtroCambioOficina')?.value||'';
+
+  const lista = cambiosAgente.filter(c => {
+    if(filtroTipo && c.tipo !== filtroTipo) return false;
+    if(filtroOficina && c.oficina !== filtroOficina) return false;
+    return true;
+  });
+
+  if(lista.length === 0) {
+    body.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--text-3);">Sin registros</td></tr>`;
+    return;
+  }
+
+  body.innerHTML = lista.map(c => {
+    const esEntrada = c.tipo === 'Entrada';
+    return `<tr>
+      <td style="font-size:12px;color:var(--text-3);">${c.fecha||'—'}</td>
+      <td><span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:${esEntrada?'#F0FDF4':'#FFF1F3'};color:${esEntrada?'#16A34A':'#BE123C'};">${esEntrada?'🟢 Entrada':'🔴 Salida'}</span></td>
+      <td style="font-size:12px;font-weight:600;">${c.poliza||'—'}</td>
+      <td style="font-size:12px;color:var(--text-2);">${c.ramo||'—'}</td>
+      <td style="font-size:12px;">${c.tomador||'—'}</td>
+      <td style="text-align:right;font-weight:700;">${c.prima>0?c.prima.toLocaleString('es-ES',{maximumFractionDigits:0})+' €':'—'}</td>
+      <td style="font-size:12px;color:var(--text-2);">${c.agenteSM||'—'}</td>
+      <td style="font-size:12px;color:var(--text-2);">${c.agenteExterno||'—'}</td>
+      <td style="font-size:12px;color:var(--text-3);">${c.oficina||'—'}</td>
+      <td><button onclick="editarCambio('${c.id}')" style="background:none;border:none;cursor:pointer;color:var(--text-3);font-size:14px;">✏️</button>
+          <button onclick="eliminarCambio('${c.id}')" style="background:none;border:none;cursor:pointer;color:#BE123C;font-size:14px;">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderCambiosPage() {
+  renderCambiosKpis();
+  renderRankingsCambios();
+  renderCambiosAgente();
+  // Poblar filtro de oficinas
+  const filtOf = document.getElementById('filtroCambioOficina');
+  if(filtOf && filtOf.options.length <= 1) {
+    oficinas.forEach(o => { const opt=document.createElement('option'); opt.value=o; opt.textContent=o; filtOf.appendChild(opt); });
+  }
+}
+
+function abrirModalCambio(c=null) {
+  _editingCambioId = c ? c.id : null;
+  document.getElementById('cambioModalTitle').textContent = c ? 'Editar cambio' : 'Nuevo cambio de agente';
+  document.getElementById('cTipo').value       = c?.tipo||'';
+  document.getElementById('cFecha').value      = c?.fecha||new Date().toISOString().split('T')[0];
+  document.getElementById('cPoliza').value     = c?.poliza||'';
+  document.getElementById('cTomador').value    = c?.tomador||'';
+  document.getElementById('cPrima').value      = c?.prima||'';
+  document.getElementById('cAgenteExterno').value = c?.agenteExterno||'';
+  document.getElementById('cNotas').value      = c?.notas||'';
+
+  // Poblar selects
+  const selRamo = document.getElementById('cRamo');
+  if(selRamo.options.length <= 1) ramos.forEach(r => { const o=document.createElement('option');o.value=r;o.textContent=r;selRamo.appendChild(o); });
+  selRamo.value = c?.ramo||'';
+
+  const selOf = document.getElementById('cOficina');
+  if(selOf.options.length <= 1) oficinas.forEach(o => { const opt=document.createElement('option');opt.value=o;opt.textContent=o;selOf.appendChild(opt); });
+  selOf.value = c?.oficina||'';
+
+  const selAg = document.getElementById('cAgenteSM');
+  if(selAg.options.length <= 1) Object.values(NOMBRES_EQUIPO).sort().forEach(n => { const o=document.createElement('option');o.value=n;o.textContent=n;selAg.appendChild(o); });
+  selAg.value = c?.agenteSM||'';
+
+  document.getElementById('cambioModal').style.display='flex';
+}
+
+function cerrarModalCambio() {
+  document.getElementById('cambioModal').style.display='none';
+  _editingCambioId = null;
+}
+
+function editarCambio(id) {
+  const c = cambiosAgente.find(x=>x.id===id);
+  if(c) abrirModalCambio(c);
+}
+
+async function eliminarCambio(id) {
+  if(!confirm('¿Eliminar este cambio de agente?')) return;
+  try {
+    await fetch(SUPA_URL+'/rest/v1/cambios_agente?id=eq.'+id, {
+      method:'DELETE', headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+accessToken}
+    });
+    cambiosAgente = cambiosAgente.filter(c=>c.id!==id);
+    renderCambiosPage();
+    mostrarToast('✅ Eliminado');
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+async function guardarCambio() {
+  const tipo = document.getElementById('cTipo').value;
+  const agenteSM = document.getElementById('cAgenteSM').value;
+  if(!tipo||!agenteSM) { alert('Selecciona el tipo y el agente de SM Seguros.'); return; }
+
+  const payload = {
+    fecha:         document.getElementById('cFecha').value,
+    tipo:          tipo,
+    poliza:        document.getElementById('cPoliza').value.trim(),
+    ramo:          document.getElementById('cRamo').value,
+    tomador:       document.getElementById('cTomador').value.trim(),
+    prima:         parseFloat(document.getElementById('cPrima').value)||0,
+    agente_sm:     agenteSM,
+    agente_externo:document.getElementById('cAgenteExterno').value.trim(),
+    oficina:       document.getElementById('cOficina').value,
+    notas:         document.getElementById('cNotas').value.trim()
+  };
+
+  try {
+    if(_editingCambioId) {
+      await fetch(SUPA_URL+'/rest/v1/cambios_agente?id=eq.'+_editingCambioId, {
+        method:'PATCH', headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+accessToken,'Content-Type':'application/json','Prefer':'return=minimal'},
+        body:JSON.stringify(payload)
+      });
+      const idx = cambiosAgente.findIndex(c=>c.id===_editingCambioId);
+      if(idx>=0) cambiosAgente[idx] = {...cambiosAgente[idx],...payload,agenteSM:payload.agente_sm,agenteExterno:payload.agente_externo};
+    } else {
+      const res = await fetch(SUPA_URL+'/rest/v1/cambios_agente', {
+        method:'POST', headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+accessToken,'Content-Type':'application/json','Prefer':'return=representation'},
+        body:JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if(Array.isArray(data)&&data[0]) cambiosAgente.unshift({...data[0],agenteSM:data[0].agente_sm,agenteExterno:data[0].agente_externo,prima:data[0].prima||0});
+    }
+    cerrarModalCambio();
+    renderCambiosPage();
+    mostrarToast('✅ Cambio guardado');
+  } catch(e) { alert('Error: '+e.message); }
 }
 
 function renderIncentivos() {
