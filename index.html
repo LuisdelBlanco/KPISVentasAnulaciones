@@ -1639,23 +1639,37 @@ async function guardarNuevaContrasena() {
 
 async function mostrarOlvidePass() {
   const email = document.getElementById('loginEmail').value.trim();
+  const err = document.getElementById('loginError');
   if(!email) {
-    const err = document.getElementById('loginError');
+    err.style.color = '#C2003F';
     err.textContent = 'Introduce tu email primero.';
     document.getElementById('loginEmail').focus();
     return;
   }
+  err.style.color = '#A3A39E';
+  err.textContent = 'Enviando...';
   try {
-    await supaFetch('/auth/v1/recover', {
+    const res = await fetch(SUPA_URL + '/auth/v1/recover', {
       method: 'POST',
-      body: JSON.stringify({ email, redirect_to: 'https://luisdelblanco.github.io/KPISVentasAnulaciones/' })
-    }, false);
-    const err = document.getElementById('loginError');
+      headers: {
+        'apikey': SUPA_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email: email,
+        redirect_to: 'https://luisdelblanco.github.io/KPISVentasAnulaciones/'
+      })
+    });
+    if(!res.ok) {
+      const txt = await res.text();
+      throw new Error(res.status + ': ' + txt);
+    }
     err.style.color = '#16A34A';
     err.textContent = '✅ Email enviado. Revisa tu bandeja de entrada.';
-    setTimeout(() => { err.textContent = ''; err.style.color = ''; }, 5000);
+    setTimeout(() => { err.textContent = ''; err.style.color = ''; }, 6000);
   } catch(e) {
-    document.getElementById('loginError').textContent = '⚠️ No se pudo enviar el email.';
+    err.style.color = '#C2003F';
+    err.textContent = '⚠️ Error: ' + e.message;
   }
 }
 
