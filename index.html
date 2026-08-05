@@ -2098,11 +2098,7 @@ function getFiltered() {
   const dAg = document.getElementById('dashAgente')?.value || '';
   const _nombreActual70 = AGENTES_70[currentUser?.id] || '';
   return registros.filter(r => {
-    if(r.tipo === 'Aumento prevista') {
-      const esAdmin70 = currentRole === 'advanced';
-      const esPropioAgente = _nombreActual70 && r.agente === _nombreActual70;
-      if(!esAdmin70 && !esPropioAgente) return false;
-    }
+    if(r.tipo === 'Aumento prevista') return false; // solo en Mi Área Barcelona
     if (!r.fecha) return false;
     if (r.tipo === 'Pte. Anular') return false;
     const d = new Date(r.fecha);
@@ -2116,7 +2112,8 @@ function getFiltered() {
 function getFilteredRegistros() {
   const _nombreActual70 = AGENTES_70[currentUser?.id] || '';
   let data = getFiltered();
-  data = data.filter(r => r.tipo !== 'Pte. Anular');
+  // "Aumento prevista" solo visible en Mi Área, nunca en Registros
+  data = data.filter(r => r.tipo !== 'Pte. Anular' && r.tipo !== 'Aumento prevista');
   const fOf = document.getElementById('fOficina')?.value||'';
   const fAg = document.getElementById('fAgente')?.value||'';
   const fTi = document.getElementById('fTipo')?.value||'';
