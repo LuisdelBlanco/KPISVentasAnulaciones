@@ -5455,6 +5455,7 @@ function renderRankingsCambios() {
   // Ranking agentes internos con más salidas
   const elInt = document.getElementById('rankingInternoSalidas');
   const entradas = cambiosAgente.filter(c => c.tipo === 'Entrada');
+  const salidas  = cambiosAgente.filter(c => c.tipo === 'Salida');
   const byAgenteSM = {};
   entradas.forEach(c => {
     const k = c.agenteSM || '(sin asignar)';
