@@ -2096,6 +2096,7 @@ function getFiltered() {
   const month = document.getElementById('monthFilter')?.value || 'todos';
   const dOf = document.getElementById('dashOficina')?.value || '';
   const dAg = document.getElementById('dashAgente')?.value || '';
+  const _nombreActual70 = AGENTES_70[currentUser?.id] || '';
   return registros.filter(r => {
     if(r.tipo === 'Aumento prevista') {
       const esAdmin70 = currentRole === 'advanced';
@@ -2103,7 +2104,7 @@ function getFiltered() {
       if(!esAdmin70 && !esPropioAgente) return false;
     }
     if (!r.fecha) return false;
-    if (r.tipo === 'Pte. Anular') return false; // nunca en KPIs ni gráficos
+    if (r.tipo === 'Pte. Anular') return false;
     const d = new Date(r.fecha);
     if (year !== 'todos' && d.getFullYear() != year) return false;
     if (month !== 'todos' && (d.getMonth()+1) != month) return false;
@@ -2113,7 +2114,6 @@ function getFiltered() {
   });
 }
 function getFilteredRegistros() {
-  // "Aumento prevista" solo visible para el propio agente o admins
   const _nombreActual70 = AGENTES_70[currentUser?.id] || '';
   let data = getFiltered();
   data = data.filter(r => r.tipo !== 'Pte. Anular');
