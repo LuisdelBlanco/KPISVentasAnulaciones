@@ -1204,6 +1204,17 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
             <input type="hidden" id="objetivoMensual">
           </div>
         </div>
+        <div class="table-card" style="grid-column:span 2;border-left:3px solid #2563EB;">
+          <div class="table-card-header"><span class="table-card-title">🔑 Forzar cambio de contraseña</span></div>
+          <div style="padding:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+            <select id="selectResetUser" style="height:36px;border:1px solid var(--border);border-radius:8px;padding:0 10px;font-size:13px;font-family:inherit;flex:1;min-width:180px;">
+              <option value="">Selecciona un agente</option>
+            </select>
+            <button onclick="forzarCambioContrasena()" style="height:36px;background:#2563EB;color:#fff;border:none;border-radius:8px;padding:0 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">🔑 Forzar cambio</button>
+            <button onclick="enviarResetEmail()" style="height:36px;background:var(--surface-2);color:var(--text-2);border:1px solid var(--border);border-radius:8px;padding:0 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">📧 Enviar email de reset</button>
+            <div id="resetMsg" style="font-size:12px;color:var(--text-3);width:100%;"></div>
+          </div>
+        </div>
         <div class="table-card" style="grid-column:span 2;border-left:3px solid var(--amber);">
           <div class="table-card-header"><span class="table-card-title">🔧 Recalcular primas corregidas</span></div>
           <div style="padding:16px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;">
@@ -1565,7 +1576,100 @@ async function supaFetch(path, options={}, useAuth=true) {
   return text ? JSON.parse(text) : null;
 }
 
-async function togglePasswordVisibility() {
+async 
+// ── CAMBIO DE CONTRASEÑA ─────────────────────────────────────
+let _recoveryMode = false; // true si venimos de un enlace de recuperación
+
+function toggleNewPass(n) {
+  const inp = document.getElementById('newPass' + n);
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+function mostrarPantallaPassword(subtitulo) {
+  document.getElementById('changePassScreen').style.display = 'flex';
+  if(subtitulo) document.getElementById('changePassSubtitle').textContent = subtitulo;
+  document.getElementById('newPass1').value = '';
+  document.getElementById('newPass2').value = '';
+  document.getElementById('changePassError').textContent = '';
+  setTimeout(() => document.getElementById('newPass1').focus(), 100);
+}
+
+async function guardarNuevaContrasena() {
+  const p1 = document.getElementById('newPass1').value;
+  const p2 = document.getElementById('newPass2').value;
+  const err = document.getElementById('changePassError');
+  const btn = document.getElementById('btnGuardarPass');
+  if(p1.length < 8) { err.textContent = 'La contraseña debe tener al menos 8 caracteres.'; return; }
+  if(p1 !== p2) { err.textContent = 'Las contraseñas no coinciden.'; return; }
+  btn.textContent = '⏳ Guardando...'; btn.disabled = true; err.textContent = '';
+  try {
+    // Cambiar contraseña en Supabase Auth
+    await supaFetch('/auth/v1/user', {
+      method: 'PUT',
+      body: JSON.stringify({ password: p1 })
+    });
+    // Desactivar force_password_change si aplica
+    if(currentUser?.id && !_recoveryMode) {
+      await fetch(SUPA_URL + '/rest/v1/user_roles?user_id=eq.' + currentUser.id, {
+        method: 'PATCH',
+        headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ force_password_change: false })
+      });
+    }
+    document.getElementById('changePassScreen').style.display = 'none';
+    _recoveryMode = false;
+    // Si venimos de recovery, arrancar la app ahora
+    if(!document.getElementById('mainLayout').style.display || document.getElementById('mainLayout').style.display === 'none') {
+      await arrancarApp();
+    }
+    mostrarToast('✅ Contraseña actualizada correctamente');
+  } catch(e) {
+    err.textContent = '⚠️ Error: ' + e.message;
+    btn.textContent = 'Guardar contraseña'; btn.disabled = false;
+  }
+}
+
+async function mostrarOlvidePass() {
+  const email = document.getElementById('loginEmail').value.trim();
+  if(!email) {
+    const err = document.getElementById('loginError');
+    err.textContent = 'Introduce tu email primero.';
+    document.getElementById('loginEmail').focus();
+    return;
+  }
+  try {
+    await supaFetch('/auth/v1/recover', {
+      method: 'POST',
+      body: JSON.stringify({ email, redirect_to: 'https://luisdelblanco.github.io/KPISVentasAnulaciones/' })
+    }, false);
+    const err = document.getElementById('loginError');
+    err.style.color = '#16A34A';
+    err.textContent = '✅ Email enviado. Revisa tu bandeja de entrada.';
+    setTimeout(() => { err.textContent = ''; err.style.color = ''; }, 5000);
+  } catch(e) {
+    document.getElementById('loginError').textContent = '⚠️ No se pudo enviar el email.';
+  }
+}
+
+// Detectar si venimos de un enlace de recuperación (hash #access_token=...&type=recovery)
+function checkRecoveryToken() {
+  const hash = window.location.hash;
+  if(!hash.includes('type=recovery') && !hash.includes('type=invite')) return;
+  const params = new URLSearchParams(hash.slice(1));
+  const token = params.get('access_token');
+  const refresh = params.get('refresh_token');
+  if(!token) return;
+  accessToken = token;
+  if(refresh) refreshToken = refresh;
+  _recoveryMode = true;
+  // Limpiar el hash de la URL
+  history.replaceState(null, '', window.location.pathname);
+  // Mostrar pantalla de cambio de contraseña
+  document.getElementById('loginScreen').style.display = 'none';
+  mostrarPantallaPassword('Introduce tu nueva contraseña para acceder a Kompass.');
+}
+
+function togglePasswordVisibility() {
   const input = document.getElementById('loginPassword');
   const btn = document.getElementById('btnOjoPass');
   if(input.type === 'password') {
@@ -1595,7 +1699,15 @@ async function doLogin() {
     saveSession({ access_token: data.access_token, refresh_token: data.refresh_token, user: data.user });
     await loadUserRole();
     iniciarRenovacionToken();
-    await arrancarApp();
+    // Comprobar si debe cambiar contraseña
+    const roleData = await supaFetch('/rest/v1/user_roles?select=force_password_change&user_id=eq.' + currentUser.id).catch(()=>[{}]);
+    const forcePwdChange = roleData?.[0]?.force_password_change === true;
+    if(forcePwdChange) {
+      btn.textContent = 'Entrar'; btn.disabled = false;
+      mostrarPantallaPassword('Por seguridad, elige tu contraseña personal antes de continuar.');
+    } else {
+      await arrancarApp();
+    }
   } catch(e) {
     err.textContent = 'Email o contraseña incorrectos.';
     btn.textContent = 'Entrar'; btn.disabled = false;
@@ -4508,6 +4620,58 @@ function renderPanel70(anio, mes, isAdv, container) {
   else { target.innerHTML = html70; }
 }
 
+
+async function poblarSelectResetUser() {
+  const sel = document.getElementById('selectResetUser');
+  if(!sel || sel.options.length > 1) return;
+  _todosUsuarios.forEach(u => {
+    if(u.userId === currentUser?.id) return; // no permitir resetearse a uno mismo
+    const opt = document.createElement('option');
+    opt.value = u.userId; opt.textContent = u.nombre;
+    sel.appendChild(opt);
+  });
+}
+
+async function forzarCambioContrasena() {
+  const sel = document.getElementById('selectResetUser');
+  const userId = sel?.value;
+  const msg = document.getElementById('resetMsg');
+  if(!userId) { msg.textContent = '⚠️ Selecciona un agente primero.'; return; }
+  const nombre = sel.options[sel.selectedIndex].textContent;
+  try {
+    await fetch(SUPA_URL + '/rest/v1/user_roles?user_id=eq.' + userId, {
+      method: 'PATCH',
+      headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ force_password_change: true })
+    });
+    msg.style.color = 'var(--green)';
+    msg.textContent = '✅ La próxima vez que ' + nombre + ' inicie sesión deberá cambiar su contraseña.';
+  } catch(e) { msg.style.color = 'var(--red)'; msg.textContent = '⚠️ Error: ' + e.message; }
+}
+
+async function enviarResetEmail() {
+  const sel = document.getElementById('selectResetUser');
+  const userId = sel?.value;
+  const msg = document.getElementById('resetMsg');
+  if(!userId) { msg.textContent = '⚠️ Selecciona un agente primero.'; return; }
+  // Buscar email del usuario en _todosUsuarios o auth
+  const u = _todosUsuarios.find(u => u.userId === userId);
+  const emailVal = u?.email || '';
+  if(!emailVal) {
+    // Pedir email al admin
+    const emailInput = prompt('Introduce el email de ' + (u?.nombre||'este agente') + ':');
+    if(!emailInput) return;
+    try {
+      await supaFetch('/auth/v1/recover', {
+        method: 'POST',
+        body: JSON.stringify({ email: emailInput, redirect_to: 'https://luisdelblanco.github.io/KPISVentasAnulaciones/' })
+      }, false);
+      msg.style.color = 'var(--green)';
+      msg.textContent = '✅ Email de reset enviado a ' + emailInput;
+    } catch(e) { msg.style.color = 'var(--red)'; msg.textContent = '⚠️ Error: ' + e.message; }
+  }
+}
+
 function renderIncentivos() {
   const anio = parseInt(document.getElementById('incYear')?.value) || new Date().getFullYear();
   const mes = parseInt(document.getElementById('incMonth')?.value) || new Date().getMonth()+1;
@@ -5813,6 +5977,45 @@ document.addEventListener('DOMContentLoaded', async ()=>{
             Cancelar
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- CAMBIO DE CONTRASEÑA OBLIGATORIO -->
+  <div id="changePassScreen" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#C2003F 0%,#7B1024 100%);z-index:99999;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:16px;padding:36px;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+      <div style="text-align:center;margin-bottom:24px;">
+        <svg width="44" height="44" viewBox="0 0 44 44" fill="none" style="margin-bottom:10px;">
+          <rect width="44" height="44" rx="11" fill="#C2003F"/>
+          <polygon transform="translate(22,22)" points="11.4,0 8.1,8.1 0,11.4 -8.1,8.1 -11.4,0 -8.1,-8.1 0,-11.4 8.1,-8.1" fill="white"/>
+          <g transform="translate(22,22)">
+            <polygon points="0,-10.2 -2.6,-2.6 0,0 2.6,-2.6" fill="#C2003F"/>
+            <polygon points="0,10.2 -2.6,2.6 0,0 2.6,2.6" fill="#C2003F"/>
+            <polygon points="-10.2,0 -2.6,-2.6 0,0 -2.6,2.6" fill="#C2003F"/>
+            <polygon points="10.2,0 2.6,-2.6 0,0 2.6,2.6" fill="#C2003F"/>
+          </g>
+        </svg>
+        <div style="font-size:18px;font-weight:800;color:#1A1A18;" id="changePassTitle">Elige tu contraseña</div>
+        <div style="font-size:13px;color:#A3A39E;margin-top:6px;" id="changePassSubtitle">Por seguridad, establece tu contraseña personal antes de continuar.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#52524E;display:block;margin-bottom:5px;">Nueva contraseña</label>
+          <div style="position:relative;">
+            <input type="password" id="newPass1" placeholder="Mínimo 8 caracteres" style="width:100%;padding:10px 40px 10px 12px;border:1px solid #E8E8E4;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;" onkeydown="if(event.key==='Enter')document.getElementById('newPass2').focus()">
+            <button type="button" onclick="toggleNewPass(1)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#A3A39E;font-size:15px;">👁</button>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#52524E;display:block;margin-bottom:5px;">Repite la contraseña</label>
+          <div style="position:relative;">
+            <input type="password" id="newPass2" placeholder="Repite la contraseña" style="width:100%;padding:10px 40px 10px 12px;border:1px solid #E8E8E4;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;" onkeydown="if(event.key==='Enter')guardarNuevaContrasena()">
+            <button type="button" onclick="toggleNewPass(2)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#A3A39E;font-size:15px;">👁</button>
+          </div>
+        </div>
+        <div id="changePassError" style="font-size:12px;color:#C2003F;min-height:16px;"></div>
+        <button onclick="guardarNuevaContrasena()" id="btnGuardarPass" style="width:100%;background:#C2003F;color:#fff;border:none;border-radius:8px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Guardar contraseña</button>
       </div>
     </div>
   </div>
