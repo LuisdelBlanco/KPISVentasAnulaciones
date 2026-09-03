@@ -5786,58 +5786,89 @@ function construirContextoKompass() {
     return y === anio && m === mes;
   });
 
+  const todos = registros.filter(r => r.tipo !== 'Pte. Anular' && r.tipo !== 'Aumento prevista');
+  const todasEmisiones = todos.filter(r => r.tipo === 'Emisión' || r.tipo === 'Inicial/Suple');
+  const todasAnulaciones = todos.filter(r => r.tipo === 'Anulación');
+  const primaTotal = todasEmisiones.reduce((s,r) => s+(parseFloat(r.primaCorregida)||0), 0);
+
   const emisiones = delMes.filter(r => r.tipo === 'Emisión' || r.tipo === 'Inicial/Suple');
   const anulaciones = delMes.filter(r => r.tipo === 'Anulación');
   const sinEfecto = delMes.filter(r => r.tipo === 'Sin efecto');
   const primaCorregidaTotal = emisiones.reduce((s,r) => s+(parseFloat(r.primaCorregida)||0), 0);
 
-  // Por agente
   const byAgente = {};
-  delMes.forEach(r => {
+  todos.forEach(r => {
     const ag = r.agente || '(sin asignar)';
     if(!byAgente[ag]) byAgente[ag] = { emisiones:0, anulaciones:0, prima:0 };
     if(r.tipo==='Emisión'||r.tipo==='Inicial/Suple') { byAgente[ag].emisiones++; byAgente[ag].prima += parseFloat(r.primaCorregida)||0; }
     if(r.tipo==='Anulación') byAgente[ag].anulaciones++;
   });
 
-  // Por oficina
-  const byOficina = {};
+  const byAgenteMes = {};
   delMes.forEach(r => {
+    const ag = r.agente || '(sin asignar)';
+    if(!byAgenteMes[ag]) byAgenteMes[ag] = { emisiones:0, anulaciones:0, prima:0 };
+    if(r.tipo==='Emisión'||r.tipo==='Inicial/Suple') { byAgenteMes[ag].emisiones++; byAgenteMes[ag].prima += parseFloat(r.primaCorregida)||0; }
+    if(r.tipo==='Anulación') byAgenteMes[ag].anulaciones++;
+  });
+
+  const byOficina = {};
+  todos.forEach(r => {
     const of = r.oficina || '(sin oficina)';
     if(!byOficina[of]) byOficina[of] = { emisiones:0, anulaciones:0 };
     if(r.tipo==='Emisión'||r.tipo==='Inicial/Suple') byOficina[of].emisiones++;
     if(r.tipo==='Anulación') byOficina[of].anulaciones++;
   });
 
+  const mesesResumen = {};
+  todos.forEach(r => {
+    if(!r.fecha) return;
+    const clave = r.fecha.slice(0,7);
+    if(!mesesResumen[clave]) mesesResumen[clave] = { emisiones:0, anulaciones:0 };
+    if(r.tipo==='Emisión'||r.tipo==='Inicial/Suple') mesesResumen[clave].emisiones++;
+    if(r.tipo==='Anulación') mesesResumen[clave].anulaciones++;
+  });
+  const mesesOrdenados = Object.keys(mesesResumen).sort();
+  const mesesStr = mesesOrdenados.map(k => {
+    const d = mesesResumen[k];
+    const [y,m] = k.split('-').map(Number);
+    return MESES[m] + ' ' + y + ': ' + d.emisiones + ' em. / ' + d.anulaciones + ' an.';
+  }).join('\n');
+
   const agenteResumen = Object.entries(byAgente)
     .sort((a,b) => b[1].emisiones - a[1].emisiones)
-    .map(([ag,d]) => '  - ' + ag + ': ' + d.emisiones + ' emisiones, ' + d.anulaciones + ' anulaciones, ' + d.prima.toFixed(0) + '€ prima corregida')
+    .map(([ag,d]) => '  - ' + ag + ': ' + d.emisiones + ' emisiones, ' + d.anulaciones + ' an., ' + d.prima.toFixed(0) + '€')
+    .join('\n');
+
+  const agenteMesStr = Object.entries(byAgenteMes)
+    .sort((a,b) => b[1].emisiones - a[1].emisiones)
+    .map(([ag,d]) => '  - ' + ag + ': ' + d.emisiones + ' emisiones, ' + d.anulaciones + ' an., ' + d.prima.toFixed(0) + '€')
     .join('\n');
 
   const oficina_resumen = Object.entries(byOficina)
     .map(([of,d]) => '  - ' + of + ': ' + d.emisiones + ' emisiones, ' + d.anulaciones + ' anulaciones')
     .join('\n');
 
-  return `Eres el asistente interno de Kompass, la herramienta de gestión de SM Seguros (agencia exclusiva de Occident en Cataluña). Responde siempre en español, de forma concisa y útil. No inventes datos.
-
-DATOS ACTUALES — ${MESES[mes]} ${anio}:
-- Total registros del mes: ${delMes.length}
-- Emisiones (netas): ${emisiones.length - sinEfecto.length}
-- Anulaciones: ${anulaciones.length}
-- Sin efecto: ${sinEfecto.length}
-- Neto: ${emisiones.length - anulaciones.length - sinEfecto.length}
-- Prima corregida total: ${primaCorregidaTotal.toFixed(2)}€
-
-Por agente:
-${agenteResumen || '  Sin datos'}
-
-Por oficina:
-${oficina_resumen || '  Sin datos'}
-
-Defensas de cartera este mes: ${defensas.filter(d=>{if(!d.fecha)return false;const[y,m]=d.fecha.split('-').map(Number);return y===anio&&m===mes;}).length} registradas
-Cambios de agente este mes: ${cambiosAgente.filter(c=>{if(!c.fecha)return false;const[y,m]=c.fecha.split('-').map(Number);return y===anio&&m===mes;}).length} registrados
-`;
+  return 'Eres el asistente interno de Kompass de SM Seguros (agencia exclusiva de Occident en Cataluña). Responde en español, de forma concisa. No inventes datos.\n\n' +
+    'RESUMEN GLOBAL (todos los datos en Kompass):\n' +
+    '- Total registros: ' + todos.length + '\n' +
+    '- Total emisiones: ' + todasEmisiones.length + '\n' +
+    '- Total anulaciones: ' + todasAnulaciones.length + '\n' +
+    '- Prima corregida acumulada: ' + primaTotal.toFixed(0) + 'EUR\n\n' +
+    'MES ACTUAL - ' + MESES[mes] + ' ' + anio + ':\n' +
+    '- Emisiones netas: ' + (emisiones.length - sinEfecto.length) + '\n' +
+    '- Anulaciones: ' + anulaciones.length + '\n' +
+    '- Sin efecto: ' + sinEfecto.length + '\n' +
+    '- Neto: ' + (emisiones.length - anulaciones.length - sinEfecto.length) + '\n' +
+    '- Prima corregida: ' + primaCorregidaTotal.toFixed(0) + 'EUR\n\n' +
+    'Por agente este mes:\n' + (agenteMesStr || '  Sin datos') + '\n\n' +
+    'ULTIMOS 6 MESES:\n' + (mesesStr || '  Sin datos') + '\n\n' +
+    'HISTORICO POR AGENTE:\n' + (agenteResumen || '  Sin datos') + '\n\n' +
+    'HISTORICO POR OFICINA:\n' + (oficina_resumen || '  Sin datos') + '\n\n' +
+    'Defensas de cartera: ' + defensas.length + ' registradas\n' +
+    'Cambios de agente: ' + cambiosAgente.filter(c=>c.tipo==='Entrada').length + ' entradas, ' + cambiosAgente.filter(c=>c.tipo==='Salida').length + ' salidas';
 }
+
 
 async function enviarMensajeAsistente() {
   const input = document.getElementById('chatInput');
