@@ -1144,7 +1144,10 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
             <div style="padding:14px;">
               <p style="font-size:11px;color:var(--text-3);margin-bottom:10px;">La key se guarda solo en tu navegador. Nunca sale de este dispositivo.</p>
               <div style="display:flex;gap:8px;">
-                <input type="password" id="inputApiKey" placeholder="sk-ant-api03-..." style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;">
+                <div style="flex:1;position:relative;">
+                  <input type="password" id="inputApiKey" placeholder="sk-ant-api03-..." style="width:100%;padding:7px 36px 7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;box-sizing:border-box;">
+                  <button type="button" onclick="document.getElementById('inputApiKey').type=document.getElementById('inputApiKey').type==='password'?'text':'password'" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-3);font-size:13px;">👁</button>
+                </div>
                 <button onclick="guardarApiKey()" style="height:34px;background:#7C3AED;color:#fff;border:none;border-radius:8px;padding:0 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Guardar</button>
                 <button onclick="borrarApiKey()" style="height:34px;background:var(--surface-2);color:var(--text-3);border:1px solid var(--border);border-radius:8px;padding:0 10px;font-size:12px;cursor:pointer;font-family:inherit;">🗑</button>
               </div>
@@ -5719,9 +5722,12 @@ function getApiKey() {
 function guardarApiKey() {
   const key = document.getElementById('inputApiKey')?.value.trim();
   const status = document.getElementById('apiKeyStatus');
-  if(!key) { if(status) { status.style.color='var(--red)'; status.textContent='Introduce una key válida.'; } return; }
+  if(!key || !key.startsWith('sk-ant-')) {
+    if(status) { status.style.color='var(--red)'; status.textContent='⚠️ La key debe empezar por sk-ant-... Cópiala directamente desde console.anthropic.com'; }
+    return;
+  }
   localStorage.setItem('kompass_claude_key', key);
-  if(status) { status.style.color='var(--green)'; status.textContent='✅ Key guardada correctamente.'; }
+  if(status) { status.style.color='var(--green)'; status.textContent='✅ Key guardada (' + key.length + ' caracteres). Empieza por: ' + key.slice(0,14) + '...'; }
   const input = document.getElementById('inputApiKey');
   if(input) input.value = '';
   activarBotonAsistente();
