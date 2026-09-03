@@ -1136,6 +1136,23 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
           </div>
         </div>
 
+
+        <!-- API Key asistente (solo Luis) -->
+        <div id="panelApiKey" style="display:none;margin-bottom:20px;">
+          <div class="table-card" style="border-left:3px solid #7C3AED;">
+            <div class="table-card-header"><span class="table-card-title" style="color:#7C3AED;">🤖 Asistente IA — API Key</span></div>
+            <div style="padding:14px;">
+              <p style="font-size:11px;color:var(--text-3);margin-bottom:10px;">La key se guarda solo en tu navegador. Nunca sale de este dispositivo.</p>
+              <div style="display:flex;gap:8px;">
+                <input type="password" id="inputApiKey" placeholder="sk-ant-api03-..." style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;">
+                <button onclick="guardarApiKey()" style="height:34px;background:#7C3AED;color:#fff;border:none;border-radius:8px;padding:0 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Guardar</button>
+                <button onclick="borrarApiKey()" style="height:34px;background:var(--surface-2);color:var(--text-3);border:1px solid var(--border);border-radius:8px;padding:0 10px;font-size:12px;cursor:pointer;font-family:inherit;">🗑</button>
+              </div>
+              <div id="apiKeyStatus" style="font-size:11px;margin-top:8px;color:var(--text-3);"></div>
+            </div>
+          </div>
+        </div>
+
         <!-- Sección incentivos -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
           <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em;">💰 Incentivos comerciales</div>
@@ -2143,6 +2160,7 @@ async function arrancarApp() {
   try { await cargarFotosAgentes(); } catch(e) { console.warn('Fotos no cargadas:', e.message); }
   try { await cargarDefensas(); } catch(e) { console.warn('Defensas no cargadas:', e.message); }
   try { await cargarCambiosAgente(); } catch(e) { console.warn('Cambios agente no cargados:', e.message); }
+  activarBotonAsistente();
   actualizarBtnNotif();
   aplicarPermisos();
   restaurarFiltros();
@@ -5688,6 +5706,196 @@ async function guardarCambio() {
   } catch(e) { alert('Error: '+e.message); }
 }
 
+
+// ── ASISTENTE IA KOMPASS ──────────────────────────────────────
+const LUIS_ID = '2beeddaf-8c14-4467-99bc-2dc0b80e7cbd';
+let chatHistorial = [];
+let _asistenteAbierto = false;
+
+function getApiKey() {
+  return localStorage.getItem('kompass_claude_key') || '';
+}
+
+function guardarApiKey() {
+  const key = document.getElementById('inputApiKey')?.value.trim();
+  const status = document.getElementById('apiKeyStatus');
+  if(!key) { if(status) { status.style.color='var(--red)'; status.textContent='Introduce una key válida.'; } return; }
+  localStorage.setItem('kompass_claude_key', key);
+  if(status) { status.style.color='var(--green)'; status.textContent='✅ Key guardada correctamente.'; }
+  const input = document.getElementById('inputApiKey');
+  if(input) input.value = '';
+  activarBotonAsistente();
+}
+
+function borrarApiKey() {
+  localStorage.removeItem('kompass_claude_key');
+  const status = document.getElementById('apiKeyStatus');
+  if(status) { status.style.color='var(--text-3)'; status.textContent='Key eliminada.'; }
+  const btn = document.getElementById('btnAsistente');
+  if(btn) btn.style.display = 'none';
+}
+
+function activarBotonAsistente() {
+  const btn = document.getElementById('btnAsistente');
+  if(!btn) return;
+  const key = getApiKey();
+  btn.style.display = (key && currentUser?.id === LUIS_ID) ? 'flex' : 'none';
+  btn.style.alignItems = 'center';
+  btn.style.justifyContent = 'center';
+}
+
+function toggleAsistente() {
+  _asistenteAbierto = !_asistenteAbierto;
+  const panel = document.getElementById('panelAsistente');
+  if(panel) panel.style.display = _asistenteAbierto ? 'flex' : 'none';
+  if(_asistenteAbierto) {
+    if(chatHistorial.length === 0) agregarMensajeSistema();
+    setTimeout(() => document.getElementById('chatInput')?.focus(), 100);
+  }
+}
+
+function agregarMensajeSistema() {
+  const hoy = new Date();
+  const mes = hoy.getMonth() + 1;
+  const anio = hoy.getFullYear();
+  const MESES = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const bienvenida = `Hola Luis, soy tu asistente de Kompass. Tengo acceso a los datos de ${MESES[mes]} ${anio}. ¿En qué puedo ayudarte?`;
+  añadirBurbuja('assistant', bienvenida);
+}
+
+function añadirBurbuja(role, texto) {
+  const contenedor = document.getElementById('chatMensajes');
+  if(!contenedor) return;
+  const esUser = role === 'user';
+  const div = document.createElement('div');
+  div.style.cssText = `display:flex;justify-content:${esUser?'flex-end':'flex-start'};`;
+  div.innerHTML = `<div style="max-width:85%;padding:9px 12px;border-radius:${esUser?'12px 12px 4px 12px':'12px 12px 12px 4px'};background:${esUser?'var(--red)':'var(--surface-2)'};color:${esUser?'#fff':'var(--text)'};font-size:13px;line-height:1.5;white-space:pre-wrap;">${texto}</div>`;
+  contenedor.appendChild(div);
+  contenedor.scrollTop = contenedor.scrollHeight;
+}
+
+function construirContextoKompass() {
+  const hoy = new Date();
+  const mes = hoy.getMonth() + 1;
+  const anio = hoy.getFullYear();
+  const MESES = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+  const delMes = registros.filter(r => {
+    if(!r.fecha) return false;
+    const [y,m] = r.fecha.split('-').map(Number);
+    return y === anio && m === mes;
+  });
+
+  const emisiones = delMes.filter(r => r.tipo === 'Emisión' || r.tipo === 'Inicial/Suple');
+  const anulaciones = delMes.filter(r => r.tipo === 'Anulación');
+  const sinEfecto = delMes.filter(r => r.tipo === 'Sin efecto');
+  const primaCorregidaTotal = emisiones.reduce((s,r) => s+(parseFloat(r.primaCorregida)||0), 0);
+
+  // Por agente
+  const byAgente = {};
+  delMes.forEach(r => {
+    const ag = r.agente || '(sin asignar)';
+    if(!byAgente[ag]) byAgente[ag] = { emisiones:0, anulaciones:0, prima:0 };
+    if(r.tipo==='Emisión'||r.tipo==='Inicial/Suple') { byAgente[ag].emisiones++; byAgente[ag].prima += parseFloat(r.primaCorregida)||0; }
+    if(r.tipo==='Anulación') byAgente[ag].anulaciones++;
+  });
+
+  // Por oficina
+  const byOficina = {};
+  delMes.forEach(r => {
+    const of = r.oficina || '(sin oficina)';
+    if(!byOficina[of]) byOficina[of] = { emisiones:0, anulaciones:0 };
+    if(r.tipo==='Emisión'||r.tipo==='Inicial/Suple') byOficina[of].emisiones++;
+    if(r.tipo==='Anulación') byOficina[of].anulaciones++;
+  });
+
+  const agenteResumen = Object.entries(byAgente)
+    .sort((a,b) => b[1].emisiones - a[1].emisiones)
+    .map(([ag,d]) => '  - ' + ag + ': ' + d.emisiones + ' emisiones, ' + d.anulaciones + ' anulaciones, ' + d.prima.toFixed(0) + '€ prima corregida')
+    .join('\n');
+
+  const oficina_resumen = Object.entries(byOficina)
+    .map(([of,d]) => '  - ' + of + ': ' + d.emisiones + ' emisiones, ' + d.anulaciones + ' anulaciones')
+    .join('\n');
+
+  return `Eres el asistente interno de Kompass, la herramienta de gestión de SM Seguros (agencia exclusiva de Occident en Cataluña). Responde siempre en español, de forma concisa y útil. No inventes datos.
+
+DATOS ACTUALES — ${MESES[mes]} ${anio}:
+- Total registros del mes: ${delMes.length}
+- Emisiones (netas): ${emisiones.length - sinEfecto.length}
+- Anulaciones: ${anulaciones.length}
+- Sin efecto: ${sinEfecto.length}
+- Neto: ${emisiones.length - anulaciones.length - sinEfecto.length}
+- Prima corregida total: ${primaCorregidaTotal.toFixed(2)}€
+
+Por agente:
+${agenteResumen || '  Sin datos'}
+
+Por oficina:
+${oficina_resumen || '  Sin datos'}
+
+Defensas de cartera este mes: ${defensas.filter(d=>{if(!d.fecha)return false;const[y,m]=d.fecha.split('-').map(Number);return y===anio&&m===mes;}).length} registradas
+Cambios de agente este mes: ${cambiosAgente.filter(c=>{if(!c.fecha)return false;const[y,m]=c.fecha.split('-').map(Number);return y===anio&&m===mes;}).length} registrados
+`;
+}
+
+async function enviarMensajeAsistente() {
+  const input = document.getElementById('chatInput');
+  const texto = input?.value.trim();
+  if(!texto) return;
+  const key = getApiKey();
+  if(!key) { añadirBurbuja('assistant', '⚠️ No hay API key configurada. Ve a Mi Área para introducirla.'); return; }
+
+  añadirBurbuja('user', texto);
+  input.value = '';
+  chatHistorial.push({ role: 'user', content: texto });
+
+  // Indicador de carga
+  const contenedor = document.getElementById('chatMensajes');
+  const loader = document.createElement('div');
+  loader.id = 'chatLoader';
+  loader.style.cssText = 'display:flex;justify-content:flex-start;';
+  loader.innerHTML = '<div style="padding:9px 12px;border-radius:12px;background:var(--surface-2);color:var(--text-3);font-size:13px;">✦ Pensando…</div>';
+  contenedor.appendChild(loader);
+  contenedor.scrollTop = contenedor.scrollHeight;
+
+  try {
+    const sistema = construirContextoKompass();
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1024,
+        system: sistema,
+        messages: chatHistorial.slice(-10)
+      })
+    });
+
+    loader.remove();
+
+    if(!res.ok) {
+      const err = await res.json();
+      añadirBurbuja('assistant', '⚠️ Error: ' + (err.error?.message || res.status));
+      return;
+    }
+
+    const data = await res.json();
+    const respuesta = data.content?.[0]?.text || '(sin respuesta)';
+    añadirBurbuja('assistant', respuesta);
+    chatHistorial.push({ role: 'assistant', content: respuesta });
+
+  } catch(e) {
+    loader.remove();
+    añadirBurbuja('assistant', '⚠️ Error de conexión: ' + e.message);
+  }
+}
+
 function renderIncentivos() {
   const anio = parseInt(document.getElementById('incYear')?.value) || new Date().getFullYear();
   const mes = parseInt(document.getElementById('incMonth')?.value) || new Date().getMonth()+1;
@@ -5911,6 +6119,16 @@ function initIncentivosSelectors() {
   const panelRol = document.getElementById('panelRol');
   if(panelNotif) panelNotif.style.display = isAdv ? '' : 'none';
   if(panelRol) panelRol.style.display = 'none';
+
+  // Panel API key asistente — solo Luis
+  const panelApiKey = document.getElementById('panelApiKey');
+  if(panelApiKey) panelApiKey.style.display = currentUser?.id === LUIS_ID ? '' : 'none';
+  if(currentUser?.id === LUIS_ID) {
+    const keyGuardada = getApiKey();
+    const status = document.getElementById('apiKeyStatus');
+    if(status && keyGuardada) { status.style.color='var(--green)'; status.textContent='✅ API Key configurada.'; }
+    activarBotonAsistente();
+  }
 
   // Panel forzar contraseña integrado en lista equipo — visible para admins via renderListaEquipo
 
@@ -7056,6 +7274,26 @@ document.addEventListener('DOMContentLoaded', async ()=>{
         <div id="changePassError" style="font-size:12px;color:#C2003F;min-height:16px;"></div>
         <button onclick="guardarNuevaContrasena()" id="btnGuardarPass" style="width:100%;background:#C2003F;color:#fff;border:none;border-radius:8px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Guardar contraseña</button>
       </div>
+    </div>
+  </div>
+
+
+  <!-- BOTÓN FLOTANTE ASISTENTE -->
+  <button id="btnAsistente" onclick="toggleAsistente()" title="Asistente IA" style="display:none;position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:#C2003F;color:#fff;border:none;box-shadow:0 4px 16px rgba(194,0,63,0.4);cursor:pointer;font-size:22px;z-index:9998;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">💬</button>
+
+  <!-- PANEL ASISTENTE -->
+  <div id="panelAsistente" style="display:none;position:fixed;bottom:88px;right:24px;width:380px;max-height:560px;background:var(--surface);border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.2);z-index:9997;display:none;flex-direction:column;overflow:hidden;border:1px solid var(--border);">
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--red);">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <svg width="24" height="24" viewBox="0 0 38 38" fill="none"><rect width="38" height="38" rx="10" fill="white" fill-opacity="0.2"/><polygon transform="translate(19,19)" points="9.5,0 6.7,6.7 0,9.5 -6.7,6.7 -9.5,0 -6.7,-6.7 0,-9.5 6.7,-6.7" fill="white"/><g transform="translate(19,19)"><polygon points="0,-8.5 -2.2,-2.2 0,0 2.2,-2.2" fill="#C2003F"/><polygon points="0,8.5 -2.2,2.2 0,0 2.2,2.2" fill="#C2003F"/><polygon points="-8.5,0 -2.2,-2.2 0,0 -2.2,2.2" fill="#C2003F"/><polygon points="8.5,0 2.2,-2.2 0,0 2.2,2.2" fill="#C2003F"/></g></svg>
+        <span style="font-size:14px;font-weight:800;color:#fff;">Asistente Kompass</span>
+      </div>
+      <button onclick="toggleAsistente()" style="background:none;border:none;color:#fff;cursor:pointer;font-size:18px;opacity:0.8;padding:0;">✕</button>
+    </div>
+    <div id="chatMensajes" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:200px;max-height:360px;"></div>
+    <div style="padding:10px 12px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-end;">
+      <textarea id="chatInput" placeholder="Pregúntame sobre los datos de Kompass…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();enviarMensajeAsistente();}" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;resize:none;min-height:38px;max-height:100px;outline:none;background:var(--surface-2);color:var(--text);"></textarea>
+      <button onclick="enviarMensajeAsistente()" style="height:38px;width:38px;background:var(--red);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:16px;flex-shrink:0;">↑</button>
     </div>
   </div>
 
