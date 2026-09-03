@@ -5786,94 +5786,77 @@ function construirContextoKompass() {
   const anio = hoy.getFullYear();
   const MESES = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
-  const delMes = registros.filter(r => {
+  const todos = registros.filter(r => r.tipo !== 'Pte. Anular' && r.tipo !== 'Aumento prevista');
+
+  // ── Desglose por agente+mes ──────────────────────────────
+  const byAgenteMes = {};
+  todos.forEach(r => {
+    if(!r.fecha || !r.agente) return;
+    const [y,m] = r.fecha.split('-').map(Number);
+    const clave = r.agente + '|' + MESES[m] + ' ' + y;
+    if(!byAgenteMes[clave]) byAgenteMes[clave] = { ag: r.agente, mes: MESES[m] + ' ' + y, em:0, an:0, se:0, prima:0 };
+    if(r.tipo==='Emisión'||r.tipo==='Inicial/Suple') { byAgenteMes[clave].em++; byAgenteMes[clave].prima += parseFloat(r.primaCorregida)||0; }
+    if(r.tipo==='Anulación') byAgenteMes[clave].an++;
+    if(r.tipo==='Sin efecto') byAgenteMes[clave].se++;
+  });
+
+  // Ordenar por fecha desc
+  const agenteMesStr = Object.values(byAgenteMes)
+    .sort((a,b) => b.mes.localeCompare(a.mes))
+    .map(d => '  ' + d.ag + ' / ' + d.mes + ': ' + d.em + ' em, ' + d.an + ' an, ' + d.se + ' se, ' + d.prima.toFixed(0) + 'EUR')
+    .join('\n');
+
+  // ── Desglose por oficina+mes ─────────────────────────────
+  const byOficinaMes = {};
+  todos.forEach(r => {
+    if(!r.fecha || !r.oficina) return;
+    const [y,m] = r.fecha.split('-').map(Number);
+    const clave = r.oficina + '|' + MESES[m] + ' ' + y;
+    if(!byOficinaMes[clave]) byOficinaMes[clave] = { of: r.oficina, mes: MESES[m] + ' ' + y, em:0, an:0 };
+    if(r.tipo==='Emisión'||r.tipo==='Inicial/Suple') byOficinaMes[clave].em++;
+    if(r.tipo==='Anulación') byOficinaMes[clave].an++;
+  });
+
+  const oficinaMesStr = Object.values(byOficinaMes)
+    .sort((a,b) => b.mes.localeCompare(a.mes))
+    .map(d => '  ' + d.of + ' / ' + d.mes + ': ' + d.em + ' em, ' + d.an + ' an')
+    .join('\n');
+
+  // ── Totales generales ────────────────────────────────────
+  const todasEm = todos.filter(r => r.tipo==='Emisión'||r.tipo==='Inicial/Suple');
+  const todasAn = todos.filter(r => r.tipo==='Anulación');
+  const primaTot = todasEm.reduce((s,r)=>s+(parseFloat(r.primaCorregida)||0),0);
+
+  // ── Mes actual ───────────────────────────────────────────
+  const delMes = todos.filter(r => {
     if(!r.fecha) return false;
     const [y,m] = r.fecha.split('-').map(Number);
-    return y === anio && m === mes;
+    return y===anio && m===mes;
   });
+  const emMes = delMes.filter(r=>r.tipo==='Emisión'||r.tipo==='Inicial/Suple');
+  const anMes = delMes.filter(r=>r.tipo==='Anulación');
+  const seMes = delMes.filter(r=>r.tipo==='Sin efecto');
 
-  const todos = registros.filter(r => r.tipo !== 'Pte. Anular' && r.tipo !== 'Aumento prevista');
-  const todasEmisiones = todos.filter(r => r.tipo === 'Emisión' || r.tipo === 'Inicial/Suple');
-  const todasAnulaciones = todos.filter(r => r.tipo === 'Anulación');
-  const primaTotal = todasEmisiones.reduce((s,r) => s+(parseFloat(r.primaCorregida)||0), 0);
-
-  const emisiones = delMes.filter(r => r.tipo === 'Emisión' || r.tipo === 'Inicial/Suple');
-  const anulaciones = delMes.filter(r => r.tipo === 'Anulación');
-  const sinEfecto = delMes.filter(r => r.tipo === 'Sin efecto');
-  const primaCorregidaTotal = emisiones.reduce((s,r) => s+(parseFloat(r.primaCorregida)||0), 0);
-
-  const byAgente = {};
-  todos.forEach(r => {
-    const ag = r.agente || '(sin asignar)';
-    if(!byAgente[ag]) byAgente[ag] = { emisiones:0, anulaciones:0, prima:0 };
-    if(r.tipo==='Emisión'||r.tipo==='Inicial/Suple') { byAgente[ag].emisiones++; byAgente[ag].prima += parseFloat(r.primaCorregida)||0; }
-    if(r.tipo==='Anulación') byAgente[ag].anulaciones++;
-  });
-
-  const byAgenteMes = {};
-  delMes.forEach(r => {
-    const ag = r.agente || '(sin asignar)';
-    if(!byAgenteMes[ag]) byAgenteMes[ag] = { emisiones:0, anulaciones:0, prima:0 };
-    if(r.tipo==='Emisión'||r.tipo==='Inicial/Suple') { byAgenteMes[ag].emisiones++; byAgenteMes[ag].prima += parseFloat(r.primaCorregida)||0; }
-    if(r.tipo==='Anulación') byAgenteMes[ag].anulaciones++;
-  });
-
-  const byOficina = {};
-  todos.forEach(r => {
-    const of = r.oficina || '(sin oficina)';
-    if(!byOficina[of]) byOficina[of] = { emisiones:0, anulaciones:0 };
-    if(r.tipo==='Emisión'||r.tipo==='Inicial/Suple') byOficina[of].emisiones++;
-    if(r.tipo==='Anulación') byOficina[of].anulaciones++;
-  });
-
-  const mesesResumen = {};
-  todos.forEach(r => {
-    if(!r.fecha) return;
-    const clave = r.fecha.slice(0,7);
-    if(!mesesResumen[clave]) mesesResumen[clave] = { emisiones:0, anulaciones:0 };
-    if(r.tipo==='Emisión'||r.tipo==='Inicial/Suple') mesesResumen[clave].emisiones++;
-    if(r.tipo==='Anulación') mesesResumen[clave].anulaciones++;
-  });
-  const mesesOrdenados = Object.keys(mesesResumen).sort();
-  const mesesStr = mesesOrdenados.map(k => {
-    const d = mesesResumen[k];
-    const [y,m] = k.split('-').map(Number);
-    return MESES[m] + ' ' + y + ': ' + d.emisiones + ' em. / ' + d.anulaciones + ' an.';
-  }).join('\n');
-
-  const agenteResumen = Object.entries(byAgente)
-    .sort((a,b) => b[1].emisiones - a[1].emisiones)
-    .map(([ag,d]) => '  - ' + ag + ': ' + d.emisiones + ' emisiones, ' + d.anulaciones + ' an., ' + d.prima.toFixed(0) + '€')
-    .join('\n');
-
-  const agenteMesStr = Object.entries(byAgenteMes)
-    .sort((a,b) => b[1].emisiones - a[1].emisiones)
-    .map(([ag,d]) => '  - ' + ag + ': ' + d.emisiones + ' emisiones, ' + d.anulaciones + ' an., ' + d.prima.toFixed(0) + '€')
-    .join('\n');
-
-  const oficina_resumen = Object.entries(byOficina)
-    .map(([of,d]) => '  - ' + of + ': ' + d.emisiones + ' emisiones, ' + d.anulaciones + ' anulaciones')
-    .join('\n');
-
-  return 'Eres el asistente interno de Kompass de SM Seguros (agencia exclusiva de Occident en Cataluña). Responde en español, de forma concisa. No inventes datos.\n\n' +
-    'RESUMEN GLOBAL (todos los datos en Kompass):\n' +
+  return 'Eres el asistente interno de Kompass de SM Seguros (agencia exclusiva de Occident en Cataluna). Responde en espanol, conciso y preciso. No inventes datos.\n\n' +
+    'RESUMEN GLOBAL:\n' +
     '- Total registros: ' + todos.length + '\n' +
-    '- Total emisiones: ' + todasEmisiones.length + '\n' +
-    '- Total anulaciones: ' + todasAnulaciones.length + '\n' +
-    '- Prima corregida acumulada: ' + primaTotal.toFixed(0) + 'EUR\n\n' +
-    'MES ACTUAL - ' + MESES[mes] + ' ' + anio + ':\n' +
-    '- Emisiones netas: ' + (emisiones.length - sinEfecto.length) + '\n' +
-    '- Anulaciones: ' + anulaciones.length + '\n' +
-    '- Sin efecto: ' + sinEfecto.length + '\n' +
-    '- Neto: ' + (emisiones.length - anulaciones.length - sinEfecto.length) + '\n' +
-    '- Prima corregida: ' + primaCorregidaTotal.toFixed(0) + 'EUR\n\n' +
-    'Por agente este mes:\n' + (agenteMesStr || '  Sin datos') + '\n\n' +
-    'ULTIMOS 6 MESES:\n' + (mesesStr || '  Sin datos') + '\n\n' +
-    'HISTORICO POR AGENTE:\n' + (agenteResumen || '  Sin datos') + '\n\n' +
-    'HISTORICO POR OFICINA:\n' + (oficina_resumen || '  Sin datos') + '\n\n' +
-    'Defensas de cartera: ' + defensas.length + ' registradas\n' +
-    'Cambios de agente: ' + cambiosAgente.filter(c=>c.tipo==='Entrada').length + ' entradas, ' + cambiosAgente.filter(c=>c.tipo==='Salida').length + ' salidas';
+    '- Total emisiones: ' + todasEm.length + '\n' +
+    '- Total anulaciones: ' + todasAn.length + '\n' +
+    '- Prima corregida acumulada: ' + primaTot.toFixed(0) + 'EUR\n\n' +
+    'MES ACTUAL (' + MESES[mes] + ' ' + anio + '):\n' +
+    '- Emisiones: ' + emMes.length + '\n' +
+    '- Anulaciones: ' + anMes.length + '\n' +
+    '- Sin efecto: ' + seMes.length + '\n' +
+    '- Neto: ' + (emMes.length - anMes.length - seMes.length) + '\n' +
+    '- Prima corregida: ' + emMes.reduce((s,r)=>s+(parseFloat(r.primaCorregida)||0),0).toFixed(0) + 'EUR\n\n' +
+    'DETALLE POR AGENTE Y MES (em=emisiones, an=anulaciones, se=sin efecto):\n' +
+    (agenteMesStr || '  Sin datos') + '\n\n' +
+    'DETALLE POR OFICINA Y MES:\n' +
+    (oficinaMesStr || '  Sin datos') + '\n\n' +
+    'DEFENSAS DE CARTERA: ' + defensas.length + ' registradas\n' +
+    'CAMBIOS DE AGENTE: ' + cambiosAgente.filter(c=>c.tipo==='Entrada').length + ' entradas, ' + cambiosAgente.filter(c=>c.tipo==='Salida').length + ' salidas';
 }
+
 
 
 async function enviarMensajeAsistente() {
