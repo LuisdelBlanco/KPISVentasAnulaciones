@@ -5761,10 +5761,8 @@ function toggleAsistente() {
 }
 
 function agregarMensajeSistema() {
-  const hoy = new Date();
-  const mes = hoy.getMonth() + 1;
-  const anio = hoy.getFullYear();
-  const MESES = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const contenedor = document.getElementById('chatMensajes');
+  if(contenedor && contenedor.children.length > 0) return; // ya tiene mensajes
   const bienvenida = 'Hola Luis, ¿en qué puedo ayudarte?';
   añadirBurbuja('assistant', bienvenida);
 }
