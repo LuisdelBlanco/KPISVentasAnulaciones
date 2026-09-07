@@ -4804,6 +4804,8 @@ function calcularIncentivo(nombre, mes, anio) {
   // Sin efectos del mes
   const sinEfectos = regs.filter(r => r.tipo === 'Sin efecto').length;
 
+
+
   // Aplicar restricciones de pólizas con prima < 50€
   let polizasBase = [...emitidas];
 
@@ -4855,8 +4857,8 @@ function calcularIncentivo(nombre, mes, anio) {
     multiplicadores.push({ label: '❤️ Vida Temporal', factor: '+1×base', importe, alcanzado: true, enMargen });
   }
 
-  // Ahorro: al menos 1 póliza con prima >= 1200€
-  const ahorro = computables.filter(r => esAhorro(r) && (r.prima||0) >= 1200);
+  // Ahorro: al menos 1 póliza nueva (Emisión) de ahorro con prima >= 1200€ — sin suples ni aumento prevista
+  const ahorro = computables.filter(r => esAhorro(r) && r.tipo === 'Emisión' && (r.prima||0) >= 1200);
   if(ahorro.length > 0) {
     const importe = enMargen ? bonoBase * 0.5 : 0;  // +0.5× base → total ×1.5
     if(enMargen) bonusTotal += importe;
@@ -4897,7 +4899,9 @@ function calcularIncentivo(nombre, mes, anio) {
     tramo, tramoNum, bonoBase, enMargen,
     multiplicadores, bonusTotal, bonoTotal,
     paraSubir, siguienteTramo,
-    emitidas: emitidas.length
+    emitidas: emitidas.length,
+    ahorroPrevistos: 0,
+    puntosAhorroPrevistos: 0
   };
 }
 
@@ -6028,6 +6032,8 @@ function renderIncentivos() {
             <div style="text-align:center;"><div style="font-size:18px;font-weight:800;color:var(--text);">${r.tramo ? 'T'+r.tramoNum : '—'}</div><div style="font-size:9px;color:var(--text-3);">tramo</div></div>
             <div style="text-align:center;"><div style="font-size:18px;font-weight:800;color:${r.enMargen ? '#16A34A' : '#BE123C'};">${r.enMargen ? '✓' : '✗'}</div><div style="font-size:9px;color:var(--text-3);">margen</div></div>
             <div style="text-align:center;"><div style="font-size:18px;font-weight:800;color:var(--blue);">${actividad.filter(a=>a.agente===nombre&&a.mes===mes&&a.anio===anio).reduce((s,a)=>s+(a.oportunidades||0),0)}</div><div style="font-size:9px;color:var(--text-3);">oportun.</div></div>
+          </div>
+          ${r.ahorroPrevistos > 0 ? `<div style="font-size:10px;color:#7C3AED;margin-bottom:6px;background:#F5F3FF;border-radius:5px;padding:3px 7px;">💼 ${r.ahorroPrevistos} ahorro prev. × 0.5 = <strong>+${r.puntosAhorroPrevistos} pts</strong></div>` : ''}
           </div>
           <!-- Multiplicadores como badges compactos -->
           <div style="display:flex;gap:5px;">
