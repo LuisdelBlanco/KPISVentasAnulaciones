@@ -4778,6 +4778,8 @@ function esVidaTemporal(r) {
 }
 function esAhorro(r) {
   const ramo = (r.ramo||'').toLowerCase();
+  // Ahorro capital (2386) es prima única — no cuenta para el incentivo de ahorro
+  if(ramo.includes('2386') || ramo.includes('ahorro capital')) return false;
   return ramo.includes('ahorro') ||
     ramo.includes('creciente') ||
     ramo.includes('1354') ||
@@ -4802,7 +4804,6 @@ function esAhorro(r) {
     ramo.includes('pensión') ||
     ramo.includes('pension') ||
     ramo.includes('epsv') ||
-    ramo.includes('2386') ||
     ramo.includes('1328') ||
     ramo.includes('cuenta cliente') ||
     ramo.includes('fondos de invers');
