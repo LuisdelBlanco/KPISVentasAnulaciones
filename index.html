@@ -4778,7 +4778,34 @@ function esVidaTemporal(r) {
 }
 function esAhorro(r) {
   const ramo = (r.ramo||'').toLowerCase();
-  return ramo.includes('ahorro') || ramo.includes('creciente') || ramo.includes('1354') || ramo.includes('1355');
+  return ramo.includes('ahorro') ||
+    ramo.includes('creciente') ||
+    ramo.includes('1354') ||
+    ramo.includes('1355') ||
+    ramo.includes('ppa') ||
+    ramo.includes('384') ||
+    ramo.includes('1364') ||
+    ramo.includes('pias') ||
+    ramo.includes('1337') ||
+    ramo.includes('sialp') ||
+    ramo.includes('935') ||
+    ramo.includes('patrimonio') ||
+    ramo.includes('370') ||
+    ramo.includes('390') ||
+    ramo.includes('375') ||
+    ramo.includes('universal') ||
+    ramo.includes('1310') ||
+    ramo.includes('multifondo') ||
+    ramo.includes('inversión') ||
+    ramo.includes('inversion') ||
+    ramo.includes('jubilaci') ||
+    ramo.includes('pensión') ||
+    ramo.includes('pension') ||
+    ramo.includes('epsv') ||
+    ramo.includes('2386') ||
+    ramo.includes('1328') ||
+    ramo.includes('cuenta cliente') ||
+    ramo.includes('fondos de invers');
 }
 function esSalud(r) {
   const ramo = (r.ramo||'').toLowerCase();
