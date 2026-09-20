@@ -1,0 +1,714 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180' width='180' height='180' xmlns:c2pa='http://c2pa.org/manifest'><metadata><c2pa:manifest>AAAWgmp1bWIAAAAeanVtZGMycGEAEQAQgAAAqgA4m3EDYzJwYQAAABZcanVtYgAAAEdqdW1kYzJtYQARABCAAACqADibcQN1cm46YzJwYTplZGFhOWRmNS01ZjVkLTRlMDItOTQ4NC00ZDhhMTM4NjczMWUAAAADl2p1bWIAAAApanVtZGMyYXMAEQAQgAAAqgA4m3EDYzJwYS5hc3NlcnRpb25zAAAAALxqdW1iAAAARGp1bWRjYm9yABEAEIAAAKoAOJtxE2MycGEuaW5ncmVkaWVudC52MwAAAAAYYzJzaCZIIHpCUTVlm4j2nJnSRiMAAABwY2JvcqNpZGM6Zm9ybWF0bWltYWdlL3N2Zyt4bWxqaW5zdGFuY2VJRHgseG1wOmlpZDpiNzQzMDRlMy0xMTc1LTQwZTAtODdiMi04MDlkMDZkMzQyNjRscmVsYXRpb25zaGlwaHBhcmVudE9mAAAB4mp1bWIAAABBanVtZGNib3IAEQAQgAAAqgA4m3ETYzJwYS5hY3Rpb25zLnYyAAAAABhjMnNoiZHzXo1VKiQoMTbDz3/R0wAAAZljYm9yomdhY3Rpb25zgqJmYWN0aW9ua2MycGEub3BlbmVkanBhcmFtZXRlcnOha2luZ3JlZGllbnRzgaJjdXJseC1zZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmluZ3JlZGllbnQudjNkaGFzaFgg8YdjCsYVWRnPq6KtwnzJxg7hFcFC1Az35ouJ4206MAukZmFjdGlvbngdY29tLmFudGhyb3BpYy5jbGF1ZGUucHJvdmlkZWRqcGFyYW1ldGVyc6F4H2NvbS5hbnRocm9waWMub3JpZ2luLWNvbmZpZGVuY2VndW5rbm93bmtkZXNjcmlwdGlvbnhmQ2xhdWRlIHByb3ZpZGVkIHRoaXMgZmlsZSBhdCB0aGUgcmVxdWVzdCBvZiBhIHVzZXIgYW5kIG1heSBoYXZlIGNyZWF0ZWQgb3IgbW9kaWZpZWQgdGhlIGZpbGUgY29udGVudHMubXNvZnR3YXJlQWdlbnShZG5hbWVmQ2xhdWRlcmFsbEFjdGlvbnNJbmNsdWRlZPUAAADIanVtYgAAAEBqdW1kY2JvcgARABCAAACqADibcRNjMnBhLmhhc2guZGF0YQAAAAAYYzJzaB+Dgkvqu3KafmqWXNF5R8IAAACAY2JvcqVjYWxnZnNoYTI1NmNwYWRNAAAAAAAAAAAAAAAAAGRoYXNoWCB29IiW8onjbrniZC3r+/t1apwaRvxBi6RRvURSz/dDCmRuYW1lbmp1bWJmIG1hbmlmZXN0amV4Y2x1c2lvbnOBomVzdGFydBiWZmxlbmd0aBkeBAAAAj5qdW1iAAAAJ2p1bWRjMmNsABEAEIAAAKoAOJtxA2MycGEuY2xhaW0udjIAAAACD2Nib3KlY2FsZ2ZzaGEyNTZpc2lnbmF0dXJleE1zZWxmI2p1bWJmPS9jMnBhL3VybjpjMnBhOmVkYWE5ZGY1LTVmNWQtNGUwMi05NDg0LTRkOGExMzg2NzMxZS9jMnBhLnNpZ25hdHVyZWppbnN0YW5jZUlEeCx4bXA6aWlkOjE5ODc3MzQwLTBlZWMtNDViZi04ZWVlLTVlYTNhYWEyMGE4M3JjcmVhdGVkX2Fzc2VydGlvbnODomN1cmx4LXNlbGYjanVtYmY9YzJwYS5hc3NlcnRpb25zL2MycGEuaW5ncmVkaWVudC52M2RoYXNoWCDxh2MKxhVZGc+roq3CfMnGDuEVwULUDPfmi4njbTowC6JjdXJseCpzZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmFjdGlvbnMudjJkaGFzaFgg/S4008okM9w6DXpCT88uDN19/0V/lM7cDecr0GDrHlOiY3VybHgpc2VsZiNqdW1iZj1jMnBhLmFzc2VydGlvbnMvYzJwYS5oYXNoLmRhdGFkaGFzaFggpt6ptVX5PJo3fImd0XFXek824e1KOCYNENJUle3Z+Ot0Y2xhaW1fZ2VuZXJhdG9yX2luZm+jZG5hbWVvQW50aHJvcGljIEZpbGVzZ3ZlcnNpb25lMS4wLjBrc3BlY1ZlcnNpb25lMi40LjAAABA4anVtYgAAAChqdW1kYzJjcwARABCAAACqADibcQNjMnBhLnNpZ25hdHVyZQAAABAIY2JvctKEWQISogEmGCFZAgowggIGMIIBjaADAgECAhRA5aAK7sI50L64g/oGQgU9Z1UTADAKBggqhkjOPQQDAzBJMRcwFQYDVQQKEw5BbnRocm9waWMsIFBCQzEuMCwGA1UEAxMlQW50aHJvcGljIENvbnRlbnQgQ3JlZGVudGlhbHMgUm9vdCBDQTAeFw0yNjA4MDcxODQzNTZaFw0yODA4MDYxOTQzNTZaMEQxFzAVBgNVBAoTDkFudGhyb3BpYywgUEJDMSkwJwYDVQQDEyBBbnRocm9waWMgQ2xhdWRlIENvbnRlbnQgU2lnbmluZzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABJh6CmvLUBgFFNU0vUKlOVtE6djd17L5SuwX0LemFisBM3dkd/3cyjxFA3Qo5S46fX0/ihY0VZ7mfb9KF703t5OjWDBWMA4GA1UdDwEB/wQEAwIHgDAVBgNVHSUEDjAMBgorBgEEAYPoXgIBMAwGA1UdEwEB/wQCMAAwHwYDVR0jBBgwFoAUzlHiBIFOZFsj+OPEz5o+nMHXXMIwCgYIKoZIzj0EAwMDZwAwZAIwMXMdFJ4BetLLVY7ORuE9noqbbAZOZn/aArXyTwFAZfKrPzxF2vPoJNf1+UCdg1XGAjBwX1zd9WGqYkqmL5SFqw1QySjr1zJfpJM9+1rdDwSPLMOPOjKuiXjoU/pUUeG9RwmhY3BhZFkNngAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPZYQJm6/eE+J7fhNVoHIqpkt1gAegxFj4gtxKI4RN5IxaY/RPVqLznRv7UIsNy6PaAkGQNukFOq5tz6iKcep+tywdA=</c2pa:manifest></metadata>  <defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23FF6A3D'/><stop offset='1' stop-color='%23D62839'/></linearGradient></defs>  <rect width='180' height='180' rx='40' fill='%23FFFFFF'/>  <circle cx='90' cy='90' r='52' fill='none' stroke='%231B2A41' stroke-width='10'/>  <circle cx='90' cy='90' r='30' fill='url(%23g)'/></svg>">
+<title>ShowMe</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+[hidden]{display:none!important}
+
+:root{
+  --bg:#F3F5F7; --panel:#FFFFFF; --stage:#0E1520; --ink:#111827; --muted:#5B6472; --line:#DDE2E8;
+  --accent:#1B2A41; --accent-ink:#FFFFFF; --accent-soft:#E6EBF3;
+  --rec:#E0452F; --rec-soft:#FBE7E3; --ok:#1F7A3A; --warn:#9A6400; --warn-soft:#FFF4D6;
+  --radius:12px; --shadow:0 1px 2px rgba(17,24,39,.06),0 8px 24px rgba(17,24,39,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F141B; --panel:#171E28; --stage:#05080D; --ink:#E9EDF2; --muted:#98A2B3; --line:#2A3441;
+    --accent:#C9D6EA; --accent-ink:#0E1826; --accent-soft:#243247;
+    --rec:#FF6A3D; --rec-soft:#3A1F18; --ok:#4ADE80; --warn:#F5C451; --warn-soft:#3A2E10;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F141B; --panel:#171E28; --stage:#05080D; --ink:#E9EDF2; --muted:#98A2B3; --line:#2A3441;
+  --accent:#C9D6EA; --accent-ink:#0E1826; --accent-soft:#243247;
+  --rec:#FF6A3D; --rec-soft:#3A1F18; --ok:#4ADE80; --warn:#F5C451; --warn-soft:#3A2E10;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;font-size:14px;line-height:1.4}
+.wrap{height:100%;display:flex;flex-direction:column;padding-block:12px;padding-inline:16px;overflow:hidden}
+@media (max-width:860px){.wrap{height:auto;overflow:visible}}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;flex:none}
+.brand{display:flex;align-items:center;gap:12px}
+.brand .mark{width:38px;height:38px;border-radius:12px;background:var(--panel);border:1px solid var(--line);color:var(--accent);display:grid;place-items:center}
+
+h1{font-family:Sora,sans-serif;font-size:18px;font-weight:700;margin:0;letter-spacing:-.01em}
+.brand small{display:block;color:var(--muted);font-size:12px}
+.status{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-size:13px;font-weight:500;color:var(--muted)}
+.status .dot{width:9px;height:9px;border-radius:50%;background:var(--line)}
+.status.rec{color:var(--rec);border-color:var(--rec)}
+.status.rec .dot{background:var(--rec);animation:pulse 1.2s infinite}
+.status.paused{color:var(--warn);border-color:var(--warn)}
+.status.paused .dot{background:var(--warn)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@media (prefers-reduced-motion: reduce){.status.rec .dot{animation:none}}
+.time{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
+
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 312px;gap:14px;flex:1;min-height:0}
+.layout>section{display:flex;flex-direction:column;gap:10px;min-height:0}
+.layout>aside{display:flex;flex-direction:column;gap:10px;min-height:0;overflow:auto}
+@media (max-width:860px){.layout{grid-template-columns:1fr}}
+
+.stage{background:var(--stage);border-radius:var(--radius);overflow:hidden;position:relative;flex:1;min-height:160px;max-width:100%;display:grid;place-items:center;box-shadow:var(--shadow)}
+@media (max-width:860px){.stage{flex:none;aspect-ratio:16/9}}
+.stage canvas,.stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
+.stage canvas{touch-action:none}
+.stage .empty{color:#B7C0CC;text-align:center;padding:24px;max-width:36ch}
+.stage .empty strong{display:block;font-family:Sora,sans-serif;font-size:17px;color:#E9EDF2;margin-bottom:6px}
+.countdown{position:absolute;inset:0;display:grid;place-items:center;background:rgba(5,8,13,.55);font-family:Sora,sans-serif;font-size:96px;font-weight:700;color:#fff}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;box-shadow:var(--shadow);flex:none}
+.panel h2{font-family:Sora,sans-serif;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
+.field label{font-size:13px;font-weight:500;color:var(--muted)}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--bg);padding:4px;border-radius:10px;border:1px solid var(--line)}
+.seg button{border:0;background:transparent;color:var(--muted);padding:6px 4px;border-radius:7px;font:inherit;font-size:13px;font-weight:500;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.seg button:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:5px 0;border-top:1px solid var(--line)}
+.row:first-of-type{border-top:0}
+.row span{font-size:13px}
+.switch{position:relative;width:36px;height:20px;border-radius:999px;background:var(--line);border:0;cursor:pointer;flex:none;padding:0}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform .15s}
+.switch[aria-checked="true"]{background:var(--accent)}
+.switch[aria-checked="true"]::after{transform:translateX(16px)}
+select,input[type=range]{width:100%;font:inherit}
+select{padding:6px 8px;font-size:13px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.bubble-row{display:flex;align-items:center;gap:10px;margin-top:8px}
+.bubble-pos{display:grid;grid-template-columns:repeat(4,28px);gap:4px;flex:none}
+.bubble-size{flex:1;font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:2px}
+.bubble-size input{margin:0}
+.bubble-pos button{border:1px solid var(--line);background:var(--bg);color:var(--muted);border-radius:8px;height:28px;padding:0;font:inherit;font-size:14px;cursor:pointer}
+.bubble-pos button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+
+.actions{display:flex;flex-direction:column;gap:8px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:9px 12px;border-radius:10px;font:inherit;font-weight:600;font-size:14px;cursor:pointer;width:100%}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.rec{background:linear-gradient(135deg,#FF6A3D,#D62839);border-color:transparent;color:#fff}
+.btn.ghost{background:transparent}
+.btn .k{width:12px;height:12px;border-radius:50%;background:currentColor;flex:none}
+.btn .sq{width:12px;height:12px;border-radius:2px;background:currentColor;flex:none}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+.note{font-size:12px;color:var(--muted);margin:8px 0 0;line-height:1.35}
+.alert{border-radius:10px;padding:8px 10px;font-size:12px;margin-top:8px;border:1px solid}
+.alert.err{background:var(--rec-soft);border-color:var(--rec);color:var(--ink)}
+.alert.warn{background:var(--warn-soft);border-color:var(--warn);color:var(--ink)}
+.alert.ok{background:var(--accent-soft);border-color:var(--accent);color:var(--ink)}
+
+.trim{margin-top:0}
+.trim .marks{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+.range2{position:relative;height:34px}
+.range2 input[type=range]{position:absolute;left:0;right:0;top:12px;margin:0;pointer-events:none;-webkit-appearance:none;appearance:none;background:transparent;height:16px}
+.range2 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;width:18px;height:18px;border-radius:50%;background:var(--accent);border:2px solid var(--panel);box-shadow:0 0 0 1px var(--accent);cursor:grab}
+.range2 input[type=range]::-moz-range-thumb{pointer-events:auto;width:16px;height:16px;border-radius:50%;background:var(--accent);border:2px solid var(--panel);cursor:grab}
+.range2 .track{position:absolute;left:9px;right:9px;top:19px;height:4px;background:var(--line);border-radius:2px}
+.range2 .sel{position:absolute;top:19px;height:4px;background:var(--accent);border-radius:2px}
+.meta{display:grid;grid-template-columns:repeat(4,auto);justify-content:start;gap:4px 18px;font-size:12px;color:var(--muted);margin-top:6px}
+.meta b{color:var(--ink);font-weight:500}
+.tips{font-size:12px;color:var(--muted);flex:none}
+.tips summary{cursor:pointer;font-weight:500;color:var(--ink);list-style:none;display:flex;align-items:center;gap:6px}
+.tips summary::before{content:'?';display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;border:1px solid var(--line);font-size:11px}
+.tips p{margin:6px 0 0;line-height:1.4}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="mark" aria-hidden="true"><svg viewBox="0 0 180 180" width="38" height="38"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF6A3D"/><stop offset="1" stop-color="#D62839"/></linearGradient></defs><circle cx="90" cy="90" r="52" fill="none" stroke="currentColor" stroke-width="12"/><circle cx="90" cy="90" r="30" fill="url(#lg)"/></svg></div>
+      <div><h1>ShowMe</h1><small>SM Seguros · vídeos explicativos de pantalla y cámara</small></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px"><a href="./" class="btn ghost" style="width:auto;padding:6px 12px;font-size:13px;text-decoration:none;color:var(--muted)">&larr; Kompass</a><div class="status" id="status"><span class="dot"></span><span id="statusText">Lista</span><span class="time" id="timer">00:00</span></div></div>
+  </header>
+
+  <div class="layout">
+    <section>
+      <div class="stage" id="stage">
+        <div class="empty" id="stageEmpty"><strong>Aquí verás la previsualización</strong>Elige qué grabar en el panel de la derecha y pulsa «Preparar fuentes». Para moverte por otras ventanas durante la grabación, comparte «Pantalla completa».</div>
+        <canvas id="canvas" hidden></canvas>
+        <video id="playback" hidden controls playsinline></video>
+        <div class="countdown" id="countdown" hidden>3</div>
+      </div>
+
+      <div class="panel trim" id="review" hidden>
+        <h2>Revisar y recortar</h2>
+        <div class="range2">
+          <div class="track"></div><div class="sel" id="sel"></div>
+          <input type="range" id="trimStart" min="0" max="1000" value="0" aria-label="Inicio del recorte">
+          <input type="range" id="trimEnd" min="0" max="1000" value="1000" aria-label="Fin del recorte">
+        </div>
+        <div class="marks"><span>Inicio: <b class="time" id="tStart">00:00.0</b></span><span>Duración final: <b class="time" id="tLen">00:00.0</b></span><span>Fin: <b class="time" id="tEnd">00:00.0</b></span></div>
+        <div class="meta">
+          <div>Formato <b id="mFormat">—</b></div>
+          <div>Tamaño <b id="mSize">—</b></div>
+          <div>Resolución <b id="mRes">—</b></div>
+          <div>Nombre <b id="mName">—</b></div>
+        </div>
+        <div class="split" style="margin-top:10px">
+          <button class="btn primary" id="btnSave">Guardar vídeo</button>
+          <button class="btn ghost" id="btnDiscard">Descartar y grabar otro</button>
+        </div>
+        <div id="reviewMsg"></div>
+      </div>
+
+      <details class="tips">
+        <summary>Consejos de uso <span class="note" id="fmtNote" style="margin:0 0 0 auto;font-weight:400"></span></summary>
+        <p><b>Burbuja flotante:</b> se abre sobre la pantalla al preparar las fuentes; arrástrala donde quieras y sus controles aparecen al pasar el ratón. Si la cierras, la burbuja se añade desde la previsualización.</p>
+        <p><b>Cómo compartir:</b> guarda el vídeo y súbelo a la carpeta de SharePoint o OneDrive de la agencia; desde allí obtienes el enlace para el cliente o el equipo.</p>
+        <p><b>Uso:</b> funciona en Chrome y Edge de escritorio. La primera vez el navegador pedirá permiso de cámara y micrófono; concédelo y quedará recordado para este sitio.</p><p><b>Cursor y dibujo:</b> para resaltar el cursor usa PowerToys (Utilidades del ratón) y para dibujar sobre la pantalla, ZoomIt (Ctrl+2). Ambos son gratuitos de Microsoft y salen en el vídeo.</p>
+      </details>
+    </section>
+
+    <aside>
+      <div class="panel">
+        <h2>Grabación</h2>
+        <div class="actions">
+          <button class="btn primary" id="btnPrepare">Preparar fuentes</button>
+          <button class="btn rec" id="btnRecord" disabled><span class="k"></span>Grabar</button>
+          <div class="split">
+            <button class="btn" id="btnPause" disabled>Pausar</button>
+            <button class="btn" id="btnStop" disabled><span class="sq"></span>Parar</button>
+          </div>
+        </div>
+        <div id="msg"></div>
+      </div>
+      <div class="panel">
+        <h2>Qué grabar</h2>
+        <div class="field">
+          <div class="seg" role="group" aria-label="Modo">
+            <button id="modeBoth" aria-pressed="true">Pantalla + cám.</button>
+            <button id="modeScreen" aria-pressed="false">Solo pantalla</button>
+            <button id="modeCam" aria-pressed="false">Solo cámara</button>
+          </div>
+        </div>
+        <div class="row"><span>Micrófono</span><button class="switch" id="swMic" role="switch" aria-checked="true" aria-label="Micrófono"></button></div>
+        <div class="row"><span>Sonido del sistema (pestaña)</span><button class="switch" id="swSys" role="switch" aria-checked="false" aria-label="Sonido del sistema"></button></div>
+        <div class="row"><span>Cuenta atrás de 3 s</span><button class="switch" id="swCount" role="switch" aria-checked="true" aria-label="Cuenta atrás"></button></div>
+        <div class="field" style="margin-top:8px;margin-bottom:0">
+          <label for="quality">Calidad</label>
+          <select id="quality">
+            <option value="1280">Estándar (720p, archivos ligeros)</option>
+            <option value="1920" selected>Alta (1080p)</option>
+          </select>
+        </div>
+      </div>
+      <div class="panel" id="bubblePanel">
+        <h2>Burbuja flotante</h2>
+        <button class="btn" id="btnPip" disabled>Mostrar burbuja en pantalla</button>
+        <div class="bubble-row">
+          <div class="bubble-pos" id="bubblePos" title="Esquina de la burbuja de previsualización">
+            <button data-pos="tl" aria-pressed="false" aria-label="Arriba izquierda">&#8598;</button>
+            <button data-pos="tr" aria-pressed="false" aria-label="Arriba derecha">&#8599;</button>
+            <button data-pos="bl" aria-pressed="false" aria-label="Abajo izquierda">&#8601;</button>
+            <button data-pos="br" aria-pressed="true" aria-label="Abajo derecha">&#8600;</button>
+          </div>
+          <label for="bubbleSize" class="bubble-size"><span>Tamaño previsualización · <span id="bubbleSizeVal">22 %</span></span><input type="range" id="bubbleSize" min="12" max="40" value="22"></label>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const canvas = $('canvas'), ctx = canvas.getContext('2d');
+  const playback = $('playback');
+  const state = {
+    mode: 'both', mic: true, sys: false, countdown: true, pos: 'br', bubble: 22, bx: null, by: null, drag: null,
+    screenStream: null, camStream: null, micStream: null, audioCtx: null,
+    recorder: null, chunks: [], blob: null, mime: '', ext: 'webm', raf: 0,
+    startAt: 0, pausedTotal: 0, pauseAt: 0, timerId: 0, elapsed: 0, duration: 0, phase: 'idle'
+  };
+  // Reloj de dibujo en un worker: Chrome congela requestAnimationFrame y ralentiza los temporizadores
+  // cuando la pestaña queda oculta; el worker sigue a 30 fps aunque el usuario cambie de ventana.
+  let ticker = null;
+  try {
+    const src = 'let t=null;onmessage=e=>{clearInterval(t);t=null;if(e.data>0)t=setInterval(()=>postMessage(0),e.data)}';
+    ticker = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
+  } catch (e) { ticker = null; }
+  let fallbackTimer = 0;
+  const startTicker = () => { if (ticker) { ticker.onmessage = draw; ticker.postMessage(33); } else { clearInterval(fallbackTimer); fallbackTimer = setInterval(draw, 33); } };
+  const stopTicker = () => { if (ticker) ticker.postMessage(0); clearInterval(fallbackTimer); };
+  const screenVid = document.createElement('video'); screenVid.muted = true; screenVid.playsInline = true;
+  const camVid = document.createElement('video'); camVid.muted = true; camVid.playsInline = true;
+
+  // Preferencias por navegador (solo comodidad)
+  try {
+    const p = JSON.parse(localStorage.getItem('showme-smseguros') || '{}');
+    if (p.mode) state.mode = p.mode; if (p.pos) state.pos = p.pos; if (p.bubble) state.bubble = p.bubble;
+    if (typeof p.mic === 'boolean') state.mic = p.mic; if (typeof p.countdown === 'boolean') state.countdown = p.countdown;
+    if (p.quality) $('quality').value = p.quality;
+    if (p.pipShape === 'circle' || p.pipShape === 'square') pipShape = p.pipShape;
+    if (typeof p.bx === 'number' && typeof p.by === 'number') { state.bx = p.bx; state.by = p.by; }
+  } catch (e) {}
+  const savePrefs = () => { try { localStorage.setItem('showme-smseguros', JSON.stringify({mode: state.mode, pos: state.pos, bubble: state.bubble, mic: state.mic, countdown: state.countdown, quality: $('quality').value, pipShape, bx: state.bx, by: state.by})); } catch (e) {} };
+
+  // Formato de salida
+  const candidates = [
+    ['video/mp4;codecs="avc1.42E01E,mp4a.40.2"', 'mp4'], ['video/mp4;codecs=avc1', 'mp4'], ['video/mp4', 'mp4'],
+    ['video/webm;codecs=vp9,opus', 'webm'], ['video/webm;codecs=vp8,opus', 'webm'], ['video/webm', 'webm']
+  ];
+  if (window.MediaRecorder) {
+    for (const [m, e] of candidates) { if (MediaRecorder.isTypeSupported(m)) { state.mime = m; state.ext = e; break; } }
+  }
+  $('fmtNote').textContent = state.mime
+    ? (state.ext === 'mp4' ? 'Este navegador exporta directamente en MP4.' : 'Este navegador exporta en WebM (se reproduce en cualquier navegador y en Teams; si necesitas MP4, usa Chrome o Edge actualizados).')
+    : 'Este navegador no permite grabar vídeo. Usa Chrome o Edge de escritorio.';
+
+  // UI helpers
+  const fmt = (s, tenths) => { s = Math.max(0, s || 0); const m = Math.floor(s / 60), r = s - m * 60; return String(m).padStart(2, '0') + ':' + (tenths ? r.toFixed(1).padStart(4, '0') : String(Math.floor(r)).padStart(2, '0')); };
+  const setStatus = (cls, text) => { $('status').className = 'status ' + cls; $('statusText').textContent = text; };
+  const show = (el, msg, cls) => { el.innerHTML = msg ? '<div class="alert ' + cls + '">' + msg + '</div>' : ''; };
+  const setPressed = (group, key, attr) => { group.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset[attr] === key))); };
+
+  const applyMode = () => {
+    ['modeBoth', 'modeScreen', 'modeCam'].forEach(id => $(id).setAttribute('aria-pressed', String(({modeBoth: 'both', modeScreen: 'screen', modeCam: 'cam'})[id] === state.mode)));
+    $('bubblePanel').hidden = state.mode === 'screen';
+    $('swSys').closest('.row').hidden = state.mode === 'cam';
+  };
+  $('modeBoth').onclick = () => { state.mode = 'both'; applyMode(); savePrefs(); };
+  $('modeScreen').onclick = () => { state.mode = 'screen'; applyMode(); savePrefs(); closePip(); };
+  $('modeCam').onclick = () => { state.mode = 'cam'; applyMode(); savePrefs(); };
+  applyMode();
+
+  const bindSwitch = (id, key) => { const b = $(id); b.setAttribute('aria-checked', String(state[key])); b.onclick = () => { state[key] = !state[key]; b.setAttribute('aria-checked', String(state[key])); savePrefs(); }; };
+  bindSwitch('swMic', 'mic'); bindSwitch('swSys', 'sys'); bindSwitch('swCount', 'countdown');
+  $('swMic').addEventListener('click', () => { if (state.micStream) { state.micStream.getAudioTracks()[0].enabled = state.mic; syncPip(); } });
+  setPressed($('bubblePos'), state.pos, 'pos');
+  $('bubblePos').onclick = e => { const b = e.target.closest('button'); if (!b) return; state.pos = b.dataset.pos; state.bx = state.by = null; setPressed($('bubblePos'), state.pos, 'pos'); savePrefs(); };
+
+  // Burbuja flotante tipo Loom (ventana imagen en imagen con la cámara y los controles)
+  let pipWin = null, pipEls = null, pipSize = 240, pipShape = 'square';
+  const PIP_SIZES = [180, 240, 320];
+  const pipOpen = () => !!pipWin;
+  const updatePipBtn = () => { $('btnPip').textContent = pipOpen() ? 'Ocultar burbuja' : 'Mostrar burbuja en pantalla'; $('btnPip').disabled = !state.camStream && !pipOpen(); };
+  // La burbuja flotante solo queda capturada al compartir la pantalla completa (monitor)
+  const screenIsMonitor = () => { if (!state.screenStream) return false; const t = state.screenStream.getVideoTracks()[0]; const d = t && t.getSettings ? t.getSettings().displaySurface : undefined; return d === undefined || d === 'monitor'; };
+  const bubbleCaptured = () => pipOpen() && screenIsMonitor();
+  // Dónde cae la burbuja flotante dentro del fotograma capturado, en píxeles del lienzo.
+  // Solo es fiable si el monitor capturado es el que contiene la burbuja (se comprueba por tamaño).
+  function pipRectOnCanvas() {
+    if (!pipWin || !state.screenStream) return null;
+    try {
+      const t = state.screenStream.getVideoTracks()[0].getSettings();
+      const dpr = pipWin.devicePixelRatio || 1, scr = pipWin.screen;
+      const monW = Math.round(scr.width * dpr), monH = Math.round(scr.height * dpr);
+      if (!t.width || Math.abs(monW - t.width) > 4 || Math.abs(monH - t.height) > 4) return null;
+      const k = canvas.width / t.width;
+      const ox = (scr.availLeft || 0), oy = (scr.availTop || 0);
+      const x = (pipWin.screenX - ox) * dpr * k, y = (pipWin.screenY - oy) * dpr * k;
+      const w = pipWin.outerWidth * dpr * k, h = pipWin.outerHeight * dpr * k;
+      const iw = pipWin.innerWidth * dpr * k, ih = pipWin.innerHeight * dpr * k;
+      if (!(w > 0 && h > 0)) return null;
+      return { x, y, w, h, ix: x + (w - iw) / 2, iy: y + (h - ih), iw, ih };
+    } catch (e) { return null; }
+  }
+  // Pinta en el vídeo la cámara ajustada exactamente a la ventana flotante capturada (tapa botones y cronómetro).
+  // Solo cuando la burbuja está quieta: mientras se mueve, la captura muestra la ventana real (cámara a pantalla
+  // completa, sin controles), que es más limpia que cualquier capa pintada con retraso.
+  let pipPrev = null, pipLastMove = 0;
+  const pipMoving = () => performance.now() - pipLastMove < 400;
+  function drawCamRect(X, Y, W, H) {
+    const vw = camVid.videoWidth, vh = camVid.videoHeight, cx = X + W / 2, cy = Y + H / 2;
+    const D = Math.hypot(W, H) + 4;
+    ctx.save();
+    if (pipShape === 'square') { ctx.beginPath(); ctx.rect(X, Y, W, H); ctx.clip(); }
+    else { ctx.beginPath(); ctx.arc(cx, cy, D / 2, 0, Math.PI * 2); ctx.clip(); }
+    const box = pipShape === 'square' ? Math.max(W / vw, H / vh) : Math.max(D / vw, D / vh);
+    const sw = vw * box, sh = vh * box;
+    ctx.translate(cx + sw / 2, cy - sh / 2); ctx.scale(-1, 1); ctx.drawImage(camVid, 0, 0, sw, sh);
+    ctx.restore();
+    if (pipShape !== 'square') { ctx.beginPath(); ctx.arc(cx, cy, D / 2 - 2, 0, Math.PI * 2); ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(255,255,255,.92)'; ctx.stroke(); }
+  }
+  function drawCleanBubble() {
+    const r = pipRectOnCanvas(); if (!r || !camVid.videoWidth) return;
+    const now = performance.now();
+    if (pipPrev && (Math.abs(pipPrev.x - r.x) > 0.5 || Math.abs(pipPrev.y - r.y) > 0.5 || Math.abs(pipPrev.w - r.w) > 0.5 || Math.abs(pipPrev.h - r.h) > 0.5)) pipLastMove = now;
+    pipPrev = r;
+    const moving = pipMoving();
+    if (pipEls) pipEls.box.classList.toggle('moving', moving);
+    if (moving) return;
+    const pad = 4; drawCamRect(r.x - pad, r.y - pad, r.w + pad * 2, r.h + pad * 2);
+  }
+  const ICONS = {
+    rec: '<svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="12" r="7" fill="#fff"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" width="16" height="16" fill="#fff"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>',
+    play: '<svg viewBox="0 0 24 24" width="16" height="16" fill="#fff"><path d="M7 5v14l12-7z"/></svg>',
+    stop: '<svg viewBox="0 0 24 24" width="16" height="16" fill="#fff"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>',
+    size: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2"><path d="M4 9V4h5M20 15v5h-5M4 4l6 6M20 20l-6-6"/></svg>',
+    screen: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8"/></svg>',
+    cam: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="7" width="13" height="10" rx="2"/><path d="M16 11l5-3v8l-5-3z"/></svg>',
+    mic: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
+    micOff: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M4 4l16 16"/></svg>',
+    shape: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2"><circle cx="9" cy="12" r="5"/><rect x="13" y="7" width="8" height="10" rx="2"/></svg>',
+    close: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>'
+  };
+  const PIP_CSS = `
+    html,body{margin:0;height:100%;background:#0B0F14;overflow:hidden;font-family:system-ui,-apple-system,Segoe UI,sans-serif;user-select:none}
+    [hidden]{display:none!important}
+    .b{position:relative;width:100vw;height:100vh;display:grid;place-items:center;app-region:drag;-webkit-app-region:drag}
+    .b.moving .bar,.b.moving .top{opacity:0!important}
+    .cam{width:100vmin;height:100vmin;overflow:hidden;position:relative;box-sizing:border-box;border:4px solid transparent;border-radius:50%}
+    .cam.square{border-radius:0;border-width:0}
+    .b:hover .cam.rec{box-shadow:inset 0 0 0 4px #F04E36}.b:hover .cam.paused{box-shadow:inset 0 0 0 4px #F5C451}
+    .cam video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:block}
+    .top{position:absolute;top:8px;left:0;right:0;display:flex;justify-content:center;pointer-events:none}
+    .pill{background:rgba(0,0,0,.65);color:#fff;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;display:flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums}
+    .pill .d{width:7px;height:7px;border-radius:50%;background:#F04E36}
+    .pill.paused .d{background:#F5C451}
+    .bar{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);display:flex;gap:4px;background:rgba(0,0,0,.72);padding:5px;border-radius:999px;opacity:0;transition:opacity .15s}
+    .b:hover .bar,.b:hover .top{opacity:1}
+    .top{opacity:0;transition:opacity .15s}
+    button{width:30px;height:30px;border-radius:50%;border:0;background:transparent;display:grid;place-items:center;cursor:pointer;padding:0;app-region:no-drag;-webkit-app-region:no-drag}
+    .bar{app-region:no-drag;-webkit-app-region:no-drag}
+    button:hover{background:rgba(255,255,255,.18)}
+    button.rec{background:linear-gradient(135deg,#FF6A3D,#D62839)}button.rec:hover{filter:brightness(1.1)}
+    button.on{background:rgba(255,255,255,.28)}
+    button[hidden]{display:none}
+    .cd{position:absolute;inset:0;display:grid;place-items:center;font-size:64px;font-weight:700;color:#fff;background:rgba(0,0,0,.45);border-radius:inherit}
+    .toast{position:absolute;left:8px;right:8px;bottom:52px;background:rgba(0,0,0,.8);color:#fff;font-size:11px;padding:6px 8px;border-radius:8px;text-align:center}
+  `;
+  const pipBtn = (d, key, title, fn) => { const b = d.createElement('button'); b.innerHTML = ICONS[key]; b.title = title; b.setAttribute('aria-label', title); b.onclick = e => { e.stopPropagation(); fn(); }; return b; };
+  function pipToast(msg) { if (!pipEls) return; pipEls.toast.textContent = msg; pipEls.toast.hidden = false; clearTimeout(pipEls.toastT); pipEls.toastT = setTimeout(() => { pipEls.toast.hidden = true; }, 3500); }
+
+  async function openPip() {
+    if (pipWin) return true;
+    if (!('documentPictureInPicture' in window)) { show($('msg'), 'Este navegador no permite la burbuja flotante (necesitas Chrome o Edge 116 o superior); la burbuja se añadirá desde la previsualización.', 'warn'); return false; }
+    try {
+      pipWin = await documentPictureInPicture.requestWindow({ width: pipSize, height: pipSize, disallowReturnToOpener: true });
+    } catch (e) { pipWin = null; if (state.camStream) show($('msg'), 'Chrome solo abre la burbuja justo después de un clic: pulsa «Mostrar burbuja en pantalla».', 'warn'); return false; }
+    const d = pipWin.document;
+    const st = d.createElement('style'); st.textContent = PIP_CSS; d.head.appendChild(st);
+    const box = d.createElement('div'); box.className = 'b';
+    const cam = d.createElement('div'); cam.className = 'cam' + (pipShape === 'square' ? ' square' : '');
+    const v = d.createElement('video'); v.muted = true; v.autoplay = true; v.playsInline = true; if (state.camStream) v.srcObject = state.camStream; cam.appendChild(v);
+    const top = d.createElement('div'); top.className = 'top'; const pill = d.createElement('div'); pill.className = 'pill'; pill.innerHTML = '<span class="d"></span><span class="t">00:00</span>'; top.appendChild(pill);
+    const bar = d.createElement('div'); bar.className = 'bar';
+    const bRec = pipBtn(d, 'rec', 'Grabar', () => { if (state.phase === 'ready') startRecording(); else togglePause(); }); bRec.className = 'rec';
+    const bStop = pipBtn(d, 'stop', 'Parar y revisar', () => stopRecording());
+    const bMic = pipBtn(d, 'mic', 'Silenciar micrófono', () => toggleMic());
+    const bScreen = pipBtn(d, 'screen', 'Pantalla + cámara', () => toggleScreen());
+    const bSize = pipBtn(d, 'size', 'Cambiar tamaño', () => { pipSize = PIP_SIZES[(PIP_SIZES.indexOf(pipSize) + 1) % PIP_SIZES.length]; try { pipWin.resizeTo(pipSize, pipSize); } catch (e) { pipToast('Arrastra la esquina de la ventana para cambiar el tamaño.'); } });
+    const bShape = pipBtn(d, 'shape', 'Redonda / cuadrada', () => { pipShape = pipShape === 'circle' ? 'square' : 'circle'; cam.classList.toggle('square', pipShape === 'square'); savePrefs(); });
+    const bClose = pipBtn(d, 'close', 'Cerrar burbuja', () => closePip());
+    [bRec, bStop, bMic, bScreen, bSize, bShape, bClose].forEach(x => bar.appendChild(x));
+    const cd = d.createElement('div'); cd.className = 'cd'; cd.hidden = true; cam.appendChild(cd);
+    const toast = d.createElement('div'); toast.className = 'toast'; toast.hidden = true;
+    box.appendChild(cam); box.appendChild(top); box.appendChild(bar); box.appendChild(toast); d.body.appendChild(box);
+    pipEls = { box, cam, pill, top, bRec, bStop, bMic, bScreen, cd, toast, toastT: 0, video: v };
+    if (!state.camStream) pipToast('Preparando cámara…');
+    pipWin.addEventListener('pagehide', () => { pipWin = null; pipEls = null; updatePipBtn(); });
+    syncPip(); updatePipBtn(); return true;
+  }
+  function closePip() { if (pipWin) { try { pipWin.close(); } catch (e) {} pipWin = null; pipEls = null; } updatePipBtn(); }
+  function syncPip() {
+    if (!pipEls) return;
+    const ph = state.phase, rec = ph === 'recording', paused = ph === 'paused';
+    pipEls.cam.classList.toggle('rec', rec); pipEls.cam.classList.toggle('paused', paused);
+    pipEls.bRec.innerHTML = rec ? ICONS.pause : (paused ? ICONS.play : ICONS.rec);
+    pipEls.bRec.title = rec ? 'Pausar' : (paused ? 'Reanudar' : 'Grabar');
+    pipEls.bRec.className = (ph === 'ready') ? 'rec' : '';
+    pipEls.bRec.hidden = !(ph === 'ready' || rec || paused);
+    pipEls.bStop.hidden = !(rec || paused);
+    pipEls.pill.classList.toggle('paused', paused);
+    pipEls.pill.querySelector('.t').textContent = (rec || paused) ? $('timer').textContent : (ph === 'review' ? 'Lista para revisar' : 'Preparada');
+    pipEls.pill.querySelector('.d').style.display = (rec || paused) ? '' : 'none';
+    const micOn = state.micStream && state.micStream.getAudioTracks()[0] && state.micStream.getAudioTracks()[0].enabled;
+    pipEls.bMic.innerHTML = state.micStream ? (micOn ? ICONS.mic : ICONS.micOff) : ICONS.micOff; pipEls.bMic.title = micOn ? 'Silenciar micrófono' : 'Activar micrófono'; pipEls.bMic.classList.toggle('on', !micOn);
+    const screenOn = !!state.screenStream && state.mode !== 'cam';
+    pipEls.bScreen.innerHTML = screenOn ? ICONS.cam : ICONS.screen;
+    pipEls.bScreen.title = screenOn ? 'Pasar a solo cámara (deja de compartir pantalla)' : 'Compartir pantalla (pantalla + cámara)';
+  }
+  function toggleMic() {
+    if (!state.micStream) { pipToast('No hay micrófono activo. Actívalo en la app antes de preparar fuentes.'); return; }
+    const t = state.micStream.getAudioTracks()[0]; t.enabled = !t.enabled; $('swMic').setAttribute('aria-checked', String(t.enabled)); syncPip();
+  }
+  async function toggleScreen() {
+    if (state.phase === 'stopping' || state.phase === 'review' || state.phase === 'idle') return;
+    if (state.screenStream && state.mode !== 'cam') {
+      // Solo cámara: dejamos de compartir; la grabación sigue con la cámara a pantalla completa
+      stopStream(state.screenStream); state.screenStream = null; state.mode = 'cam'; applyMode(); syncPip(); pipToast('Solo cámara. La pantalla ya no se comparte.'); return;
+    }
+    try {
+      const nav = pipWin ? pipWin.navigator : navigator;
+      const dmOpts = { video: { frameRate: 30, cursor: 'always', displaySurface: 'monitor' }, audio: false, selfBrowserSurface: 'exclude', surfaceSwitching: 'include' };
+      const ctl = (pipWin && 'CaptureController' in pipWin) ? new pipWin.CaptureController() : (('CaptureController' in window) ? new CaptureController() : null); if (ctl) dmOpts.controller = ctl;
+      const ss = await nav.mediaDevices.getDisplayMedia(dmOpts);
+      if (ctl) { try { ctl.setFocusBehavior('focus-captured-surface'); } catch (e) {} }
+      state.screenStream = ss; screenVid.srcObject = ss; await screenVid.play();
+      ss.getVideoTracks()[0].addEventListener('ended', () => { if (state.mode !== 'cam') { state.screenStream = null; state.mode = 'cam'; applyMode(); syncPip(); pipToast('Se dejó de compartir la pantalla: solo cámara.'); } });
+      state.mode = 'both'; applyMode(); syncPip(); pipToast(screenIsMonitor() ? 'Pantalla + cámara.' : 'Ventana/pestaña: la cámara se añade desde ShowMe.');
+    } catch (e) { pipToast('No se compartió la pantalla.'); }
+  }
+  $('btnPip').onclick = async () => { if (pipOpen()) closePip(); else if (await openPip()) syncPip(); };
+
+  // Geometría de la burbuja (centro y diámetro en píxeles del lienzo)
+  const bubbleGeom = () => {
+    const W = canvas.width, H = canvas.height, d = Math.round(H * state.bubble / 100), m = Math.round(H * 0.03);
+    let cx, cy;
+    if (state.bx !== null) { cx = state.bx * W; cy = state.by * H; }
+    else { cx = (state.pos.endsWith('l') ? m : W - m - d) + d / 2; cy = (state.pos.startsWith('t') ? m : H - m - d) + d / 2; }
+    cx = Math.min(Math.max(cx, d / 2), W - d / 2); cy = Math.min(Math.max(cy, d / 2), H - d / 2);
+    return { cx, cy, d };
+  };
+  // Coordenadas del ratón → píxeles del lienzo (el canvas se muestra con object-fit: contain)
+  const toCanvas = e => {
+    const r = canvas.getBoundingClientRect(), s = Math.min(r.width / canvas.width, r.height / canvas.height);
+    const ox = (r.width - canvas.width * s) / 2, oy = (r.height - canvas.height * s) / 2;
+    return { x: (e.clientX - r.left - ox) / s, y: (e.clientY - r.top - oy) / s };
+  };
+  const overBubble = p => { const g = bubbleGeom(); return Math.hypot(p.x - g.cx, p.y - g.cy) <= g.d / 2; };
+  canvas.addEventListener('pointerdown', e => {
+    if (state.mode !== 'both' || !camVid.videoWidth || bubbleCaptured()) return;
+    const p = toCanvas(e); if (!overBubble(p)) return;
+    const g = bubbleGeom(); state.drag = { dx: g.cx - p.x, dy: g.cy - p.y };
+    canvas.setPointerCapture(e.pointerId); canvas.style.cursor = 'grabbing'; e.preventDefault();
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (state.drag) { const p = toCanvas(e); state.bx = (p.x + state.drag.dx) / canvas.width; state.by = (p.y + state.drag.dy) / canvas.height; return; }
+    if (state.mode === 'both' && camVid.videoWidth && !bubbleCaptured()) canvas.style.cursor = overBubble(toCanvas(e)) ? 'grab' : 'default';
+  });
+  const endDrag = e => { if (!state.drag) return; state.drag = null; canvas.style.cursor = 'grab'; $('bubblePos').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', 'false')); savePrefs(); };
+  canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag);
+  $('bubbleSize').value = state.bubble; $('bubbleSizeVal').textContent = state.bubble + ' %';
+  $('bubbleSize').oninput = e => { state.bubble = +e.target.value; $('bubbleSizeVal').textContent = state.bubble + ' %'; savePrefs(); };
+  $('quality').onchange = savePrefs;
+
+  // Fuentes
+  const stopStream = s => { if (s) s.getTracks().forEach(t => t.stop()); };
+  const releaseSources = () => {
+    stopTicker();
+    stopStream(state.screenStream); stopStream(state.camStream); stopStream(state.micStream);
+    state.screenStream = state.camStream = state.micStream = null;
+    if (state.audioCtx) { state.audioCtx.close().catch(() => {}); state.audioCtx = null; }
+  };
+
+  async function prepare() {
+    show($('msg'), '', '');
+    releaseSources();
+    if (state.mode !== 'screen') await openPip();
+    try {
+      if (state.mode !== 'cam') {
+        const dmOpts = { video: { frameRate: 30, cursor: 'always', displaySurface: 'monitor' }, audio: state.sys, selfBrowserSurface: 'exclude', surfaceSwitching: 'include', systemAudio: state.sys ? 'include' : 'exclude' };
+        const ctl = ('CaptureController' in window) ? new CaptureController() : null; if (ctl) dmOpts.controller = ctl;
+        state.screenStream = await navigator.mediaDevices.getDisplayMedia(dmOpts);
+        // Al elegir una ventana o pestaña, Chrome pasa el foco a ella (debe pedirse justo al resolverse la promesa)
+        if (ctl) { try { ctl.setFocusBehavior('focus-captured-surface'); } catch (e) {} }
+        screenVid.srcObject = state.screenStream; await screenVid.play();
+        state.screenStream.getVideoTracks()[0].addEventListener('ended', () => { if (state.mode === 'cam' || !state.screenStream) return; if (state.phase === 'recording' || state.phase === 'paused') { state.screenStream = null; state.mode = 'cam'; applyMode(); syncPip(); pipToast('Se dejó de compartir la pantalla: solo cámara.'); } else { releaseSources(); closePip(); resetUI('Se dejó de compartir la pantalla.'); } });
+      }
+      if (state.mode !== 'screen') {
+        state.camStream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' }, audio: false });
+        camVid.srcObject = state.camStream; await camVid.play();
+      }
+      if (state.mic) {
+        try { state.micStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false }); }
+        catch (e) { show($('msg'), 'No se pudo usar el micrófono; se grabará sin voz. Revisa los permisos del navegador.', 'warn'); }
+      }
+    } catch (e) {
+      releaseSources(); closePip();
+      const denied = e && (e.name === 'NotAllowedError' || e.name === 'SecurityError');
+      show($('msg'), denied
+        ? 'El navegador no ha concedido el permiso. Si no apareció ningún diálogo, abre esta app en su propia pestaña y vuelve a intentarlo.'
+        : 'No se pudieron preparar las fuentes: ' + (e && e.message ? e.message : e), 'err');
+      return;
+    }
+    // Lienzo
+    const maxW = +$('quality').value;
+    let w = 1280, h = 720;
+    if (state.mode !== 'cam') { const s = state.screenStream.getVideoTracks()[0].getSettings(); w = s.width || 1280; h = s.height || 720; }
+    else { const s = state.camStream.getVideoTracks()[0].getSettings(); w = s.width || 1280; h = s.height || 720; }
+    if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+    canvas.width = w - (w % 2); canvas.height = h - (h % 2);
+    $('stageEmpty').hidden = true; playback.hidden = true; canvas.hidden = false; $('review').hidden = true;
+    state.phase = 'ready';
+    setStatus('', 'Preparada'); $('timer').textContent = '00:00';
+    $('btnRecord').disabled = false; $('btnPrepare').textContent = 'Cambiar fuentes';
+    updatePipBtn();
+    startTicker();
+    if (state.mode === 'screen') closePip();
+    else if (pipEls) { pipEls.video.srcObject = state.camStream; pipEls.video.play().catch(() => {}); pipEls.toast.hidden = true; syncPip(); }
+    if (state.mode === 'both' && state.screenStream && !screenIsMonitor()) { show($('msg'), 'Has compartido una ventana o pestaña, así que la burbuja flotante no sale en la captura: ShowMe añade la cámara al vídeo por su cuenta (colócala en la previsualización). Para que salga tal cual la ves, comparte «Pantalla completa».', 'warn'); pipToast('Ventana/pestaña: la cámara se añade desde ShowMe.'); }
+  }
+
+  function draw() {
+    const W = canvas.width, H = canvas.height;
+    ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+    const fit = (vid, cover) => {
+      const vw = vid.videoWidth || 16, vh = vid.videoHeight || 9;
+      const r = cover ? Math.max(W / vw, H / vh) : Math.min(W / vw, H / vh);
+      const dw = vw * r, dh = vh * r; return [(W - dw) / 2, (H - dh) / 2, dw, dh];
+    };
+    if (state.mode === 'cam' || !state.screenStream) {
+      const [x, y, dw, dh] = fit(camVid, true);
+      ctx.save(); ctx.translate(W, 0); ctx.scale(-1, 1); ctx.drawImage(camVid, W - x - dw, y, dw, dh); ctx.restore();
+    } else {
+      const [x, y, dw, dh] = fit(screenVid, false); ctx.drawImage(screenVid, x, y, dw, dh);
+      if (state.mode === 'both' && bubbleCaptured()) drawCleanBubble();
+      if (state.mode === 'both' && camVid.videoWidth && !bubbleCaptured()) {
+        const { cx, cy, d } = bubbleGeom();
+        ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, d / 2, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
+        const vw = camVid.videoWidth, vh = camVid.videoHeight, r = Math.max(d / vw, d / vh), sw = vw * r, sh = vh * r;
+        ctx.translate(cx + sw / 2, cy - sh / 2); ctx.scale(-1, 1); ctx.drawImage(camVid, 0, 0, sw, sh); ctx.restore();
+        ctx.beginPath(); ctx.arc(cx, cy, d / 2 - 1.5, 0, Math.PI * 2); ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.stroke();
+      }
+    }
+  }
+
+  // Grabación
+  function buildStream() {
+    const out = new MediaStream(canvas.captureStream(30).getVideoTracks());
+    const audioTracks = [];
+    if (state.micStream) audioTracks.push(state.micStream.getAudioTracks()[0]);
+    if (state.screenStream) audioTracks.push(...state.screenStream.getAudioTracks());
+    const tracks = audioTracks.filter(Boolean);
+    if (tracks.length === 1) out.addTrack(tracks[0]);
+    else if (tracks.length > 1) {
+      state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const dest = state.audioCtx.createMediaStreamDestination();
+      tracks.forEach(t => state.audioCtx.createMediaStreamSource(new MediaStream([t])).connect(dest));
+      out.addTrack(dest.stream.getAudioTracks()[0]);
+    }
+    return out;
+  }
+
+  async function startRecording() {
+    if (state.phase !== 'ready') return;
+    $('btnRecord').disabled = true; $('btnPrepare').disabled = true;
+    if (state.mode !== 'screen' && !pipOpen()) await openPip();
+    if (state.countdown) {
+      const c = $('countdown'); c.hidden = false;
+      for (let n = 3; n > 0; n--) { c.textContent = n; if (pipEls) { pipEls.cd.hidden = false; pipEls.cd.textContent = n; } await new Promise(r => setTimeout(r, 1000)); }
+      c.hidden = true; if (pipEls) pipEls.cd.hidden = true;
+    }
+    if (state.phase !== 'ready') return;
+    state.chunks = [];
+    try { state.recorder = new MediaRecorder(buildStream(), state.mime ? { mimeType: state.mime, videoBitsPerSecond: 5_000_000 } : undefined); }
+    catch (e) { show($('msg'), 'No se pudo iniciar la grabación: ' + e.message, 'err'); $('btnRecord').disabled = false; $('btnPrepare').disabled = false; return; }
+    state.recorder.ondataavailable = e => { if (e.data && e.data.size) state.chunks.push(e.data); };
+    state.recorder.onstop = finishRecording;
+    state.recorder.start(1000);
+    state.phase = 'recording'; state.startAt = performance.now(); state.pausedTotal = 0;
+    setStatus('rec', 'Grabando'); syncPip();
+    $('btnPause').disabled = false; $('btnStop').disabled = false;
+    state.timerId = setInterval(() => { state.elapsed = (performance.now() - state.startAt - state.pausedTotal) / 1000; $('timer').textContent = fmt(state.elapsed); if (pipEls) pipEls.pill.querySelector('.t').textContent = $('timer').textContent; }, 250);
+  }
+  function togglePause() {
+    if (state.phase === 'recording') { state.recorder.pause(); state.pauseAt = performance.now(); state.phase = 'paused'; setStatus('paused', 'En pausa'); $('btnPause').textContent = 'Reanudar'; syncPip(); }
+    else if (state.phase === 'paused') { state.recorder.resume(); state.pausedTotal += performance.now() - state.pauseAt; state.phase = 'recording'; setStatus('rec', 'Grabando'); $('btnPause').textContent = 'Pausar'; syncPip(); }
+  }
+  function stopRecording() {
+    if (state.phase !== 'recording' && state.phase !== 'paused') return;
+    clearInterval(state.timerId);
+    if (state.phase === 'paused') state.pausedTotal += performance.now() - state.pauseAt;
+    state.elapsed = (performance.now() - state.startAt - state.pausedTotal) / 1000;
+    state.phase = 'stopping'; $('btnPause').disabled = true; $('btnStop').disabled = true; syncPip();
+    state.recorder.stop();
+  }
+  function finishRecording() {
+    state.blob = new Blob(state.chunks, { type: state.mime || 'video/webm' });
+    releaseSources();
+    canvas.hidden = true; playback.hidden = false;
+    playback.src = URL.createObjectURL(state.blob);
+    state.phase = 'review';
+    closePip(); try { window.focus(); } catch (e) {}
+    setStatus('', 'Grabación lista'); $('btnPause').textContent = 'Pausar';
+    $('btnRecord').disabled = true; $('btnPrepare').disabled = false; $('btnPrepare').textContent = 'Preparar fuentes';
+    const name = 'ShowMe-' + new Date().toISOString().slice(0, 16).replace('T', '_').replace(':', '') + '.' + state.ext;
+    $('mName').textContent = name; $('mFormat').textContent = state.ext.toUpperCase();
+    $('mSize').textContent = (state.blob.size / 1048576).toFixed(1) + ' MB'; $('mRes').textContent = canvas.width + '×' + canvas.height;
+    $('review').hidden = false; show($('reviewMsg'), '', '');
+    // Los WebM del navegador no llevan duración: la forzamos o usamos el cronómetro
+    playback.onloadedmetadata = () => {
+      if (playback.duration === Infinity || isNaN(playback.duration)) {
+        playback.currentTime = 1e101;
+        playback.ontimeupdate = () => { playback.ontimeupdate = null; playback.currentTime = 0; state.duration = isFinite(playback.duration) ? playback.duration : state.elapsed; initTrim(); };
+      } else { state.duration = playback.duration; initTrim(); }
+    };
+  }
+  function resetUI(msg) {
+    state.phase = 'idle'; canvas.hidden = true; playback.hidden = true; $('stageEmpty').hidden = false; $('review').hidden = true;
+    $('btnRecord').disabled = true; $('btnPause').disabled = true; $('btnStop').disabled = true; $('btnPrepare').disabled = false; $('btnPrepare').textContent = 'Preparar fuentes';
+    setStatus('', 'Lista'); $('timer').textContent = '00:00'; if (msg) show($('msg'), msg, 'warn');
+  }
+
+  // Recorte
+  const ts = $('trimStart'), te = $('trimEnd');
+  const trimVals = () => [ +ts.value / 1000 * state.duration, +te.value / 1000 * state.duration ];
+  function updateTrimUI() {
+    const [a, b] = trimVals();
+    $('tStart').textContent = fmt(a, true); $('tEnd').textContent = fmt(b, true); $('tLen').textContent = fmt(b - a, true);
+    const sel = $('sel'); sel.style.left = 'calc(9px + (100% - 18px) * ' + (ts.value / 1000) + ')'; sel.style.width = 'calc((100% - 18px) * ' + ((te.value - ts.value) / 1000) + ')';
+  }
+  function initTrim() { ts.value = 0; te.value = 1000; updateTrimUI(); }
+  ts.oninput = () => { if (+ts.value > +te.value - 5) ts.value = +te.value - 5; updateTrimUI(); playback.currentTime = trimVals()[0]; };
+  te.oninput = () => { if (+te.value < +ts.value + 5) te.value = +ts.value + 5; updateTrimUI(); playback.currentTime = trimVals()[1]; };
+  const isTrimmed = () => +ts.value > 0 || +te.value < 1000;
+
+  // Re-codifica solo el tramo elegido reproduciéndolo y grabando la reproducción
+  function trimBlob(a, b) {
+    return new Promise((resolve, reject) => {
+      const v = document.createElement('video'); v.src = playback.src; v.playsInline = true; v.muted = true;
+      v.onerror = () => reject(new Error('No se pudo leer la grabación para recortarla.'));
+      v.onloadedmetadata = async () => {
+        v.currentTime = a;
+        await new Promise(r => { v.onseeked = r; });
+        const stream = v.captureStream ? v.captureStream() : v.mozCaptureStream();
+        const chunks = []; const rec = new MediaRecorder(stream, state.mime ? { mimeType: state.mime, videoBitsPerSecond: 5_000_000 } : undefined);
+        rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+        rec.onstop = () => resolve(new Blob(chunks, { type: state.mime || 'video/webm' }));
+        rec.start(500);
+        const tick = () => { if (v.currentTime >= b || v.ended) { v.pause(); rec.stop(); } else requestAnimationFrame(tick); };
+        v.onplay = () => requestAnimationFrame(tick);
+        v.play().catch(reject);
+      };
+    });
+  }
+
+  async function saveVideo() {
+    const btn = $('btnSave'); btn.disabled = true; show($('reviewMsg'), '', '');
+    try {
+      let blob = state.blob;
+      if (isTrimmed()) {
+        const [a, b] = trimVals();
+        show($('reviewMsg'), 'Recortando el vídeo… tarda lo mismo que dura el tramo elegido (' + fmt(b - a) + ').', 'warn');
+        blob = await trimBlob(a, b);
+      }
+      const downloads = (window.claude && claude.use) ? await claude.use('downloads') : null;
+      if (downloads) {
+        await downloads.save({ filename: $('mName').textContent, data: blob });
+      } else {
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = $('mName').textContent;
+        document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+      }
+      show($('reviewMsg'), 'Vídeo guardado (' + (blob.size / 1048576).toFixed(1) + ' MB). Súbelo a SharePoint o OneDrive para compartir el enlace.', 'ok');
+    } catch (e) {
+      const code = e && e.code;
+      show($('reviewMsg'), code === 'declined' ? 'Guardado cancelado. El vídeo sigue aquí; puedes volver a guardarlo.' : code === 'rate_limited' ? 'Hay otra descarga pendiente de confirmar. Espera un momento y vuelve a intentarlo.' : 'No se pudo guardar: ' + (e && e.message ? e.message : e), code === 'declined' ? 'warn' : 'err');
+    } finally { btn.disabled = false; }
+  }
+  function discard() { closePip(); if (playback.src) URL.revokeObjectURL(playback.src); playback.removeAttribute('src'); state.blob = null; resetUI(''); }
+
+  $('btnPrepare').onclick = prepare;
+  $('btnRecord').onclick = startRecording;
+  $('btnPause').onclick = togglePause;
+  $('btnStop').onclick = stopRecording;
+  $('btnSave').onclick = saveVideo;
+  $('btnDiscard').onclick = discard;
+  window.addEventListener('beforeunload', e => { if (state.phase === 'recording' || state.phase === 'paused' || state.phase === 'review') { e.preventDefault(); e.returnValue = ''; } });
+})();
+</script>
+
+</body>
+</html>
