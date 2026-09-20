@@ -1,5 +1,5 @@
-// Kompass · SM Seguros - Service Worker v6
-const CACHE = 'kompass-v6';
+// Kompass · SM Seguros - Service Worker v7
+const CACHE = 'kompass-v7';
 
 self.addEventListener('install', e => {
   self.skipWaiting();
