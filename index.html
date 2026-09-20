@@ -640,7 +640,6 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
     <div class="nav-item" onclick="goPage('registros')" style="display:flex;align-items:center;gap:6px;"><span class="nav-icon">☰</span> Registros<span style="width:6px;height:6px;border-radius:50%;background:#16A34A;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
     <div class="nav-item" id="navDefensa" onclick="goPage('defensa')" style="display:none;display:flex;align-items:center;gap:6px;"><span class="nav-icon">🛡️</span> Defensa cartera<span style="width:6px;height:6px;border-radius:50%;background:#C2003F;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
     <div class="nav-item" id="navCambiosAgente" onclick="goPage('cambiosagente')" style="display:none;display:flex;align-items:center;gap:6px;"><span class="nav-icon">🔄</span> Cambios de agente<span style="width:6px;height:6px;border-radius:50%;background:#C2003F;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
-    <div class="nav-item" id="navCalculadora" onclick="goPage('calculadora')" style="display:flex;align-items:center;gap:6px;"><span class="nav-icon">🧮</span> Calculadoras<span style="width:6px;height:6px;border-radius:50%;background:#16A34A;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
     <div class="nav-item" id="navActividad" onclick="goPage('actividad')" style="display:flex;align-items:center;gap:6px;"><span class="nav-icon">◎</span> Actividad comercial<span style="width:6px;height:6px;border-radius:50%;background:#2563EB;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
   </div>
   <div class="nav-group">
@@ -649,6 +648,12 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
     <div class="nav-item" id="navImportar" onclick="goPage('importar')" style="display:flex;align-items:center;gap:6px;"><span class="nav-icon">↓</span> Importar<span style="width:6px;height:6px;border-radius:50%;background:#2563EB;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
     <div class="nav-item" id="navNovedades" onclick="goPage('novedades')" style="display:flex;align-items:center;gap:6px;"><span class="nav-icon">✦</span> Novedades <span id="noveltyDot" style="display:none;width:7px;height:7px;background:#C2003F;border-radius:50%;display:inline-block;margin-left:4px;vertical-align:middle;"></span><span style="width:6px;height:6px;border-radius:50%;background:#16A34A;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
     <div class="nav-item" id="navConfig" onclick="goPage('config')" style="display:flex;align-items:center;gap:6px;"><span class="nav-icon">◈</span> Ajustes<span style="width:6px;height:6px;border-radius:50%;background:#2563EB;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-label">Herramientas</div>
+    <div class="nav-item" id="navCalculadora" onclick="goPage('calculadora')" style="display:flex;align-items:center;gap:8px;"><span class="nav-icon" style="display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" width="16" height="16" style="flex-shrink:0"><path d="M12 8.5 L9.5 5 L6 5 L3.8 8 L3.8 11.5 L12 21 L20.2 11.5 L20.2 8 L18 5 L14.5 5 Z" fill="#BF0050"/><path d="M12 8.5 L14.5 5 L18 5 L20.2 8 L20.2 11.5 L12 21 Z" fill="#8a0039"/></svg></span> Calculadoras<span style="width:6px;height:6px;border-radius:50%;background:#16A34A;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
+    <div class="nav-item" id="navShowMe" onclick="window.open('showme.html','_blank')" title="Se abre en una pestaña nueva" style="display:flex;align-items:center;gap:8px;"><span class="nav-icon" style="display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 180 180" width="16" height="16" style="flex-shrink:0"><defs><linearGradient id="smg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF6A3D"/><stop offset="1" stop-color="#D62839"/></linearGradient></defs><circle cx="90" cy="90" r="60" fill="none" stroke="#1B2A41" stroke-width="18"/><circle cx="90" cy="90" r="34" fill="url(#smg)"/></svg></span> ShowMe <span style="font-size:10px;color:var(--text-3);">↗</span><span style="width:6px;height:6px;border-radius:50%;background:#16A34A;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
   </div>
 
   <div class="sidebar-foot">
@@ -2187,7 +2192,8 @@ const CHANGELOG = [
   {
     version: 'v1.8 · Septiembre 2026',
     items: [
-      { icon: '🧮', title: 'Calculadoras dentro de Kompass', desc: 'Nueva sección "Calculadoras" en el menú, visible para todo el equipo. Reúne la calculadora de Vida (fallecimiento, IAP y enfermedades graves, con capital decreciente por hipoteca o por ahorro) y la de Ahorro y Previsión (garantizado, Unit Linked, coste de esperar, renta mensual), con modo presentación para enseñarlo al cliente. Hipotecaria, Decesos y Vida Sénior llegarán más adelante. Todo sin salir de Kompass y sin contraseña adicional.' },
+      { icon: '🧰', title: 'Nueva sección "Herramientas" en el menú', desc: 'Debajo de Sistema aparece un bloque nuevo con las aplicaciones propias de SM Seguros, cada una con su logo: Calculadoras y ShowMe (grabación de pantalla y cámara para explicar cosas en vídeo; se abre en una pestaña nueva porque necesita la ventana completa para capturar la pantalla). Aquí irán apareciendo el resto de herramientas.' },
+      { icon: '🧮', title: 'Calculadoras dentro de Kompass', desc: 'Sección "Calculadoras", visible para todo el equipo. Reúne la calculadora de Vida (fallecimiento, IAP y enfermedades graves, con capital decreciente por hipoteca o por ahorro) y la de Ahorro y Previsión (garantizado, Unit Linked, coste de esperar, renta mensual), con modo presentación para enseñarlo al cliente. Hipotecaria, Decesos y Vida Sénior llegarán más adelante. Todo sin salir de Kompass y sin contraseña adicional.' },
     ]
   },
   {
