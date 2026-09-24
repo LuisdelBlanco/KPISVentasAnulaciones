@@ -62,14 +62,16 @@ body {
   width: var(--sidebar-w);
   background: var(--surface);
   border-right: 1px solid var(--border);
-  min-height: 100vh;
+  height: 100vh;
   position: fixed;
   top: 0; left: 0;
   display: flex;
   flex-direction: column;
   z-index: 100;
   transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+  overflow: hidden;
 }
+.sidebar-nav { flex: 1; overflow-y: auto; }
 .sidebar-logo {
   padding: 20px 16px 14px;
   border-bottom: 1px solid var(--border);
@@ -655,6 +657,7 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
     </div>
   </div>
 
+  <div class="sidebar-nav">
   <div class="nav-group">
     <div class="nav-group-label">Análisis</div>
     <div class="nav-item active" onclick="goPage('dashboard')" style="display:flex;align-items:center;gap:6px;"><span class="nav-icon">⬡</span> Resumen general<span style="width:6px;height:6px;border-radius:50%;background:#16A34A;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
@@ -675,6 +678,14 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
     <div class="nav-item" id="navNovedades" onclick="goPage('novedades')" style="display:flex;align-items:center;gap:6px;"><span class="nav-icon">✦</span> Novedades <span id="noveltyDot" style="display:none;width:7px;height:7px;background:#C2003F;border-radius:50%;display:inline-block;margin-left:4px;vertical-align:middle;"></span><span style="width:6px;height:6px;border-radius:50%;background:#16A34A;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
     <div class="nav-item" id="navConfig" onclick="goPage('config')" style="display:flex;align-items:center;gap:6px;"><span class="nav-icon">◈</span> Ajustes<span style="width:6px;height:6px;border-radius:50%;background:#2563EB;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
   </div>
+
+  <div class="nav-group">
+    <div class="nav-group-label">Herramientas</div>
+    <div class="nav-item" id="navCalculadoras" onclick="goPage('calculadoras')" style="display:flex;align-items:center;gap:6px;"><span class="nav-icon">🧮</span> Calculadoras<span style="width:6px;height:6px;border-radius:50%;background:#16A34A;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
+    <div class="nav-item" onclick="window.open('showme.html','_blank')" style="display:flex;align-items:center;gap:6px;cursor:pointer;"><span class="nav-icon">⏺</span> ShowMe <span style="font-size:9px;color:var(--text-3);margin-left:2px;">↗</span><span style="width:6px;height:6px;border-radius:50%;background:#16A34A;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
+  </div>
+
+  </div><!-- /sidebar-nav -->
 
   <div class="sidebar-foot">
     <div id="sidebarUser" style="font-size:11px;color:var(--text-3);margin-bottom:6px;"></div>
