@@ -5839,9 +5839,30 @@ async function guardarCambio() {
         body:JSON.stringify(payload)
       });
       const data = await res.json();
-      if(Array.isArray(data)&&data[0]) cambiosAgente.unshift({...data[0],agenteSM:data[0].agente_sm,agenteExterno:data[0].agente_externo,prima:data[0].prima||0});
+      if(Array.isArray(data)&&data[0]) {
+        const r = data[0];
+        cambiosAgente.unshift({
+          id:r.id, fecha:r.fecha, tipo:r.tipo, poliza:r.poliza,
+          ramo:r.ramo, tomador:r.tomador, prima:r.prima||0,
+          agenteSM:r.agente_sm||'', agenteExterno:r.agente_externo||'',
+          telefono:r.telefono||'', email:r.email||'', oficina:r.oficina||'', notas:r.notas||'',
+          contactado:r.contactado||false, contactadoPor:r.contactado_por||'',
+          contactadoFecha:r.contactado_fecha||'', contactadoNotas:r.contactado_notas||'',
+          polizaRevisada:r.poliza_revisada||false, polizaRevisadaPor:r.poliza_revisada_por||'',
+          polizaRevisadaFecha:r.poliza_revisada_fecha||''
+        });
+      }
     }
     cerrarModalCambio();
+    // Resetear filtros para que el nuevo registro sea visible
+    const fAnio = document.getElementById('filtroCambioAnio');
+    const fMes = document.getElementById('filtroCambioMes');
+    const fTipo = document.getElementById('filtroCambioTipo');
+    if(fAnio) fAnio.value = '';
+    if(fMes) fMes.value = '';
+    if(fTipo) fTipo.value = '';
+    // Recargar desde Supabase para asegurar que aparece el registro
+    await cargarCambiosAgente();
     renderCambiosPage();
     mostrarToast('✅ Cambio guardado');
   } catch(e) { alert('Error: '+e.message); }
