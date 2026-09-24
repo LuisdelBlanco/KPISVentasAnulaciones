@@ -36,7 +36,7 @@
   --blue: #2563EB;
   --blue-bg: #EFF6FF;
   --gray-bg: #F4F4F2;
-  --sidebar-w: 220px;
+  --sidebar-w: 200px;
   --radius: 10px;
   --radius-sm: 6px;
   --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
@@ -164,11 +164,23 @@ input::placeholder { color: var(--text-3); }
 textarea { height: auto; min-height: 72px; padding: 8px 10px; resize: vertical; }
 
 /* ── CONTENT ── */
-.content { padding: 24px; flex: 1; }
+.content { padding: 16px 20px; flex: 1; overflow-x: hidden; }
 
 /* ── PAGES ── */
 .page { display: none; }
-.page.active { display: block; animation: fadeIn 0.18s ease; }
+.page.active { display: flex; flex-direction: column; animation: fadeIn 0.18s ease; min-height: calc(100vh - 48px); }
+/* Páginas simples: tabla ocupa toda la altura disponible */
+#page-oficinas { background: var(--bg); }
+#page-oficinas .table-card,
+#page-comerciales .table-card { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+#page-oficinas .table-scroll,
+#page-comerciales .table-scroll { flex: 1; overflow-y: auto; }
+/* Registros, dashboard, incentivos: flex column normal */
+#page-registros, #page-dashboard, #page-incentivos { flex-direction: column; }
+.table-scroll table[style*="table-layout:fixed"] td,
+.table-scroll table[style*="table-layout:fixed"] th {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 @keyframes modalInMobile { from { transform: translateY(100%); } to { transform: none; } }
 
 /* ── NOTIFICACIÓN WHATSAPP ── */
@@ -278,6 +290,10 @@ th {
 td { padding: 9px 14px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: middle; }
 tr:last-child td { border-bottom: none; }
 tbody tr:hover td { background: var(--bg); }
+
+/* Tabla registros: compacta para 14" */
+#page-registros th { padding: 7px 8px; font-size: 10px; }
+#page-registros td { padding: 6px 8px; font-size: 11.5px; }
 
 /* ── BADGES ── */
 .badge {
@@ -422,7 +438,7 @@ body.mobile .topbar-title { font-size: 13px !important; }
 body.mobile .btn-primary { height: 34px !important; padding: 0 10px !important; font-size: 13px !important; }
 
 /* Contenido */
-body.mobile .content { padding: 10px 8px !important; }
+body.mobile .content { padding: 8px 6px !important; }
 
 /* KPI 2 columnas */
 body.mobile .kpi-grid { grid-template-columns: repeat(2,1fr) !important; gap: 6px !important; margin-bottom: 10px !important; }
@@ -650,12 +666,6 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
     <div class="nav-item" id="navConfig" onclick="goPage('config')" style="display:flex;align-items:center;gap:6px;"><span class="nav-icon">◈</span> Ajustes<span style="width:6px;height:6px;border-radius:50%;background:#2563EB;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
   </div>
 
-  <div class="nav-group">
-    <div class="nav-group-label">Herramientas</div>
-    <div class="nav-item" id="navCalculadora" onclick="goPage('calculadora')" style="display:flex;align-items:center;gap:8px;"><span class="nav-icon" style="display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" width="16" height="16" style="flex-shrink:0"><path d="M12 8.5 L9.5 5 L6 5 L3.8 8 L3.8 11.5 L12 21 L20.2 11.5 L20.2 8 L18 5 L14.5 5 Z" fill="#BF0050"/><path d="M12 8.5 L14.5 5 L18 5 L20.2 8 L20.2 11.5 L12 21 Z" fill="#8a0039"/></svg></span> Calculadoras<span style="width:6px;height:6px;border-radius:50%;background:#16A34A;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
-    <div class="nav-item" id="navShowMe" onclick="window.open('showme.html','_blank')" title="Se abre en una pestaña nueva" style="display:flex;align-items:center;gap:8px;"><span class="nav-icon" style="display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 180 180" width="16" height="16" style="flex-shrink:0"><defs><linearGradient id="smg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF6A3D"/><stop offset="1" stop-color="#D62839"/></linearGradient></defs><circle cx="90" cy="90" r="60" fill="none" stroke="#1B2A41" stroke-width="18"/><circle cx="90" cy="90" r="34" fill="url(#smg)"/></svg></span> ShowMe <span style="font-size:10px;color:var(--text-3);">↗</span><span style="width:6px;height:6px;border-radius:50%;background:#16A34A;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
-  </div>
-
   <div class="sidebar-foot">
     <div id="sidebarUser" style="font-size:11px;color:var(--text-3);margin-bottom:6px;"></div>
     <button onclick="doLogout()" style="background:#FFF1F3;border:1px solid #FECDD3;border-radius:6px;font-size:11px;color:#C2003F;cursor:pointer;font-family:inherit;padding:4px 10px;font-weight:600;width:100%;">⎋ Cerrar sesión</button>
@@ -877,12 +887,19 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
         </div>
         <div class="table-card">
           <div class="table-scroll">
-            <table>
+            <table style="table-layout:fixed;width:100%;">
+              <colgroup>
+                <col style="width:28px"><col style="width:74px"><col style="width:68px">
+                <col style="width:110px"><col style="width:115px"><col style="width:82px">
+                <col style="width:115px"><col style="width:82px"><col style="width:74px">
+                <col style="width:38px"><col style="width:44px"><col style="width:72px">
+                <col style="width:90px"><col style="width:54px">
+              </colgroup>
               <thead><tr>
                 <th style="width:32px;"><input type="checkbox" id="pteCheckAll" onchange="toggleCheckAllPte(this)" style="cursor:pointer;accent-color:#D97706;"></th>
                 <th>Fecha</th><th>Urgencia</th><th>Póliza</th><th>Ramo</th>
                 <th>Agente</th><th>Tomador</th><th>Oficina</th><th>Vencimiento</th>
-                <th>Días</th><th>Recibo</th><th style="text-align:right">Prima corr.</th><th>Motivo/Notas</th><th></th>
+                <th>Días</th><th>Recibo</th><th style="text-align:right">Prima</th><th>Motivo/Notas</th><th></th>
               </tr></thead>
               <tbody id="tablaPendientes"></tbody>
               <tfoot>
@@ -907,23 +924,22 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
             <span class="table-card-title">Movimientos</span>
           </div>
           <div class="table-scroll">
-            <table>
+            <table style="table-layout:fixed;width:100%;">
+              <colgroup>
+                <col style="width:74px"><col style="width:82px"><col style="width:110px">
+                <col style="width:120px"><col style="width:64px"><col style="width:74px">
+                <col style="width:70px"><col style="width:76px"><col style="width:130px">
+                <col style="width:90px"><col style="width:90px"><col style="width:54px">
+              </colgroup>
               <thead><tr>
                 <th>Fecha</th><th>Tipo</th><th>Nº Póliza</th><th>Ramo</th>
-                <th>Gestora</th><th>Oficina</th><th>Prima neta</th><th>Prima corregida</th>
+                <th>Gestora</th><th>Oficina</th><th>Prima neta</th><th>Prima corr.</th>
                 <th>Tomador</th><th>Agente</th><th>Observaciones</th><th></th>
               </tr></thead>
               <tbody id="bodyRegistros"></tbody>
             </table>
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- PAGE: CALCULADORA VIDA -->
-    <div class="page" id="page-calculadora">
-      <div class="table-card" style="margin:0;height:calc(100vh - 100px);overflow:hidden;">
-        <iframe id="frameCalculadora" data-src="calculadora.html" title="Calculadoras SM Seguros" style="width:100%;height:100%;border:0;display:block;background:#fff;"></iframe>
       </div>
     </div>
 
@@ -1199,7 +1215,7 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
 
 
     <div class="page" id="page-cambiosagente">
-      <div style="max-width:1100px;">
+      <div style="max-width:100%;">
 
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:20px;">
           <div>
@@ -1326,7 +1342,7 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
     </div>
 
     <div class="page" id="page-defensa">
-      <div style="max-width:1100px;">
+      <div style="max-width:100%;">
 
         <!-- CABECERA -->
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:20px;">
@@ -2190,13 +2206,6 @@ async function arrancarApp() {
 // ── CHANGELOG ────────────────────────────────────────────
 const CHANGELOG = [
   {
-    version: 'v1.8 · Septiembre 2026',
-    items: [
-      { icon: '🧰', title: 'Nueva sección "Herramientas" en el menú', desc: 'Debajo de Sistema aparece un bloque nuevo con las aplicaciones propias de SM Seguros, cada una con su logo: Calculadoras y ShowMe (grabación de pantalla y cámara para explicar cosas en vídeo; se abre en una pestaña nueva porque necesita la ventana completa para capturar la pantalla). Aquí irán apareciendo el resto de herramientas.' },
-      { icon: '🧮', title: 'Calculadoras dentro de Kompass', desc: 'Sección "Calculadoras", visible para todo el equipo. Reúne la calculadora de Vida (fallecimiento, IAP y enfermedades graves, con capital decreciente por hipoteca o por ahorro) y la de Ahorro y Previsión (garantizado, Unit Linked, coste de esperar, renta mensual), con modo presentación para enseñarlo al cliente. Hipotecaria, Decesos y Vida Sénior llegarán más adelante. Todo sin salir de Kompass y sin contraseña adicional.' },
-    ]
-  },
-  {
     version: 'v1.7 · Agosto 2026',
     items: [
       { icon: '⬡', title: 'Por oficina: mismos datos que el ranking por agente', desc: 'La página "Por oficina" ahora muestra una tabla con las mismas columnas que el ranking por agente: emisiones netas, anulaciones, rehabilitaciones, reemplazos, sin efecto, neto y prima corregida. Incluye fila de totales al pie y al hacer clic en una oficina va directamente a sus registros filtrados. Facilita comparar el rendimiento entre oficinas con los mismos criterios que se usan para comparar agentes.' },
@@ -2650,8 +2659,7 @@ const pageNames = {
   incentivos: ['Mi Área','Incentivos y área personal'],
   novedades: ['Novedades','Historial de actualizaciones'],
   defensa: ['Defensa cartera','Defensa de cartera · Autos'],
-  cambiosagente: ['Cambios de agente','Entradas y salidas por cambio de agente'],
-  calculadora: ['Calculadoras','Vida · Ahorro y previsión · Hipotecaria · Decesos · Vida Sénior']
+  cambiosagente: ['Cambios de agente','Entradas y salidas por cambio de agente']
 };
 let currentRegistrosTab = 'registros';
 
@@ -2713,7 +2721,6 @@ function goPage(id) {
   if (id==='incentivos') { initIncentivosSelectors(); setTimeout(renderIncentivos, 200); }
   if (id==='defensa') { renderDefensaPage(); cargarDefensas().then(() => renderDefensaPage()); }
   if (id==='cambiosagente') { renderCambiosPage(); cargarCambiosAgente().then(() => renderCambiosPage()); }
-  if (id==='calculadora') { const f=document.getElementById('frameCalculadora'); if(f && !f.getAttribute('src')) f.src=f.dataset.src; }
   renderAll();
 }
 function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
