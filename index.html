@@ -655,7 +655,7 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
     <div class="nav-group-label">Datos</div>
     <div class="nav-item" onclick="goPage('registros')" style="display:flex;align-items:center;gap:6px;"><span class="nav-icon">☰</span> Registros<span style="width:6px;height:6px;border-radius:50%;background:#16A34A;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
     <div class="nav-item" id="navDefensa" onclick="goPage('defensa')" style="display:none;display:flex;align-items:center;gap:6px;"><span class="nav-icon">🛡️</span> Defensa cartera<span style="width:6px;height:6px;border-radius:50%;background:#C2003F;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
-    <div class="nav-item" id="navCambiosAgente" onclick="goPage('cambiosagente')" style="display:none;display:flex;align-items:center;gap:6px;"><span class="nav-icon">🔄</span> Cambios de agente<span style="width:6px;height:6px;border-radius:50%;background:#2563EB;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
+    <div class="nav-item" id="navCambiosAgente" onclick="goPage('cambiosagente')" style="display:none;display:flex;align-items:center;gap:6px;"><span class="nav-icon">🔄</span> Cambios de agente<span style="width:6px;height:6px;border-radius:50%;background:#16A34A;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
     <div class="nav-item" id="navActividad" onclick="goPage('actividad')" style="display:flex;align-items:center;gap:6px;"><span class="nav-icon">◎</span> Actividad comercial<span style="width:6px;height:6px;border-radius:50%;background:#2563EB;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
   </div>
   <div class="nav-group">
@@ -2143,7 +2143,7 @@ function aplicarPermisos() {
   const navDefensa = document.getElementById('navDefensa');
   if(navDefensa) navDefensa.style.display = currentUser?.id === '2beeddaf-8c14-4467-99bc-2dc0b80e7cbd' ? '' : 'none';
   const navCambios = document.getElementById('navCambiosAgente');
-  if(navCambios) navCambios.style.display = '';
+  if(navCambios) navCambios.style.display = ''; // visible para todos
 
   const adminNavIds = ['navImportar', 'navActividad', 'navConfig'];
   adminNavIds.forEach(id => {
@@ -5600,6 +5600,7 @@ function renderCambiosAgente() {
   const filtroAnio    = document.getElementById('filtroCambioAnio')?.value||'';
   const filtroMes     = document.getElementById('filtroCambioMes')?.value||'';
 
+  const nombreAgente = NOMBRES_EQUIPO[currentUser?.id] || '';
   const lista = cambiosAgente.filter(c => {
     if(filtroTipo && c.tipo !== filtroTipo) return false;
     if(filtroOficina && c.oficina !== filtroOficina) return false;
@@ -6198,7 +6199,8 @@ function initIncentivosSelectors() {
   const isAdv = currentRole === 'advanced';
   const panelNotif = document.getElementById('panelNotifEquipo');
   const panelRol = document.getElementById('panelRol');
-  if(panelNotif) panelNotif.style.display = isAdv ? '' : 'none';
+  const puedeVerEquipo = isAdv || currentUser?.id === '11d688ae-3bce-42f1-a712-d0a49842ca81';
+  if(panelNotif) panelNotif.style.display = puedeVerEquipo ? '' : 'none';
   if(panelRol) panelRol.style.display = 'none';
 
   // Panel API key asistente — solo Luis
@@ -6689,6 +6691,7 @@ const NOMBRES_70 = Object.values(AGENTES_70);
 const ADMINS_VEN_70 = [
   '2beeddaf-8c14-4467-99bc-2dc0b80e7cbd', // Luis del Blanco
   'c4f2609a-2ec6-4885-9394-17f78c97caae', // Iago Losada
+  '11d688ae-3bce-42f1-a712-d0a49842ca81', // Erika Gómez
 ];
 function adminVe70() { return ADMINS_VEN_70.includes(currentUser?.id); }
 const RAMOS_AHORRO_70 = [
