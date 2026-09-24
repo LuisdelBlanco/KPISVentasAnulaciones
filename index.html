@@ -291,6 +291,16 @@ td { padding: 9px 14px; font-size: 13px; border-bottom: 1px solid var(--border);
 tr:last-child td { border-bottom: none; }
 tbody tr:hover td { background: var(--bg); }
 
+
+.calc-tab {
+  padding: 10px 16px; border: none; background: transparent; cursor: pointer;
+  font-size: 13px; font-weight: 600; color: var(--text-3); font-family: inherit;
+  border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s;
+  white-space: nowrap;
+}
+.calc-tab:hover { color: var(--text); }
+.calc-tab.active-tab { color: var(--red); border-bottom-color: var(--red); background: var(--surface); }
+
 /* Tabla registros: compacta para 14" */
 #page-registros th { padding: 7px 8px; font-size: 10px; }
 #page-registros td { padding: 6px 8px; font-size: 11.5px; }
@@ -1338,6 +1348,13 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
           <button onclick="cerrarModalCambio()" class="btn btn-ghost">Cancelar</button>
           <button onclick="guardarCambio()" class="btn btn-primary">Guardar</button>
         </div>
+      </div>
+    </div>
+
+
+    <div class="page" id="page-calculadoras">
+      <div style="display:flex;flex-direction:column;height:calc(100vh - 48px);">
+        <iframe src="calculadora.html" style="flex:1;width:100%;border:none;display:block;"></iframe>
       </div>
     </div>
 
@@ -2659,6 +2676,7 @@ const pageNames = {
   incentivos: ['Mi Área','Incentivos y área personal'],
   novedades: ['Novedades','Historial de actualizaciones'],
   defensa: ['Defensa cartera','Defensa de cartera · Autos'],
+  calculadoras: ['Calculadoras','Calculadoras de productos'],
   cambiosagente: ['Cambios de agente','Entradas y salidas por cambio de agente']
 };
 let currentRegistrosTab = 'registros';
@@ -5974,6 +5992,25 @@ async function enviarMensajeAsistente() {
     loader.remove();
     añadirBurbuja('assistant', '⚠️ Error de conexión: ' + e.message);
   }
+}
+
+
+function switchCalcTab(tab) {
+  const tabs = ['vida','ahorro','hipotecaria','decesos','senior'];
+  tabs.forEach(t => {
+    const btn = document.getElementById('calcTab' + t.charAt(0).toUpperCase() + t.slice(1));
+    if(btn) btn.classList.toggle('active-tab', t === tab);
+  });
+  // Iframes
+  ['vida','ahorro','senior'].forEach(t => {
+    const f = document.getElementById('calcFrame' + t.charAt(0).toUpperCase() + t.slice(1));
+    if(f) f.style.display = t === tab ? 'block' : 'none';
+  });
+  // Próximamente
+  ['hipotecaria','decesos'].forEach(t => {
+    const s = document.getElementById('calcFrame' + t.charAt(0).toUpperCase() + t.slice(1) + 'Soon');
+    if(s) s.style.display = t === tab ? 'flex' : 'none';
+  });
 }
 
 function renderIncentivos() {
