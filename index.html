@@ -1299,6 +1299,26 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
       </div>
     </div>
 
+
+    <!-- MODAL CONTACTADO -->
+    <div id="contactadoModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9999;align-items:center;justify-content:center;">
+      <div style="background:var(--surface);border-radius:16px;padding:24px;max-width:440px;width:calc(100% - 32px);box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+        <div style="font-size:16px;font-weight:800;color:var(--text);margin-bottom:6px;">📞 Registro de contacto</div>
+        <div id="contactadoInfo" style="font-size:12px;color:var(--text-3);margin-bottom:16px;"></div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div>
+            <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Resultado / Motivo del cambio</label>
+            <textarea id="contactadoNotas" rows="4" placeholder="¿Por qué se fue? ¿Qué dijo el cliente? ¿Posibilidad de recuperación?..." style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;"></textarea>
+          </div>
+          <div id="contactadoHistorial" style="font-size:11px;color:var(--text-3);background:var(--surface-2);border-radius:8px;padding:8px 10px;display:none;"></div>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">
+          <button onclick="cerrarContactado()" class="btn btn-ghost">Cancelar</button>
+          <button onclick="guardarContactado()" class="btn btn-primary">✓ Guardar contacto</button>
+        </div>
+      </div>
+    </div>
+
     <!-- MODAL CAMBIO AGENTE -->
     <div id="cambioModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9999;align-items:center;justify-content:center;">
       <div style="background:var(--surface);border-radius:16px;padding:24px;max-width:540px;width:calc(100% - 32px);max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
@@ -1331,7 +1351,7 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
             <input type="text" id="cTomador" placeholder="Nombre del cliente" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
           </div>
           <div>
-            <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Prima neta (€)</label>
+            <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Prima total (€)</label>
             <input type="number" id="cPrima" placeholder="0" min="0" step="0.01" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
           </div>
           <div>
@@ -1349,6 +1369,14 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
             <select id="cOficina" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);">
               <option value="">Selecciona…</option>
             </select>
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Teléfono contacto</label>
+            <input type="tel" id="cTelefono" placeholder="600 000 000" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Email contacto</label>
+            <input type="email" id="cEmail" placeholder="cliente@email.com" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
           </div>
           <div style="grid-column:span 2;">
             <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Notas / Motivo</label>
@@ -5543,6 +5571,11 @@ async function cargarCambiosAgente() {
       id: r.id, fecha: r.fecha, tipo: r.tipo, poliza: r.poliza,
       ramo: r.ramo, tomador: r.tomador, prima: r.prima||0,
       agenteSM: r.agente_sm||'', agenteExterno: r.agente_externo||'',
+      telefono: r.telefono||'', email: r.email||'',
+      contactado: r.contactado||false, contactadoPor: r.contactado_por||'',
+      contactadoFecha: r.contactado_fecha||'', contactadoNotas: r.contactado_notas||'',
+      polizaRevisada: r.poliza_revisada||false, polizaRevisadaPor: r.poliza_revisada_por||'',
+      polizaRevisadaFecha: r.poliza_revisada_fecha||'',
       oficina: r.oficina||'', notas: r.notas||''
     }));
   } catch(e) { console.warn('Error cargando cambios agente:', e.message); }
@@ -5682,9 +5715,19 @@ function renderCambiosAgente() {
       <td style="text-align:right;font-weight:700;">${c.prima>0?c.prima.toLocaleString('es-ES',{maximumFractionDigits:0})+' €':'—'}</td>
       <td style="font-size:12px;color:var(--text-2);">${c.agenteSM||'—'}</td>
       <td style="font-size:12px;color:var(--text-2);">${c.agenteExterno||'—'}</td>
+      <td style="font-size:12px;">${c.telefono?`<a href="tel:${c.telefono}" style="color:var(--text-2);text-decoration:none;">${c.telefono}</a>`:'—'}</td>
+      <td style="font-size:12px;">${c.email?`<a href="mailto:${c.email}" style="color:var(--text-2);text-decoration:none;">${c.email}</a>`:'—'}</td>
       <td style="font-size:12px;color:var(--text-3);">${c.oficina||'—'}</td>
-      <td><button onclick="editarCambio('${c.id}')" style="background:none;border:none;cursor:pointer;color:var(--text-3);font-size:14px;">✏️</button>
-          <button onclick="eliminarCambio('${c.id}')" style="background:none;border:none;cursor:pointer;color:#BE123C;font-size:14px;">✕</button></td>
+      <td style="white-space:nowrap;">
+        ${c.tipo==='Salida' ? `<button onclick="abrirContactado('${c.id}')" style="background:${c.contactado?'#F0FDF4':'var(--surface-2)'};border:1px solid ${c.contactado?'#86EFAC':'var(--border)'};border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;color:${c.contactado?'#16A34A':'var(--text-3)'};white-space:nowrap;" title="${c.contactado?'Contactado por '+c.contactadoPor+' · '+c.contactadoFecha:'Marcar como contactado'}">
+          ${c.contactado?'✓ Contactado':'📞 Contactar'}
+        </button>` : ''}
+        ${c.tipo==='Entrada' ? `<button onclick="marcarPolizaRevisada('${c.id}')" style="background:${c.polizaRevisada?'#EFF6FF':'var(--surface-2)'};border:1px solid ${c.polizaRevisada?'#BFDBFE':'var(--border)'};border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;color:${c.polizaRevisada?'#2563EB':'var(--text-3)'};white-space:nowrap;" title="${c.polizaRevisada?'Revisada por '+c.polizaRevisadaPor+' · '+c.polizaRevisadaFecha:'Marcar póliza como revisada'}">
+          ${c.polizaRevisada?'✓ Revisada':'📋 Revisar'}
+        </button>` : ''}
+        <button onclick="editarCambio('${c.id}')" style="background:none;border:none;cursor:pointer;color:var(--text-3);font-size:14px;margin-left:2px;">✏️</button>
+        <button onclick="eliminarCambio('${c.id}')" style="background:none;border:none;cursor:pointer;color:#BE123C;font-size:14px;">✕</button>
+      </td>
     </tr>`;
   });
   body.innerHTML = htmlRows;
@@ -5720,6 +5763,8 @@ function abrirModalCambio(c=null) {
   document.getElementById('cTomador').value    = c?.tomador||'';
   document.getElementById('cPrima').value      = c?.prima||'';
   document.getElementById('cAgenteExterno').value = c?.agenteExterno||'';
+  document.getElementById('cTelefono').value = c?.telefono||'';
+  document.getElementById('cEmail').value = c?.email||'';
   document.getElementById('cNotas').value      = c?.notas||'';
 
   // Poblar selects
@@ -5774,6 +5819,8 @@ async function guardarCambio() {
     prima:         parseFloat(document.getElementById('cPrima').value)||0,
     agente_sm:     agenteSM,
     agente_externo:document.getElementById('cAgenteExterno').value.trim(),
+    telefono:      document.getElementById('cTelefono').value.trim(),
+    email:         document.getElementById('cEmail').value.trim(),
     oficina:       document.getElementById('cOficina').value,
     notas:         document.getElementById('cNotas').value.trim()
   };
@@ -6022,6 +6069,84 @@ function switchCalcTab(tab) {
     const s = document.getElementById('calcFrame' + t.charAt(0).toUpperCase() + t.slice(1) + 'Soon');
     if(s) s.style.display = t === tab ? 'flex' : 'none';
   });
+}
+
+
+let _contactadoId = null;
+
+
+async function marcarPolizaRevisada(id) {
+  const c = cambiosAgente.find(x => x.id === id);
+  if(!c) return;
+  const agente = NOMBRES_EQUIPO[currentUser?.id] || currentUser?.email?.split('@')[0] || 'Desconocido';
+  const hoy = new Date().toISOString().split('T')[0];
+  // Si ya está revisada, mostrar info y preguntar si desmarcar
+  if(c.polizaRevisada) {
+    if(!confirm('Póliza revisada por ' + c.polizaRevisadaPor + ' el ' + c.polizaRevisadaFecha + '.\n\n¿Desmarcar como revisada?')) return;
+    try {
+      await fetch(SUPA_URL+'/rest/v1/cambios_agente?id=eq.'+id, {
+        method:'PATCH', headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+accessToken,'Content-Type':'application/json','Prefer':'return=minimal'},
+        body:JSON.stringify({ poliza_revisada: false, poliza_revisada_por: '', poliza_revisada_fecha: null })
+      });
+      c.polizaRevisada=false; c.polizaRevisadaPor=''; c.polizaRevisadaFecha='';
+      renderCambiosAgente();
+      mostrarToast('Póliza desmarcada como revisada');
+    } catch(e) { alert('Error: '+e.message); }
+    return;
+  }
+  // Marcar como revisada
+  try {
+    await fetch(SUPA_URL+'/rest/v1/cambios_agente?id=eq.'+id, {
+      method:'PATCH', headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+accessToken,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify({ poliza_revisada: true, poliza_revisada_por: agente, poliza_revisada_fecha: hoy })
+    });
+    c.polizaRevisada=true; c.polizaRevisadaPor=agente; c.polizaRevisadaFecha=hoy;
+    renderCambiosAgente();
+    mostrarToast('✅ Póliza marcada como revisada por ' + agente);
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+function abrirContactado(id) {
+  const c = cambiosAgente.find(x => x.id === id);
+  if(!c) return;
+  _contactadoId = id;
+  const info = document.getElementById('contactadoInfo');
+  if(info) info.textContent = c.poliza ? `Póliza ${c.poliza} · ${c.tomador||''}` : c.tomador||'';
+  document.getElementById('contactadoNotas').value = '';
+  // Mostrar historial si ya fue contactado
+  const hist = document.getElementById('contactadoHistorial');
+  if(c.contactado && c.contactadoNotas) {
+    hist.style.display = 'block';
+    hist.innerHTML = `<strong>Último contacto:</strong> ${c.contactadoPor} · ${c.contactadoFecha}<br>${c.contactadoNotas}`;
+  } else {
+    hist.style.display = 'none';
+  }
+  document.getElementById('contactadoModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('contactadoNotas').focus(), 100);
+}
+
+function cerrarContactado() {
+  document.getElementById('contactadoModal').style.display = 'none';
+  _contactadoId = null;
+}
+
+async function guardarContactado() {
+  const notas = document.getElementById('contactadoNotas').value.trim();
+  if(!notas) { alert('Escribe al menos una nota sobre el contacto.'); return; }
+  const agente = NOMBRES_EQUIPO[currentUser?.id] || currentUser?.email?.split('@')[0] || 'Desconocido';
+  const hoy = new Date().toISOString().split('T')[0];
+  try {
+    await fetch(SUPA_URL+'/rest/v1/cambios_agente?id=eq.'+_contactadoId, {
+      method: 'PATCH',
+      headers: {'apikey':SUPA_KEY,'Authorization':'Bearer '+accessToken,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body: JSON.stringify({ contactado: true, contactado_por: agente, contactado_fecha: hoy, contactado_notas: notas })
+    });
+    const c = cambiosAgente.find(x => x.id === _contactadoId);
+    if(c) { c.contactado=true; c.contactadoPor=agente; c.contactadoFecha=hoy; c.contactadoNotas=notas; }
+    cerrarContactado();
+    renderCambiosAgente();
+    mostrarToast('✅ Contacto registrado por ' + agente);
+  } catch(e) { alert('Error: '+e.message); }
 }
 
 function renderIncentivos() {
