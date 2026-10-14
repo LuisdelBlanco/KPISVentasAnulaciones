@@ -126,7 +126,9 @@
   .aviso-rgpd { display: none; margin: 10px 0 0 34px; font-size: 14px; font-weight: 700; color: var(--granate); }
   section.consentimiento.resaltar .aviso-rgpd { display: block; }
   .consentimiento label { display: flex; gap: 12px; align-items: flex-start; font-size: 14px; cursor: pointer; }
+  .consentimiento label span { flex: 1; min-width: 0; }
   .consentimiento input { accent-color: var(--granate); width: 22px; height: 22px; margin-top: 1px; flex-shrink: 0; }
+  #rgpd-email { color: var(--granate); }
   .acciones {
     background: var(--blanco); border-radius: 12px; padding: 18px 20px; border: 1px solid var(--borde);
     margin-bottom: 30px;
@@ -741,7 +743,7 @@
     <section class="consentimiento">
       <label>
         <input type="checkbox" id="rgpd">
-        <span id="rgpd-texto" data-dyn></span>
+        <span id="rgpd-texto">Acepto que SM Seguros S.C.P., agencia exclusiva de Occident, utilice estos datos únicamente para preparar mi presupuesto de seguro de hogar. Puedo pedir que se borren escribiendo a <a id="rgpd-email" href="mailto:"></a>.</span>
       </label>
       <p class="aviso-rgpd" id="aviso-rgpd" data-dyn></p>
     </section>
@@ -910,7 +912,8 @@
     "Cuando lo tenga, envíelo por donde le vaya mejor. Las fotos de la póliza o del recibo actual puede mandarlas aparte por WhatsApp o correo.": "Quan el tingui, enviï'l per on li vagi millor. Les fotos de la pòlissa o del rebut actual les pot enviar a part per WhatsApp o correu.",
     "Enviar por WhatsApp": "Enviar per WhatsApp",
     "Enviar por correo": "Enviar per correu",
-    "Guardar como PDF": "Desar com a PDF"
+    "Guardar como PDF": "Desar com a PDF",
+    "Acepto que SM Seguros S.C.P., agencia exclusiva de Occident, utilice estos datos únicamente para preparar mi presupuesto de seguro de hogar. Puedo pedir que se borren escribiendo a": "Accepto que SM Seguros S.C.P., agència exclusiva d'Occident, utilitzi aquestes dades únicament per preparar el meu pressupost d'assegurança de llar. Puc demanar que s'esborrin escrivint a"
   };
 
   const TXT = {
@@ -989,7 +992,8 @@
     document.getElementById('intro').textContent = saludo + (USTED ? T.introUsted : T.introTu);
     document.getElementById('aviso-rgpd').textContent = USTED ? T.alertaUsted : T.alertaTu;
     document.getElementById('sin-consentimiento').textContent = T.impresion;
-    document.getElementById('rgpd-texto').textContent = T.rgpd + (CFG.email || '[correo del agente]') + '.';
+    const eml = document.getElementById('rgpd-email');
+    if (eml) { const addr = CFG.email || '[correo del agente]'; eml.textContent = addr; eml.setAttribute('href', 'mailto:' + addr); }
   }
 
   function cambiarIdioma(v) { IDIOMA = v === 'ca' ? 'ca' : 'es'; traducir(); }
