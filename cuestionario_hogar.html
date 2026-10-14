@@ -17,7 +17,7 @@
     --blanco: #ffffff;
   }
   * { box-sizing: border-box; }
-  html { -webkit-text-size-adjust: 100%; }
+  html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
   body {
     margin: 0; background: var(--fondo); color: var(--texto);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -89,6 +89,7 @@
   input[type=text], input[type=number], input[type=date], input[type=email], input[type=tel], textarea, select {
     width: 100%; padding: 12px; border: 1px solid var(--borde); border-radius: 8px;
     font: inherit; font-size: 16px; background: #fff; color: var(--texto); min-height: 46px;
+    -webkit-appearance: none; appearance: none;
   }
   select {
     -webkit-appearance: none; appearance: none;
@@ -134,7 +135,10 @@
   .botones { display: flex; flex-wrap: wrap; gap: 10px; }
   button {
     font: inherit; font-weight: 600; border: none; border-radius: 8px; padding: 14px 16px; cursor: pointer; min-height: 48px;
+    -webkit-appearance: none; appearance: none;
+    transition: opacity .15s, transform .1s;
   }
+  button:active { opacity: .82; transform: scale(.97); }
   .btn-wa { background: #25D366; color: #fff; }
   .btn-mail { background: var(--granate); color: #fff; }
   .btn-pdf { background: #fff; color: var(--granate); border: 1px solid var(--granate); }
@@ -143,23 +147,43 @@
   /* Móvil */
   @media (max-width: 700px) { .tarjetas { grid-template-columns: 1fr; } }
   @media (max-width: 560px) {
-    .hoja { padding: 10px 10px calc(16px + env(safe-area-inset-bottom)); }
+    body { overscroll-behavior-y: contain; }
+    .hoja { padding: 10px 10px 0; }
     header.cabecera { padding: 14px; }
-    .logos, .logos-img { width: 100%; }
-    .logos-img { height: auto; }
-    .contacto { text-align: left; }
+    .logos { width: 100%; flex-direction: column; align-items: flex-start; gap: 10px; }
+    .logos-img { height: 38px; width: auto; max-width: 180px; }
+    .contacto { text-align: left; width: 100%; }
     h1 { font-size: 20px; margin-top: 16px; }
     section { padding: 16px 14px; }
-    section h2 .picto { width: 36px; height: 36px; }
+    section h2 .picto { width: 34px; height: 34px; }
     details.seguros summary { padding: 14px; }
     details.seguros .cuerpo { padding: 0 14px 14px; }
     .fila, .fila3 { grid-template-columns: 1fr; }
-    .opciones label { flex: 1 1 auto; justify-content: center; }
+    .opciones label { flex: 1 1 auto; justify-content: center; min-height: 50px; }
     .opciones.lista label { flex: 1 1 100%; justify-content: flex-start; }
     .botones button { flex: 1 1 100%; }
     .barra-idioma { justify-content: stretch; }
     .barra-idioma label { width: 100%; }
     .barra-idioma select { flex: 1; }
+    /* Barra de acciones fija al fondo */
+    .acciones {
+      position: sticky;
+      bottom: 0;
+      border-radius: 12px 12px 0 0;
+      border-bottom: none;
+      padding-bottom: calc(18px + env(safe-area-inset-bottom));
+      box-shadow: 0 -6px 24px rgba(0,0,0,.12);
+      margin-bottom: 0;
+      z-index: 20;
+    }
+    footer { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+  }
+  /* iPhone SE y pantallas muy pequeñas */
+  @media (max-width: 390px) {
+    h1 { font-size: 18px; }
+    section h2 { font-size: 15px; }
+    section h2 .picto { display: none; }
+    .opciones label { font-size: 14px; padding: 10px 10px; }
   }
 
   /* Panel de preparación (solo uso interno) */
@@ -623,20 +647,13 @@
           <label class="titulo" for="garaje-dir">Dirección del garaje o trastero</label>
           <input type="text" id="garaje-dir" data-label="Dirección garaje/trastero">
         </div>
-        <div class="campo">
-          <label class="titulo">¿Es un local con entrada directa desde la calle?</label>
-          <div class="opciones" data-label="Local con acceso desde la vía pública">
-            <label><input type="radio" name="garaje-local" value="No"> No</label>
-            <label><input type="radio" name="garaje-local" value="Sí"> Sí</label>
-          </div>
-        </div>
       </div>
     </section>
 
     <!-- 8 -->
     <section>
       <h2><span class="num">8</span><span>Lo que hay dentro</span><svg class="picto" viewBox="0 0 90 90"><path d="M28 20h34l12 16-29 36-29-36z"/><path d="M16 36h58"/><path d="M38 20l-6 16 13 36 13-36-6-16"/></svg></h2>
-      <div class="aviso" data-usted="Si no sabe los importes, déjelos en blanco: los calculamos nosotros a partir de los metros y la calidad de la vivienda.">Si no sabes los importes, déjalos en blanco: los calculamos nosotros a partir de los metros y la calidad de la vivienda.</div>
+      <div class="aviso" data-usted="El contenido es todo lo que tiene dentro de su casa: muebles, electrodomésticos, ropa, electrónica… Piénselo así: si mañana se quemara todo, ¿cuánto dinero necesitaría para volver a tenerlo? Si no lo sabe, déjelo en blanco — nosotros le damos un valor orientativo a partir de los metros cuadrados y la calidad de la vivienda.">El contenido es todo lo que tienes dentro de tu casa: muebles, electrodomésticos, ropa, electrónica… Piénsalo así: si mañana se quemara todo, ¿cuánto dinero necesitarías para volver a tenerlo? Si no lo sabes, déjalo en blanco — nosotros te damos un valor orientativo a partir de los metros cuadrados y la calidad de la vivienda.</div>
       <div class="campo">
         <label class="titulo" for="contenido">Valor aproximado de muebles y enseres (€)</label>
         <input type="number" id="contenido" min="0" step="500" inputmode="numeric" data-label="Valor del contenido (€)">
@@ -868,9 +885,8 @@
     "Garaje o trastero en otra dirección": "Garatge o traster en una altra adreça",
     "¿Hay un garaje o trastero en otra dirección que también se quiera asegurar?": "Hi ha un garatge o traster en una altra adreça que també es vulgui assegurar?",
     "Dirección del garaje o trastero": "Adreça del garatge o traster",
-    "¿Es un local con entrada directa desde la calle?": "És un local amb entrada directa des del carrer?",
-    "Si no sabes los importes, déjalos en blanco: los calculamos nosotros a partir de los metros y la calidad de la vivienda.": "Si no saps els imports, deixa'ls en blanc: els calculem nosaltres a partir dels metres i la qualitat de l'habitatge.",
-    "Si no sabe los importes, déjelos en blanco: los calculamos nosotros a partir de los metros y la calidad de la vivienda.": "Si no sap els imports, deixi'ls en blanc: els calculem nosaltres a partir dels metres i la qualitat de l'habitatge.",
+    "El contenido es todo lo que tienes dentro de tu casa: muebles, electrodomésticos, ropa, electrónica… Piénsalo así: si mañana se quemara todo, ¿cuánto dinero necesitarías para volver a tenerlo? Si no lo sabes, déjalo en blanco — nosotros te damos un valor orientativo a partir de los metros cuadrados y la calidad de la vivienda.": "El contingut és tot el que tens dins de casa teva: mobles, electrodomèstics, roba, electrònica… Pensa-ho així: si demà es cremés tot, quants diners necessitaries per tornar-ho a tenir? Si no ho saps, deixa-ho en blanc — nosaltres et donem un valor orientatiu a partir dels metres quadrats i la qualitat de l'habitatge.",
+    "El contenido es todo lo que tiene dentro de su casa: muebles, electrodomésticos, ropa, electrónica… Piénselo así: si mañana se quemara todo, ¿cuánto dinero necesitaría para volver a tenerlo? Si no lo sabe, déjelo en blanco — nosotros le damos un valor orientativo a partir de los metros cuadrados y la calidad de la vivienda.": "El contingut és tot el que té dins de casa seva: mobles, electrodomèstics, roba, electrònica… Pensi-ho així: si demà es cremés tot, quants diners necessitaria per tornar-ho a tenir? Si no ho sap, deixi-ho en blanc — nosaltres li donem un valor orientatiu a partir dels metres quadrats i la qualitat de l'habitatge.",
     "Valor aproximado de muebles y enseres (€)": "Valor aproximat de mobles i estris (€)",
     "¿Hay objetos de más de 5.000 € cada uno?": "Hi ha objectes de més de 5.000 € cadascun?",
     "Obras de arte, relojes, instrumentos, colecciones…": "Obres d'art, rellotges, instruments, col·leccions…",
