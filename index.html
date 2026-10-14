@@ -683,6 +683,7 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
     <div class="nav-group-label">Herramientas</div>
     <div class="nav-item" id="navCalculadoras" onclick="goPage('calculadoras')" style="display:flex;align-items:center;gap:6px;"><span class="nav-icon">🧮</span> Calculadoras<span style="width:6px;height:6px;border-radius:50%;background:#16A34A;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
     <div class="nav-item" onclick="window.open('showme.html','_blank')" style="display:flex;align-items:center;gap:6px;cursor:pointer;"><span class="nav-icon">⏺</span> ShowMe <span style="font-size:9px;color:var(--text-3);margin-left:2px;">↗</span><span style="width:6px;height:6px;border-radius:50%;background:#16A34A;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
+    <div class="nav-item" id="navCuestionarios" onclick="goPage('cuestionarios')" style="display:flex;align-items:center;gap:6px;"><span class="nav-icon">📋</span> Cuestionarios<span style="width:6px;height:6px;border-radius:50%;background:#16A34A;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
   </div>
 
   </div><!-- /sidebar-nav -->
@@ -1394,6 +1395,12 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
     <div class="page" id="page-calculadoras">
       <div style="display:flex;flex-direction:column;height:calc(100vh - 48px);">
         <iframe src="calculadora.html" style="flex:1;width:100%;border:none;display:block;"></iframe>
+      </div>
+    </div>
+
+    <div class="page" id="page-cuestionarios">
+      <div style="display:flex;flex-direction:column;height:calc(100vh - 48px);">
+        <iframe src="cuestionario_hogar.html" style="flex:1;width:100%;border:none;display:block;"></iframe>
       </div>
     </div>
 
@@ -2716,6 +2723,7 @@ const pageNames = {
   novedades: ['Novedades','Historial de actualizaciones'],
   defensa: ['Defensa cartera','Defensa de cartera · Autos'],
   calculadoras: ['Calculadoras','Calculadoras de productos'],
+  cuestionarios: ['Cuestionarios','Cuestionarios para clientes'],
   cambiosagente: ['Cambios de agente','Entradas y salidas por cambio de agente']
 };
 let currentRegistrosTab = 'registros';
