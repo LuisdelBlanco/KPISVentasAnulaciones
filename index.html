@@ -2857,12 +2857,12 @@ function goPage(id) {
 function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
 
 // ── PREVIEW MODES (cuestionario) ──────────────────────────────────────────
-function _ocultarPreparar() {
+function _setPreparar(visible) {
   try {
     const doc = document.getElementById('cuestionario-iframe')?.contentDocument;
     if (doc) {
       const p = doc.getElementById('preparar');
-      if (p) p.style.display = 'none';
+      if (p) p.style.display = visible ? '' : 'none';
     }
   } catch(e) {}
 }
@@ -2885,22 +2885,23 @@ function setPreviewMode(mode) {
   localStorage.setItem('kompass_preview_mode', mode);
 
   if (mode === 'desktop') {
+    // Vista escritorio: iframe normal, panel del agente visible
     viewport.style.cssText = 'flex:1;overflow:auto;display:flex;align-items:flex-start;justify-content:center;background:transparent;padding:0;';
     frame.className = '';
     frame.style.cssText = 'flex:1;display:flex;flex-direction:column;height:100%;width:100%;';
     iframe.style.cssText = 'flex:1;width:100%;border:none;display:block;';
+    _setPreparar(true);
   } else {
+    // Vista móvil: marco de dispositivo, sin panel del agente, fondo gris Kompass
     const dims = mode === 'ios'
       ? { w: 390, h: 844 }
       : { w: 360, h: 800 };
-    viewport.style.cssText = 'flex:1;overflow:auto;display:flex;align-items:flex-start;justify-content:center;background:#2a2a3e;padding:24px 20px 40px;';
+    viewport.style.cssText = 'flex:1;overflow:auto;display:flex;align-items:flex-start;justify-content:center;background:#F7F7F6;padding:24px 20px 40px;';
     frame.className = 'phone-frame';
     frame.style.cssText = `width:${dims.w}px;height:${dims.h}px;flex-shrink:0;`;
     iframe.style.cssText = `width:${dims.w}px;height:${dims.h}px;border:none;display:block;`;
+    _setPreparar(false);
   }
-
-  // Ocultar panel "Preparar cuestionario" en todos los modos de vista previa
-  _ocultarPreparar();
 }
 
 // ── RENDER ALL ────────────────────────────────────
