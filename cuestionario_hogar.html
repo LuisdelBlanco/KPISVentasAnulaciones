@@ -1225,14 +1225,16 @@
     }
     var aviso = document.getElementById('aviso-consent');
     if (aviso) aviso.style.display = 'block';
-    const sec = document.querySelector('section.consentimiento');
+    var sec = document.querySelector('section.consentimiento');
     sec.classList.remove('resaltar'); void sec.offsetWidth; sec.classList.add('resaltar');
     sec.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    // Alert de respaldo: garantizado en cualquier navegador iOS (incluido WKWebView)
-    var txtAlerta = USTED
-      ? (IDIOMA === 'ca' ? 'Marqui la casella de protecció de dades per poder enviar.' : 'Marque la casilla de protección de datos para poder enviar.')
-      : (IDIOMA === 'ca' ? 'Marca la casella de protecció de dades per poder enviar.' : 'Marca la casilla de protección de datos para poder enviar.');
-    setTimeout(function() { alert(txtAlerta); }, 50);
+    // En WKWebView alert() está bloqueado; el feedback visual (banner rojo + animación) es suficiente
+    if (!IS_WKWEBVIEW) {
+      var txtAlerta = USTED
+        ? (IDIOMA === 'ca' ? 'Marqui la casella de protecció de dades per poder enviar.' : 'Marque la casilla de protección de datos para poder enviar.')
+        : (IDIOMA === 'ca' ? 'Marca la casella de protecció de dades per poder enviar.' : 'Marca la casilla de protección de datos para poder enviar.');
+      setTimeout(function() { alert(txtAlerta); }, 50);
+    }
     return false;
   }
   document.getElementById('rgpd').addEventListener('change', function () {
@@ -1243,6 +1245,19 @@
       if (aviso) aviso.style.display = 'none';
     }
   });
+  // ---------- Modal nativo iOS (WKWebView): el usuario toca directamente el <a> ----------
+  function mostrarModalIOS(href, btnTexto, mensaje, color) {
+    document.getElementById('modal-ios-msg').textContent = mensaje;
+    var btn = document.getElementById('modal-ios-btn');
+    btn.href = href;
+    btn.textContent = btnTexto;
+    btn.style.background = color || '#25D366';
+    document.getElementById('modal-ios').style.display = 'block';
+  }
+  function cerrarModalIOS() {
+    document.getElementById('modal-ios').style.display = 'none';
+  }
+
   // ---------- Helper: copia texto al portapapeles con mensaje de confirmación ----------
   function copiarAlPortapapeles(texto, mensaje) {
     function fallback() {
@@ -1276,9 +1291,16 @@
     var texto = recopilar();
     var telefono = '34' + soloDigitos(CFG.telefono).slice(-9);
     if (IS_WKWEBVIEW) {
-      // En WKWebView (iOS): el esquema whatsapp:// se pasa al sistema y abre WhatsApp
-      // con el número y el texto prellenados, igual que en Android.
-      window.location.href = 'whatsapp://send?phone=' + telefono + '&text=' + encodeURIComponent(texto);
+      // Modal con <a> real: el usuario lo toca directamente.
+      // Un tap directo del usuario en un <a> es la única acción que WKWebView permite sin restricciones.
+      mostrarModalIOS(
+        'whatsapp://send?phone=' + telefono + '&text=' + encodeURIComponent(texto),
+        IDIOMA === 'ca' ? '📲  Abrir en WhatsApp' : '📲  Abrir en WhatsApp',
+        IDIOMA === 'ca'
+          ? 'Prem el botó per obrir WhatsApp amb el qüestionari a punt per enviar.'
+          : 'Pulsa el botón para abrir WhatsApp con el cuestionario listo para enviar.',
+        '#25D366'
+      );
     } else {
       var url = 'https://wa.me/' + telefono + '?text=' + encodeURIComponent(texto);
       var a = document.createElement('a');
@@ -1290,8 +1312,19 @@
   function enviarEmail() {
     if (!consentimientoOk()) return;
     var cuerpo = recopilar().replace(/\*/g, '');
-    // window.location.href funciona en WKWebView (iOS Safari interno); abre la app Mail directamente
-    window.location.href = 'mailto:' + CFG.email + '?subject=' + encodeURIComponent(asunto()) + '&body=' + encodeURIComponent(cuerpo);
+    var href = 'mailto:' + CFG.email + '?subject=' + encodeURIComponent(asunto()) + '&body=' + encodeURIComponent(cuerpo);
+    if (IS_WKWEBVIEW) {
+      mostrarModalIOS(
+        href,
+        IDIOMA === 'ca' ? '✉️  Obrir el correu' : '✉️  Abrir el correo',
+        IDIOMA === 'ca'
+          ? 'Prem el botó per obrir l\'app de correu amb el qüestionari a punt.'
+          : 'Pulsa el botón para abrir el correo con el cuestionario listo para enviar.',
+        '#1a73e8'
+      );
+    } else {
+      window.location.href = href;
+    }
   }
 
   // ---------- Panel de preparación ----------
@@ -1412,5 +1445,14 @@
   if (window.matchMedia('(min-width: 701px)').matches) document.querySelector('details.seguros').open = true;
   traducir();
 </script>
+
+<!-- Modal para iOS WKWebView: el usuario toca directamente el <a>, sin navegación programática -->
+<div id="modal-ios" style="display:none;position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,0.55);" onclick="if(event.target===this)cerrarModalIOS()">
+  <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:22px 22px 0 0;padding:28px 20px 44px;max-width:520px;margin:0 auto;box-sizing:border-box;">
+    <p id="modal-ios-msg" style="margin:0 0 22px;font-size:15px;color:#444;text-align:center;line-height:1.5;"></p>
+    <a id="modal-ios-btn" href="#" onclick="setTimeout(cerrarModalIOS,400)" style="display:block;color:#fff;text-align:center;padding:17px;border-radius:14px;font-size:17px;font-weight:700;text-decoration:none;margin-bottom:14px;letter-spacing:0.2px;"></a>
+    <button onclick="cerrarModalIOS()" style="width:100%;padding:15px;background:#efefef;border:none;border-radius:14px;font-size:16px;color:#555;cursor:pointer;font-family:inherit;">Cancelar</button>
+  </div>
+</div>
 </body>
 </html>
