@@ -437,6 +437,24 @@ tbody tr:hover td { background: var(--bg); }
 .bottom-nav-item.active { color: var(--red); }
 .bottom-nav-item.active .bnav-icon { transform: scale(1.1); }
 
+/* ── CUESTIONARIOS: iframe ocupa todo el espacio sin padding ── */
+body.cuestionario-activo #page-cuestionarios.active {
+  position: fixed;
+  top: 48px;
+  left: var(--sidebar-w);
+  width: calc(100vw - var(--sidebar-w));
+  height: calc(100vh - 48px);
+  z-index: 100;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex;
+  flex-direction: column;
+}
+body.mobile.cuestionario-activo #page-cuestionarios.active {
+  left: 0;
+  width: 100vw;
+}
+
 /* ── RESPONSIVE ── */
 body.mobile { --sidebar-w: 0px; }
 body.mobile .sidebar { display: none !important; }
@@ -2773,6 +2791,12 @@ function setBottomNav(id) {
 function goPage(id) {
   currentPage = id;
   localStorage.setItem('kompass_last_page', id); // recordar página actual
+  // Cuestionarios ocupa todo el espacio disponible (sin padding, sidebar siempre visible)
+  if (id === 'cuestionarios') {
+    document.body.classList.add('cuestionario-activo');
+  } else {
+    document.body.classList.remove('cuestionario-activo');
+  }
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-'+id)?.classList.add('active');
