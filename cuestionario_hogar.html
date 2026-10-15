@@ -1401,7 +1401,7 @@
     if (!datosAgenteOk(cfg)) return;
     try {
       const payload = btoa(unescape(encodeURIComponent(JSON.stringify(cfg))));
-      const base = location.origin + location.pathname;
+      const base = 'https://luisdelblanco.github.io/sm-cuestionarios/cuestionario_hogar.html';
       const url = base + '#cfg=' + payload;
       document.getElementById('enlace-url').value = url;
       document.getElementById('enlace-resultado').style.display = 'block';
