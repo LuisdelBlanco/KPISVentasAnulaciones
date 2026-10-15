@@ -38,8 +38,8 @@
     border-top: 6px solid var(--granate);
     display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
   }
-  .logos { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
-  .logos-img { display: block; height: 44px; width: auto; max-width: 100%; }
+  .logos { display: flex; align-items: center; gap: 20px; flex-wrap: nowrap; flex-shrink: 0; }
+  .logos-img { display: block; height: 44px; width: auto; flex-shrink: 0; object-fit: contain; }
   .contacto { font-size: 13px; color: var(--gris); text-align: right; }
   .contacto a { color: inherit; text-decoration: none; }
   h1 { font-size: 22px; margin: 22px 0 6px; line-height: 1.25; }
@@ -152,9 +152,9 @@
     body { overscroll-behavior-y: contain; }
     .hoja { padding: 10px 10px 0; }
     header.cabecera { padding: 12px 14px; flex-direction: column; align-items: flex-start; gap: 10px; }
-    /* Logos en fila, escalan por altura sin restricción de ancho */
-    .logos { flex-direction: row; align-items: center; gap: 14px; flex-wrap: nowrap; }
-    .logos-img { height: 34px; width: auto; max-width: none; }
+    /* Logos en fila, escalan por altura sin restricción de ancho, sin comprimir */
+    .logos { flex-direction: row; align-items: center; gap: 12px; flex-wrap: nowrap; flex-shrink: 0; }
+    .logos-img { height: 32px; width: auto; flex-shrink: 0; object-fit: contain; }
     .contacto { text-align: left; width: 100%; font-size: 12px; }
     h1 { font-size: 20px; margin-top: 16px; }
     section { padding: 16px 14px; }
