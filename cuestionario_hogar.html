@@ -23,7 +23,7 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     font-size: 16px; line-height: 1.45;
   }
-  .hoja { max-width: 1200px; margin: 0 auto; padding: 16px; }
+  .hoja { max-width: 100%; margin: 0 auto; padding: 16px 24px; }
 
   /* Selector de idioma */
   .barra-idioma { display: flex; justify-content: flex-end; margin-bottom: 10px; }
@@ -247,7 +247,7 @@
     </div>
     <div class="botones">
       <button type="button" class="btn-mail" onclick="descargarPersonalizado()">Descargar para el cliente</button>
-      <button type="button" class="btn-pdf" onclick="vistaPrevia()">Ver cómo queda</button>
+      <button type="button" class="btn-pdf" onclick="vistaPrevia()">Vista previa</button>
     </div>
     <p class="nota" id="p-error" style="color:#ffb3c6;font-weight:600"></p>
     <p class="nota">* Obligatorio. Las respuestas del cliente llegarán al móvil y correo que pongas aquí. El cuestionario y el resumen que os llega salen en el idioma que elijas.</p>
@@ -1275,12 +1275,47 @@
   function vistaPrevia() {
     const cfg = leerPanel();
     if (!datosAgenteOk(cfg)) return;
-    const w = window.open('', '_blank');
-    if (!w) { alert('Permite las ventanas emergentes para ver la vista previa.'); return; }
-    w.document.open(); w.document.write(generarHTML(cfg)); w.document.close();
+
+    // Aplica los datos del panel al CFG global para que textosDinamicos() los use
+    CFG.preparado = true;
+    CFG.cliente   = cfg.cliente;
+    CFG.trato     = cfg.trato;
+    CFG.idioma    = cfg.idioma;
+    CFG.remitente = cfg.remitente;
+    CFG.telefono  = cfg.telefono;
+    CFG.email     = cfg.email;
+
+    // Aplica trato (usted/tú) — USTED es const, lo evaluamos directamente
+    if (cfg.trato === 'usted') {
+      document.querySelectorAll('#cliente [data-usted]').forEach(function(el){ el.textContent = el.dataset.usted; });
+    } else {
+      document.querySelectorAll('#cliente [data-usted]').forEach(function(el){ el.textContent = el.dataset.tu || el.dataset.usted; });
+    }
+
+    // Aplica idioma y textos dinámicos
+    IDIOMA = cfg.idioma === 'ca' ? 'ca' : 'es';
+    traducir();
+
+    // Oculta el panel del agente
+    var preparar = document.getElementById('preparar');
+    if (preparar) preparar.style.display = 'none';
+
+    // Notifica a Kompass que active la barra de vista previa
+    window.parent.postMessage({ type: 'showPreview' }, '*');
   }
 
+  // Llamado desde Kompass cuando el agente pulsa "← Editar"
+  window.exitPreview = function() {
+    var preparar = document.getElementById('preparar');
+    if (preparar) preparar.style.display = '';
+    window.parent.postMessage({ type: 'hidePreview' }, '*');
+  };
+
   // ---------- Arranque ----------
+  // Guarda el texto original (tú) en data-tu para poder restaurarlo si el agente cambia el trato
+  document.querySelectorAll('#cliente [data-usted]').forEach(function(el){
+    if (!el.dataset.tu) el.dataset.tu = el.textContent;
+  });
   if (!CFG.preparado) {
     document.getElementById('preparar').classList.remove('oculto');
     document.getElementById('p-idioma').addEventListener('change', function () { cambiarIdioma(this.value); });
