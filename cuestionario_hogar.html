@@ -203,6 +203,11 @@
   #preparar .opciones label { color: var(--texto); }
   #preparar .botones { margin-top: 14px; }
   #preparar .btn-pdf { background: transparent; color: #fff; border-color: #fff; }
+  #preparar .btn-link { background: #25D366; color: #fff; border: none; }
+  #preparar .btn-link:disabled { opacity: .6; cursor: default; }
+  #preparar .enlace-resultado { display:none; margin-top: 12px; }
+  #preparar .enlace-resultado input { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 8px; border: none; font-size: 13px; color: #222; background: #fff; }
+  #preparar .enlace-resultado button { margin-top: 8px; background: #fff; color: var(--granate); border: 1px solid #fff; font-size: 13px; padding: 9px 18px; }
   #preparar .nota { font-size: 12.5px; color: #c8c8d0; margin: 10px 0 0; }
 
   .sin-consentimiento-impresion { display: none; }
@@ -258,7 +263,12 @@
     </div>
     <div class="botones">
       <button type="button" class="btn-mail" onclick="descargarPersonalizado()">Descargar para el cliente</button>
+      <button type="button" class="btn-link" id="btn-generar-enlace" onclick="generarEnlace(this)">🔗 Generar enlace</button>
       <button type="button" class="btn-pdf" onclick="vistaPrevia()">Vista previa</button>
+    </div>
+    <div class="enlace-resultado" id="enlace-resultado">
+      <input type="text" id="enlace-url" readonly placeholder="https://..." onclick="this.select()">
+      <button type="button" onclick="copiarEnlace()">📋 Copiar enlace</button>
     </div>
     <p class="nota" id="p-error" style="color:#ffb3c6;font-weight:600"></p>
     <p class="nota">* Obligatorio. Las respuestas del cliente llegarán al móvil y correo que pongas aquí. El cuestionario y el resumen que os llega salen en el idioma que elijas.</p>
@@ -1372,6 +1382,65 @@
     a.download = nombre;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+  }
+
+  // ---- Generar enlace (Supabase Storage) ----
+  var SUPA_URL_STORE = 'https://sblprwqnwcravldtmvat.supabase.co';
+  var SUPA_KEY_STORE = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNibHByd3Fud2NyYXZsZHRtdmF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzMTMwNTIsImV4cCI6MjA5NTg4OTA1Mn0.0f08Urtc2g2A1ZGuXXyhaC3c0pmBpv5pIiEUxtXDuJw';
+  var SUPA_BUCKET = 'cuestionarios';
+
+  async function generarEnlace(btn) {
+    const cfg = leerPanel();
+    if (!datosAgenteOk(cfg)) return;
+    const html = generarHTML(cfg);
+    const ts = Date.now();
+    const rand = Math.random().toString(36).slice(2, 7);
+    const clienteSlug = cfg.cliente
+      ? cfg.cliente.replace(/[^a-zA-Z0-9\s]/g, '').trim().replace(/\s+/g, '-').toLowerCase()
+      : 'cliente';
+    const nombre = 'hogar-' + clienteSlug + '-' + ts + '-' + rand + '.html';
+    const errBox = document.getElementById('p-error');
+    errBox.textContent = '';
+    btn.textContent = '⏳ Subiendo...';
+    btn.disabled = true;
+    try {
+      const resp = await fetch(SUPA_URL_STORE + '/storage/v1/object/' + SUPA_BUCKET + '/' + nombre, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + SUPA_KEY_STORE,
+          'Content-Type': 'text/html; charset=utf-8',
+          'x-upsert': 'true'
+        },
+        body: html
+      });
+      if (!resp.ok) throw new Error(await resp.text());
+      const url = SUPA_URL_STORE + '/storage/v1/object/public/' + SUPA_BUCKET + '/' + nombre;
+      document.getElementById('enlace-url').value = url;
+      document.getElementById('enlace-resultado').style.display = 'block';
+      try { await navigator.clipboard.writeText(url); } catch(e) {}
+      btn.textContent = '✅ Listo';
+      setTimeout(function() { btn.textContent = '🔗 Generar enlace'; btn.disabled = false; }, 4000);
+    } catch(e) {
+      errBox.textContent = 'Error al subir: ' + (e.message || e);
+      btn.textContent = '❌ Error';
+      setTimeout(function() { btn.textContent = '🔗 Generar enlace'; btn.disabled = false; }, 3000);
+    }
+  }
+
+  function copiarEnlace() {
+    const input = document.getElementById('enlace-url');
+    const url = input.value;
+    if (!url) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).catch(function() {
+        input.select(); document.execCommand('copy');
+      });
+    } else {
+      input.select(); document.execCommand('copy');
+    }
+    const btn = event.target;
+    btn.textContent = '✅ Copiado';
+    setTimeout(function() { btn.textContent = '📋 Copiar enlace'; }, 2000);
   }
 
   function vistaPrevia() {
