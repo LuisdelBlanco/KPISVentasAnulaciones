@@ -1461,7 +1461,7 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
       </div>
       <div id="preview-viewport">
         <div id="device-frame" style="flex:1;display:flex;flex-direction:column;height:100%;width:100%;">
-          <iframe id="cuestionario-iframe" src="cuestionario_hogar.html" style="flex:1;width:100%;border:none;display:block;"></iframe>
+          <iframe id="cuestionario-iframe" src="cuestionario_hogar.html" style="flex:1;width:100%;border:none;display:block;" onload="onCuestionarioLoaded()"></iframe>
         </div>
       </div>
     </div>
@@ -2857,6 +2857,21 @@ function goPage(id) {
 function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
 
 // ── PREVIEW MODES (cuestionario) ──────────────────────────────────────────
+function _ocultarPreparar() {
+  try {
+    const doc = document.getElementById('cuestionario-iframe')?.contentDocument;
+    if (doc) {
+      const p = doc.getElementById('preparar');
+      if (p) p.style.display = 'none';
+    }
+  } catch(e) {}
+}
+
+function onCuestionarioLoaded() {
+  const m = localStorage.getItem('kompass_preview_mode') || 'desktop';
+  setPreviewMode(m);
+}
+
 function setPreviewMode(mode) {
   const viewport  = document.getElementById('preview-viewport');
   const frame     = document.getElementById('device-frame');
@@ -2883,6 +2898,9 @@ function setPreviewMode(mode) {
     frame.style.cssText = `width:${dims.w}px;height:${dims.h}px;flex-shrink:0;`;
     iframe.style.cssText = `width:${dims.w}px;height:${dims.h}px;border:none;display:block;`;
   }
+
+  // Ocultar panel "Preparar cuestionario" en todos los modos de vista previa
+  _ocultarPreparar();
 }
 
 // ── RENDER ALL ────────────────────────────────────
