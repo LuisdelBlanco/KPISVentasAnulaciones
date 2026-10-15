@@ -1274,13 +1274,13 @@
   function enviarWhatsApp() {
     if (!consentimientoOk()) return;
     var texto = recopilar();
+    var telefono = '34' + soloDigitos(CFG.telefono).slice(-9);
     if (IS_WKWEBVIEW) {
-      // Estamos dentro del navegador de WhatsApp: copiamos y pedimos al cliente que pegue
-      copiarAlPortapapeles(texto, IDIOMA === 'ca'
-        ? 'Text copiat! Torna al xat de WhatsApp i enganxa\'l aquí.'
-        : 'Texto copiado. Vuelve al chat de WhatsApp y pégalo aquí.');
+      // En WKWebView (iOS): el esquema whatsapp:// se pasa al sistema y abre WhatsApp
+      // con el número y el texto prellenados, igual que en Android.
+      window.location.href = 'whatsapp://send?phone=' + telefono + '&text=' + encodeURIComponent(texto);
     } else {
-      var url = 'https://wa.me/34' + soloDigitos(CFG.telefono).slice(-9) + '?text=' + encodeURIComponent(texto);
+      var url = 'https://wa.me/' + telefono + '?text=' + encodeURIComponent(texto);
       var a = document.createElement('a');
       a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
