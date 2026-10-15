@@ -114,7 +114,7 @@
     padding: 10px 12px; border-radius: 6px; font-size: 14px; margin-bottom: 14px;
   }
   .oculto { display: none !important; }
-  section.consentimiento { transition: background .3s, border-color .3s, box-shadow .3s; }
+  section.consentimiento { transition: background .3s, border-color .3s, box-shadow .3s; scroll-margin-bottom: 140px; }
   section.consentimiento.resaltar {
     border: 2px solid var(--granate); background: var(--granate-suave);
     animation: latido 0.6s ease-in-out 3;
@@ -218,7 +218,11 @@
 </style>
 </head>
 <body>
-<div class="hoja">
+<!-- Banner WKWebView: visible solo cuando el archivo se abre dentro de la app de WhatsApp u otro browser de app -->
+<div id="banner-safari" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#1a73e8;color:#fff;padding:12px 16px;font-size:14px;font-weight:600;text-align:center;line-height:1.4;">
+  Para enviar el cuestionario abre este archivo en <strong>Safari</strong> → toca el icono ↗ o ⋯ y elige <em>Abrir en Safari</em>
+</div>
+<div class="hoja" id="hoja-principal">
 
   <!-- PANEL DE PREPARACIÓN: el cliente no lo ve -->
   <div id="preparar" class="oculto">
@@ -759,6 +763,7 @@
 
   <div class="acciones">
     <p data-usted="Cuando lo tenga, envíelo por donde le vaya mejor. Las fotos de la póliza o del recibo actual puede mandarlas aparte por WhatsApp o correo.">Cuando lo tengas, envíamelo por donde te vaya mejor. Las fotos de la póliza o del recibo actual mándamelas aparte por WhatsApp o correo.</p>
+    <p id="aviso-consent" style="display:none;margin:0 0 10px;font-size:14px;font-weight:700;color:#be003e;">⚠️ <span id="aviso-consent-txt">Acepta la casilla de protección de datos para poder enviar el cuestionario.</span></p>
     <div class="botones">
       <button type="button" class="btn-wa" onclick="enviarWhatsApp()">Enviar por WhatsApp</button>
       <button type="button" class="btn-mail" onclick="enviarEmail()">Enviar por correo</button>
@@ -777,6 +782,10 @@
   const CFG = JSON.parse(document.getElementById('config').textContent);
   const USTED = CFG.trato === 'usted';
   let IDIOMA = CFG.idioma === 'ca' ? 'ca' : 'es';
+
+  // Detección de plataforma iOS / WKWebView (navegador interno de WhatsApp, Instagram, etc.)
+  var IS_IOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  var IS_WKWEBVIEW = IS_IOS && !/Safari\//.test(navigator.userAgent) && !/CriOS\//.test(navigator.userAgent) && !/FxiOS\//.test(navigator.userAgent);
 
   // ---------- Traducción al catalán ----------
   // Clave: texto en castellano tal como aparece; valor: catalán (tú) o [tú, vostè] cuando cambia con el trato.
@@ -998,6 +1007,8 @@
     const saludo = T.hola + (CFG.cliente ? ' ' + CFG.cliente : '') + ', ';
     document.getElementById('intro').textContent = saludo + (USTED ? T.introUsted : T.introTu);
     document.getElementById('aviso-rgpd').textContent = USTED ? T.alertaUsted : T.alertaTu;
+    var actxt = document.getElementById('aviso-consent-txt');
+    if (actxt) actxt.textContent = USTED ? T.alertaUsted : T.alertaTu;
     document.getElementById('sin-consentimiento').textContent = T.impresion;
     const eml = document.getElementById('rgpd-email');
     if (eml) { const addr = CFG.email || '[correo del agente]'; eml.textContent = addr; eml.setAttribute('href', 'mailto:' + addr); }
@@ -1207,28 +1218,79 @@
   }
 
   function consentimientoOk() {
-    if (document.getElementById('rgpd').checked) return true;
+    if (document.getElementById('rgpd').checked) {
+      var aviso = document.getElementById('aviso-consent');
+      if (aviso) aviso.style.display = 'none';
+      return true;
+    }
+    var aviso = document.getElementById('aviso-consent');
+    if (aviso) aviso.style.display = 'block';
     const sec = document.querySelector('section.consentimiento');
     sec.classList.remove('resaltar'); void sec.offsetWidth; sec.classList.add('resaltar');
-    sec.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    sec.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    // Alert de respaldo: garantizado en cualquier navegador iOS (incluido WKWebView)
+    var txtAlerta = USTED
+      ? (IDIOMA === 'ca' ? 'Marqui la casella de protecció de dades per poder enviar.' : 'Marque la casilla de protección de datos para poder enviar.')
+      : (IDIOMA === 'ca' ? 'Marca la casella de protecció de dades per poder enviar.' : 'Marca la casilla de protección de datos para poder enviar.');
+    setTimeout(function() { alert(txtAlerta); }, 50);
     return false;
   }
   document.getElementById('rgpd').addEventListener('change', function () {
     document.body.classList.toggle('acepta', this.checked);
-    if (this.checked) document.querySelector('section.consentimiento').classList.remove('resaltar');
+    if (this.checked) {
+      document.querySelector('section.consentimiento').classList.remove('resaltar');
+      var aviso = document.getElementById('aviso-consent');
+      if (aviso) aviso.style.display = 'none';
+    }
   });
+  // ---------- Helper: copia texto al portapapeles con mensaje de confirmación ----------
+  function copiarAlPortapapeles(texto, mensaje) {
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = texto;
+      ta.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none;';
+      document.body.appendChild(ta);
+      ta.focus(); ta.select(); ta.setSelectionRange(0, 99999);
+      try { document.execCommand('copy'); alert(mensaje); }
+      catch(e) { alert(IDIOMA === 'ca' ? 'No s\'ha pogut copiar. Prova-ho des de Safari.' : 'No se pudo copiar. Pruébalo desde Safari.'); }
+      document.body.removeChild(ta);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(texto).then(function() { alert(mensaje); }).catch(fallback);
+    } else { fallback(); }
+  }
+
   function guardarPDF() {
     if (!consentimientoOk()) return;
-    window.print();
+    if (IS_WKWEBVIEW) {
+      copiarAlPortapapeles(recopilar(), IDIOMA === 'ca'
+        ? 'Text copiat. Obre Safari per guardar-lo com a PDF, o enganxa\'l a Notes.'
+        : 'Texto copiado. Abre Safari para guardarlo como PDF, o pégalo en Notas.');
+    } else {
+      window.print();
+    }
   }
 
   function enviarWhatsApp() {
     if (!consentimientoOk()) return;
-    window.open('https://wa.me/34' + soloDigitos(CFG.telefono).slice(-9) + '?text=' + encodeURIComponent(recopilar()), '_blank');
+    var texto = recopilar();
+    if (IS_WKWEBVIEW) {
+      // Estamos dentro del navegador de WhatsApp: copiamos y pedimos al cliente que pegue
+      copiarAlPortapapeles(texto, IDIOMA === 'ca'
+        ? 'Text copiat! Torna al xat de WhatsApp i enganxa\'l aquí.'
+        : 'Texto copiado. Vuelve al chat de WhatsApp y pégalo aquí.');
+    } else {
+      var url = 'https://wa.me/34' + soloDigitos(CFG.telefono).slice(-9) + '?text=' + encodeURIComponent(texto);
+      var a = document.createElement('a');
+      a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }
   }
+
   function enviarEmail() {
     if (!consentimientoOk()) return;
-    const cuerpo = recopilar().replace(/\*/g, '');
+    var cuerpo = recopilar().replace(/\*/g, '');
+    // window.location.href funciona en WKWebView (iOS Safari interno); abre la app Mail directamente
     window.location.href = 'mailto:' + CFG.email + '?subject=' + encodeURIComponent(asunto()) + '&body=' + encodeURIComponent(cuerpo);
   }
 
@@ -1323,6 +1385,20 @@
   if (window.parent !== window) {
     document.body.classList.add('en-iframe');
   }
+  // Detecta WKWebView (navegador interno de WhatsApp, Instagram, etc. en iOS)
+  // En WKWebView el userAgent tiene "iPhone/iPad" pero NO tiene "Safari/" ni "CriOS/" ni "FxiOS/"
+  (function() {
+    var ua = navigator.userAgent || '';
+    var isIOS = /iPhone|iPad|iPod/.test(ua);
+    var isWKWebView = isIOS && !/Safari\//.test(ua) && !/CriOS\//.test(ua) && !/FxiOS\//.test(ua);
+    if (isWKWebView) {
+      var banner = document.getElementById('banner-safari');
+      if (banner) banner.style.display = 'block';
+      // Añade margen superior a la hoja para que no quede tapada
+      var hoja = document.getElementById('hoja-principal');
+      if (hoja) hoja.style.paddingTop = '64px';
+    }
+  })();
   // Guarda el texto original (tú) en data-tu para poder restaurarlo si el agente cambia el trato
   document.querySelectorAll('#cliente [data-usted]').forEach(function(el){
     if (!el.dataset.tu) el.dataset.tu = el.textContent;
