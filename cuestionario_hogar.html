@@ -151,10 +151,11 @@
   @media (max-width: 560px) {
     body { overscroll-behavior-y: contain; }
     .hoja { padding: 10px 10px 0; }
-    header.cabecera { padding: 14px; }
-    .logos { width: 100%; flex-direction: column; align-items: flex-start; gap: 10px; }
-    .logos-img { height: 38px; width: auto; max-width: 180px; }
-    .contacto { text-align: left; width: 100%; }
+    header.cabecera { padding: 12px 14px; flex-direction: column; align-items: flex-start; gap: 10px; }
+    /* Logos en fila, escalan por altura sin restricción de ancho */
+    .logos { flex-direction: row; align-items: center; gap: 14px; flex-wrap: nowrap; }
+    .logos-img { height: 34px; width: auto; max-width: none; }
+    .contacto { text-align: left; width: 100%; font-size: 12px; }
     h1 { font-size: 20px; margin-top: 16px; }
     section { padding: 16px 14px; }
     section h2 .picto { width: 34px; height: 34px; }
