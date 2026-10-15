@@ -168,8 +168,8 @@
     .barra-idioma { justify-content: stretch; }
     .barra-idioma label { width: 100%; }
     .barra-idioma select { flex: 1; }
-    /* Barra de acciones fija al fondo */
-    .acciones {
+    /* Barra de acciones fija al fondo — solo cuando NO está en iframe (envío real al cliente) */
+    body:not(.en-iframe) .acciones {
       position: sticky;
       bottom: 0;
       border-radius: 12px 12px 0 0;
@@ -178,6 +178,12 @@
       box-shadow: 0 -6px 24px rgba(0,0,0,.12);
       margin-bottom: 0;
       z-index: 20;
+    }
+    body.en-iframe .acciones {
+      position: static;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      box-shadow: none;
     }
     footer { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
   }
@@ -1313,6 +1319,10 @@
   };
 
   // ---------- Arranque ----------
+  // Detecta si está dentro de un iframe (preview de Kompass) para desactivar sticky en acciones
+  if (window.parent !== window) {
+    document.body.classList.add('en-iframe');
+  }
   // Guarda el texto original (tú) en data-tu para poder restaurarlo si el agente cambia el trato
   document.querySelectorAll('#cliente [data-usted]').forEach(function(el){
     if (!el.dataset.tu) el.dataset.tu = el.textContent;
