@@ -1453,7 +1453,8 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
     </div>
 
     <div class="page" id="page-cuestionarios">
-      <div id="preview-toolbar">
+      <div id="preview-toolbar" style="display:none;">
+        <button class="preview-btn" id="btn-editar" onclick="exitPreview()" style="margin-right:8px;border-color:rgba(255,255,255,0.3);">← Editar</button>
         <span>Vista previa:</span>
         <button class="preview-btn active" id="btn-desktop" onclick="setPreviewMode('desktop')">🖥️ Escritorio</button>
         <button class="preview-btn" id="btn-ios" onclick="setPreviewMode('ios')">📱 iOS</button>
@@ -2845,7 +2846,7 @@ function goPage(id) {
   const [t,s] = pageNames[id]||['',''];
   document.getElementById('pageTitle').textContent = t;
   document.getElementById('pageSubtitle').textContent = s;
-  if (id==='cuestionarios') { const m=localStorage.getItem('kompass_preview_mode')||'desktop'; setPreviewMode(m); }
+  // Cuestionarios: no activar preview toolbar al navegar; se activa solo al pulsar "Vista previa" en el formulario
   if (id==='registros') populateFilterSelects();
   if (id==='config') renderConfig();
   if (id==='actividad') { renderActividad(); preseleccionarMesActividad(); }
@@ -2857,19 +2858,53 @@ function goPage(id) {
 function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
 
 // ── PREVIEW MODES (cuestionario) ──────────────────────────────────────────
-function _setPreparar(visible) {
-  try {
-    const doc = document.getElementById('cuestionario-iframe')?.contentDocument;
-    if (doc) {
-      const p = doc.getElementById('preparar');
-      if (p) p.style.display = visible ? '' : 'none';
-    }
-  } catch(e) {}
+
+// Cuando el iframe carga, resetea la barra (oculta) hasta que el agente pulse "Vista previa"
+function onCuestionarioLoaded() {
+  document.getElementById('preview-toolbar').style.display = 'none';
+  // Asegura layout de escritorio por defecto sin mostrar toolbar
+  const viewport = document.getElementById('preview-viewport');
+  const frame    = document.getElementById('device-frame');
+  const iframe   = document.getElementById('cuestionario-iframe');
+  if (!viewport || !frame || !iframe) return;
+  viewport.style.cssText = 'flex:1;overflow:auto;display:flex;align-items:flex-start;justify-content:center;background:transparent;padding:0;';
+  frame.className = '';
+  frame.style.cssText = 'flex:1;display:flex;flex-direction:column;height:100%;width:100%;';
+  iframe.style.cssText = 'flex:1;width:100%;border:none;display:block;';
 }
 
-function onCuestionarioLoaded() {
-  const m = localStorage.getItem('kompass_preview_mode') || 'desktop';
-  setPreviewMode(m);
+// Escucha mensajes del iframe del cuestionario
+window.addEventListener('message', function(e) {
+  if (!e.data || typeof e.data !== 'object') return;
+  if (e.data.type === 'showPreview') {
+    const saved = localStorage.getItem('kompass_preview_mode') || 'desktop';
+    showPreviewToolbar(saved);
+  }
+  if (e.data.type === 'hidePreview') {
+    // El formulario ya ha restaurado #preparar; solo ocultamos la toolbar
+    document.getElementById('preview-toolbar').style.display = 'none';
+  }
+});
+
+// Muestra la barra de vista previa y activa el modo guardado
+function showPreviewToolbar(mode) {
+  mode = mode || localStorage.getItem('kompass_preview_mode') || 'desktop';
+  document.getElementById('preview-toolbar').style.display = 'flex';
+  setPreviewMode(mode);
+}
+
+// Vuelve al modo edición: oculta toolbar y pide al iframe que muestre #preparar
+function exitPreview() {
+  document.getElementById('preview-toolbar').style.display = 'none';
+  try {
+    const iframe = document.getElementById('cuestionario-iframe');
+    if (iframe && iframe.contentWindow && typeof iframe.contentWindow.exitPreview === 'function') {
+      iframe.contentWindow.exitPreview();
+    }
+  } catch(e) {}
+  // Reset a layout escritorio para la próxima vista previa
+  setPreviewMode('desktop');
+  document.getElementById('preview-toolbar').style.display = 'none';
 }
 
 function setPreviewMode(mode) {
@@ -2878,29 +2913,24 @@ function setPreviewMode(mode) {
   const iframe    = document.getElementById('cuestionario-iframe');
   if (!viewport || !frame || !iframe) return;
 
-  document.querySelectorAll('.preview-btn').forEach(b => b.classList.remove('active'));
+  // Marca el botón activo (excluye el botón "← Editar")
+  document.querySelectorAll('.preview-btn:not(#btn-editar)').forEach(b => b.classList.remove('active'));
   const btn = document.getElementById('btn-' + mode);
   if (btn) btn.classList.add('active');
 
   localStorage.setItem('kompass_preview_mode', mode);
 
   if (mode === 'desktop') {
-    // Vista escritorio: iframe normal, panel del agente visible
     viewport.style.cssText = 'flex:1;overflow:auto;display:flex;align-items:flex-start;justify-content:center;background:transparent;padding:0;';
     frame.className = '';
     frame.style.cssText = 'flex:1;display:flex;flex-direction:column;height:100%;width:100%;';
     iframe.style.cssText = 'flex:1;width:100%;border:none;display:block;';
-    _setPreparar(true);
   } else {
-    // Vista móvil: marco de dispositivo, sin panel del agente, fondo gris Kompass
-    const dims = mode === 'ios'
-      ? { w: 390, h: 844 }
-      : { w: 360, h: 800 };
+    const dims = mode === 'ios' ? { w: 390, h: 844 } : { w: 360, h: 800 };
     viewport.style.cssText = 'flex:1;overflow:auto;display:flex;align-items:flex-start;justify-content:center;background:#F7F7F6;padding:24px 20px 40px;';
     frame.className = 'phone-frame';
     frame.style.cssText = `width:${dims.w}px;height:${dims.h}px;flex-shrink:0;`;
     iframe.style.cssText = `width:${dims.w}px;height:${dims.h}px;border:none;display:block;`;
-    _setPreparar(false);
   }
 }
 
