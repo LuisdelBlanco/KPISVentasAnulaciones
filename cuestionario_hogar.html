@@ -1408,8 +1408,8 @@
         method: 'POST',
         headers: {
           'Authorization': 'Bearer ' + SUPA_KEY_STORE,
-          'Content-Type': 'text/html; charset=utf-8',
-          'x-upsert': 'true'
+          'apikey': SUPA_KEY_STORE,
+          'Content-Type': 'text/html; charset=utf-8'
         },
         body: html
       });
