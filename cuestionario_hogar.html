@@ -1404,17 +1404,20 @@
     btn.textContent = '⏳ Subiendo...';
     btn.disabled = true;
     try {
-      const resp = await fetch(SUPA_URL_STORE + '/storage/v1/object/' + SUPA_BUCKET + '/' + nombre, {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Bearer ' + SUPA_KEY_STORE,
-          'apikey': SUPA_KEY_STORE,
-          'Content-Type': 'text/html; charset=utf-8'
-        },
-        body: html
-      });
-      if (!resp.ok) throw new Error(await resp.text());
-      const url = SUPA_URL_STORE + '/storage/v1/object/public/' + SUPA_BUCKET + '/' + nombre;
+      const resp = await fetch(
+        SUPA_URL_STORE + '/functions/v1/upload-cuestionario?filename=' + encodeURIComponent(nombre),
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + SUPA_KEY_STORE,
+            'Content-Type': 'text/plain'
+          },
+          body: html
+        }
+      );
+      const data = await resp.json().catch(function() { return {}; });
+      if (!resp.ok) throw new Error(data.error || resp.statusText);
+      const url = data.url;
       document.getElementById('enlace-url').value = url;
       document.getElementById('enlace-resultado').style.display = 'block';
       try { await navigator.clipboard.writeText(url); } catch(e) {}
