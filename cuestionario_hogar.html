@@ -168,22 +168,14 @@
     .barra-idioma { justify-content: stretch; }
     .barra-idioma label { width: 100%; }
     .barra-idioma select { flex: 1; }
-    /* Barra de acciones fija al fondo — solo cuando NO está en iframe (envío real al cliente) */
-    body:not(.en-iframe) .acciones {
-      position: sticky;
-      bottom: 0;
-      border-radius: 12px 12px 0 0;
-      border-bottom: none;
+    /* Botones solo al final — sin sticky */
+    .acciones {
+      position: static !important;
+      border-radius: 12px !important;
+      margin-bottom: 20px !important;
+      box-shadow: none !important;
+      border-bottom: 1px solid var(--borde) !important;
       padding-bottom: calc(18px + env(safe-area-inset-bottom));
-      box-shadow: 0 -6px 24px rgba(0,0,0,.12);
-      margin-bottom: 0;
-      z-index: 20;
-    }
-    body.en-iframe .acciones {
-      position: static;
-      border-radius: 12px;
-      margin-bottom: 20px;
-      box-shadow: none;
     }
     footer { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
   }
@@ -209,6 +201,14 @@
   #preparar .enlace-resultado input { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 8px; border: none; font-size: 13px; color: #222; background: #fff; }
   #preparar .enlace-resultado button { margin-top: 8px; background: #fff; color: var(--granate); border: 1px solid #fff; font-size: 13px; padding: 9px 18px; }
   #preparar .nota { font-size: 12.5px; color: #c8c8d0; margin: 10px 0 0; }
+
+  /* Panel colapsable en móvil */
+  @media (max-width: 700px) {
+    #preparar.colapsado > *:not(h2) { display: none !important; }
+    #preparar h2 { cursor: pointer; user-select: none; -webkit-user-select: none; }
+    #preparar h2::after { content: " ▼"; font-size: 13px; opacity: 0.65; }
+    #preparar.colapsado h2::after { content: " ▶"; }
+  }
 
   .sin-consentimiento-impresion { display: none; }
   @media print {
@@ -1493,6 +1493,14 @@
   });
   if (!CFG.preparado) {
     document.getElementById('preparar').classList.remove('oculto');
+    // En móvil, colapsar el panel por defecto para no ocupar pantalla
+    if (window.matchMedia('(max-width: 700px)').matches) {
+      var prepEl = document.getElementById('preparar');
+      prepEl.classList.add('colapsado');
+      prepEl.querySelector('h2').addEventListener('click', function() {
+        prepEl.classList.toggle('colapsado');
+      });
+    }
     document.getElementById('p-idioma').addEventListener('change', function () { cambiarIdioma(this.value); });
   }
   aplicarConfig();
