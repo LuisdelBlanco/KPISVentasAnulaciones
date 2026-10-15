@@ -790,6 +790,17 @@
   // Copia del archivo tal cual se cargó, para generar la versión personalizada
   const ORIGINAL = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
   const CFG = JSON.parse(document.getElementById('config').textContent);
+  // Aplicar config desde hash de URL (#cfg=BASE64) si existe
+  (function() {
+    try {
+      var m = location.hash.match(/^#cfg=([A-Za-z0-9+/=]+)/);
+      if (m) {
+        var decoded = JSON.parse(decodeURIComponent(escape(atob(m[1]))));
+        Object.assign(CFG, decoded);
+        CFG.preparado = true;
+      }
+    } catch(e) {}
+  })();
   const USTED = CFG.trato === 'usted';
   let IDIOMA = CFG.idioma === 'ca' ? 'ca' : 'es';
 
@@ -1384,49 +1395,21 @@
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
   }
 
-  // ---- Generar enlace (Supabase Storage) ----
-  var SUPA_URL_STORE = 'https://sblprwqnwcravldtmvat.supabase.co';
-  var SUPA_KEY_STORE = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNibHByd3Fud2NyYXZsZHRtdmF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzMTMwNTIsImV4cCI6MjA5NTg4OTA1Mn0.0f08Urtc2g2A1ZGuXXyhaC3c0pmBpv5pIiEUxtXDuJw';
-  var SUPA_BUCKET = 'cuestionarios';
-
-  async function generarEnlace(btn) {
+  // ---- Generar enlace (hash URL, sin servidor) ----
+  function generarEnlace(btn) {
     const cfg = leerPanel();
     if (!datosAgenteOk(cfg)) return;
-    const html = generarHTML(cfg);
-    const ts = Date.now();
-    const rand = Math.random().toString(36).slice(2, 7);
-    const clienteSlug = cfg.cliente
-      ? cfg.cliente.replace(/[^a-zA-Z0-9\s]/g, '').trim().replace(/\s+/g, '-').toLowerCase()
-      : 'cliente';
-    const nombre = 'hogar-' + clienteSlug + '-' + ts + '-' + rand + '.html';
-    const errBox = document.getElementById('p-error');
-    errBox.textContent = '';
-    btn.textContent = '⏳ Subiendo...';
-    btn.disabled = true;
     try {
-      const resp = await fetch(
-        SUPA_URL_STORE + '/functions/v1/upload-cuestionario?filename=' + encodeURIComponent(nombre),
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': 'Bearer ' + SUPA_KEY_STORE,
-            'Content-Type': 'text/plain'
-          },
-          body: html
-        }
-      );
-      const data = await resp.json().catch(function() { return {}; });
-      if (!resp.ok) throw new Error(data.error || resp.statusText);
-      const url = data.url;
+      const payload = btoa(unescape(encodeURIComponent(JSON.stringify(cfg))));
+      const base = location.origin + location.pathname;
+      const url = base + '#cfg=' + payload;
       document.getElementById('enlace-url').value = url;
       document.getElementById('enlace-resultado').style.display = 'block';
-      try { await navigator.clipboard.writeText(url); } catch(e) {}
+      try { navigator.clipboard.writeText(url); } catch(e) {}
       btn.textContent = '✅ Listo';
-      setTimeout(function() { btn.textContent = '🔗 Generar enlace'; btn.disabled = false; }, 4000);
+      setTimeout(function() { btn.textContent = '🔗 Generar enlace'; }, 3000);
     } catch(e) {
-      errBox.textContent = 'Error al subir: ' + (e.message || e);
-      btn.textContent = '❌ Error';
-      setTimeout(function() { btn.textContent = '🔗 Generar enlace'; btn.disabled = false; }, 3000);
+      document.getElementById('p-error').textContent = 'Error al generar enlace: ' + e.message;
     }
   }
 
