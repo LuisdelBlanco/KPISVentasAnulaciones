@@ -3098,7 +3098,7 @@ function renderKPIs() {
 
   const kpis = [
     { label:'Emisiones', value: emisNetas, accent:'var(--green)', delta:`Brutas: ${ventas} · Sin efecto: ${sinEf}${suple>0?' · Suples: '+suple:''}`, progress: { pct: progPct, color: progColor, label: `${emisNetas} de ${obj} · ${progPct}%` } },
-    { label:'Anulaciones', value: anulan, accent:'#BE123C', delta:`${Math.round(anulan/(ventas||1)*100)}% sobre emisiones${suspenso>0?' · Suspensos: '+suspenso:''}${rehab>0?' · Rehab: -'+rehab:''}` },
+    { label:'Anulaciones', value: rehabDeAnul>0 ? `${anulNetas} <span style="font-size:14px;font-weight:500;opacity:0.5">(${anulan}−${rehabDeAnul})</span>` : anulan, accent:'#BE123C', delta:`${Math.round(anulNetas/(ventas||1)*100)}% sobre emisiones${suspenso>0?' · Suspensos: '+suspenso:''}${rehabDeAnul>0?' · Rehab: −'+rehabDeAnul:''}` },
     { label:'Neto pólizas', value: neto>0?'+'+neto:neto, accent:'var(--blue)', delta:`Rehab: ${rehab} · Reempl: ${sust} · Susp: ${suspenso}` },
     { label:'Sin efecto', value: sinEf, accent:'var(--text-3)', delta:'' },
     { label:'Prima neta (€)', value: fmtK(totalPrima), accent:'var(--red)', delta:`Media: ${fmtK(totalPrima/(ventas||1))}€/póliza` },
