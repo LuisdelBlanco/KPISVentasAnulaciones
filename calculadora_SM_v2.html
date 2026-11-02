@@ -577,18 +577,6 @@ body.presentando #pageFinanciera .grid2 > div:last-child{width:100%;}
       </div>
     </div>
 
-    <!-- CARTERA -->
-    <div class="card solo-edicion">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-        <p class="section-title" style="margin:0">Cartera de clientes</p>
-        <button class="btn-add" onclick="agregarCliente()">+ Añadir cliente</button>
-      </div>
-      <div id="tablaCartera"><p class="empty-msg">Añade clientes para ver el agregado de cartera.</p></div>
-      <div id="totalCartera" style="display:none;" class="total-row">
-        <span>Total cartera / año (primer año)</span>
-        <span id="totalCarteraVal"></span>
-      </div>
-    </div>
 
     <div class="footer solo-edicion"><b>SM Seguros</b> &nbsp;·&nbsp; Calculadora interna de primas &nbsp;·&nbsp; Fallecimiento 47364/44662/44663 · IAP 7691 · EG 7883</div>
 
@@ -1346,7 +1334,7 @@ function calcular(){
       <span style="font-weight:700">${i+1}</span>
       <span>${edad}</span>
       <span style="text-align:right;color:#555">${capTxt}</span>
-      ${ahCol}
+      ${mostrarAhorro ? ahCol : `<span>${gsActivas}</span>`}
       <span style="text-align:right;font-weight:700;color:#BF0050">${fmt(totalMostrar)}</span>
       <span style="text-align:right;color:#888">${fmt(acumT)}</span>
     </div>`;
