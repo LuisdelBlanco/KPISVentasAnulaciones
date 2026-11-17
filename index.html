@@ -965,11 +965,11 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
           <div class="table-scroll">
             <table style="table-layout:fixed;width:100%;">
               <colgroup>
-                <col style="width:28px"><col style="width:74px"><col style="width:68px">
-                <col style="width:110px"><col style="width:115px"><col style="width:82px">
-                <col style="width:115px"><col style="width:82px"><col style="width:74px">
-                <col style="width:38px"><col style="width:44px"><col style="width:72px">
-                <col style="width:90px"><col style="width:54px">
+                <col style="width:24px"><col style="width:60px"><col style="width:55px">
+                <col style="width:90px"><col style="width:75px"><col style="width:70px">
+                <col style="width:85px"><col style="width:60px"><col style="width:62px">
+                <col style="width:32px"><col style="width:40px"><col style="width:68px">
+                <col style="width:55px"><col style="width:155px">
               </colgroup>
               <thead><tr>
                 <th style="width:32px;"><input type="checkbox" id="pteCheckAll" onchange="toggleCheckAllPte(this)" style="cursor:pointer;accent-color:#D97706;"></th>
@@ -4799,7 +4799,7 @@ function renderPendientesAnular() {
 
   const hoy = new Date(); hoy.setHours(0,0,0,0);
 
-  let pendientes = registros.filter(r => r.tipo === 'Pte. Anular' && r.estadoPte !== 'anulado');
+  let pendientes = registros.filter(r => r.tipo === 'Pte. Anular' && r.estadoPte !== 'anulado' && r.estadoPte !== 'retenida');
   if(fOf) pendientes = pendientes.filter(r => r.oficina === fOf);
   if(fAg) pendientes = pendientes.filter(r => r.agente === fAg);
   if(fRa) pendientes = pendientes.filter(r => r.ramo === fRa);
@@ -4864,20 +4864,20 @@ function renderPendientesAnular() {
       <td style="text-align:center;"><input type="checkbox" class="pte-check" data-id="${r.id}" data-prima="${prima}" onchange="actualizarSeleccionPte()" style="cursor:pointer;accent-color:#D97706;width:15px;height:15px;"></td>
       <td style="font-size:11px;white-space:nowrap;">${formatDate(r.fecha)}</td>
       <td><span style="background:${urg.bg};color:${urg.color};padding:1px 6px;border-radius:8px;font-size:10px;font-weight:700;">${urg.label}</span></td>
-      <td style="font-size:12px;font-family:'JetBrains Mono',monospace;">${r.poliza||'—'}</td>
-      <td style="font-size:11px;">${r.ramo||'—'}</td>
-      <td style="font-size:12px;">${r.agente||'—'}</td>
-      <td style="font-size:12px;">${r.tomador||'—'}</td>
-      <td style="font-size:11px;">${r.oficina||'—'}</td>
+      <td style="font-size:11px;font-family:'JetBrains Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.poliza||'—'}</td>
+      <td style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.ramo||'—'}</td>
+      <td style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.agente||'—'}</td>
+      <td style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.tomador||'—'}</td>
+      <td style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.oficina||'—'}</td>
       <td style="font-size:11px;white-space:nowrap;">${formatDate(r.fechaVencimiento)||'—'}</td>
       <td style="font-size:12px;font-weight:700;">${diasStr}</td>
       <td>${reciboHtml}</td>
       <td style="font-size:12px;font-weight:700;text-align:right;color:#BE123C;">${primaStr}</td>
       <td style="font-size:11px;color:var(--text-3);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.notas||'—'}</td>
       <td style="white-space:nowrap;display:flex;gap:3px;align-items:center;">
-        <button class="btn btn-primary btn-sm" onclick="convertirAAnulacion('${r.id}')" style="font-size:11px;padding:3px 7px;">Anular</button>
+        <button class="btn btn-danger btn-sm" onclick="convertirAAnulacion('${r.id}')" style="font-size:11px;padding:3px 7px;">Anular</button>
         <button class="btn btn-ghost btn-sm" data-edit-id="${r.id}" onclick="editRegistro(this.dataset.editId)">✏️</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteRegistro('${r.id}')">✕</button>
+        <button class="btn btn-sm" onclick="deleteRegistro('${r.id}')" style="font-size:11px;padding:3px 7px;background:#16a34a;color:#fff;border:none;border-radius:4px;cursor:pointer;">No anula</button>
       </td>
     </tr>`;
   }).join('');
@@ -4972,6 +4972,26 @@ function convertirAAnulacion(id) {
     method: 'PATCH',
     body: JSON.stringify({ estado_pte: 'anulado' })
   }).catch(e => console.warn(e));
+}
+
+
+
+function cancelarPteAnular(id) {
+  const r = registros.find(r => String(r.id) === String(id));
+  if(!r) return;
+  if(!confirm('¿Marcar la póliza ' + (r.poliza||id) + ' como RETENIDA?\n\nSe quitará de la lista de pendientes de anular.')) return;
+
+  const idx = registros.findIndex(r2 => String(r2.id) === String(id));
+  if(idx >= 0) registros[idx].estadoPte = 'retenida';
+
+  saveData();
+  renderAll();
+  renderPendientesAnular();
+
+  supaFetch('/rest/v1/registros?id=eq.' + encodeURIComponent(id), {
+    method: 'PATCH',
+    body: JSON.stringify({ estado_pte: 'retenida' })
+  }).catch(e => console.warn('Error actualizando estado en Supabase:', e.message));
 }
 
 
