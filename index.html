@@ -1536,6 +1536,7 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
           <div class="table-card-header">
             <span class="table-card-title">Pólizas pendientes de regularizar</span>
             <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <input id="busquedaReg" type="text" placeholder="🔍 Buscar póliza, tomador, ramo…" oninput="renderTablaReg()" style="height:30px;border:1px solid var(--border);border-radius:6px;padding:0 10px;font-size:12px;font-family:inherit;background:var(--surface);color:var(--text);min-width:220px;">
               <select id="filtroRegSemaforo" onchange="renderTablaReg()" style="height:30px;border:1px solid var(--border);border-radius:6px;padding:0 8px;font-size:12px;font-family:inherit;background:var(--surface);color:var(--text);">
                 <option value="">Todos los semáforos</option>
                 <option value="rojo">🔴 Urgente (+30d)</option>
@@ -1545,10 +1546,18 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
               <select id="filtroRegRamo" onchange="renderTablaReg()" style="height:30px;border:1px solid var(--border);border-radius:6px;padding:0 8px;font-size:12px;font-family:inherit;background:var(--surface);color:var(--text);">
                 <option value="">Todos los ramos</option>
               </select>
-              <select id="filtroRegSupl" onchange="renderTablaReg()" style="height:30px;border:1px solid var(--border);border-radius:6px;padding:0 8px;font-size:12px;font-family:inherit;background:var(--surface);color:var(--text);">
-                <option value="">Todos</option>
-                <option value="N">⏳ Pendiente (N)</option>
-                <option value="S">✅ Hecho (S)</option>
+              <select id="filtroRegEstado" onchange="renderTablaReg()" style="height:30px;border:1px solid var(--border);border-radius:6px;padding:0 8px;font-size:12px;font-family:inherit;background:var(--surface);color:var(--text);">
+                <option value="">Todos los estados</option>
+                <option value="pendiente">⏳ Pendiente</option>
+                <option value="en_gestion">🔄 En gestión</option>
+                <option value="hecho">✅ Hecho</option>
+              </select>
+              <select id="filtroRegOficina" onchange="renderKpisReg();renderTablaReg();" style="height:30px;border:1px solid var(--border);border-radius:6px;padding:0 8px;font-size:12px;font-family:inherit;background:var(--surface);color:var(--text);">
+                <option value="">Todas las oficinas</option>
+                <option value="Montornés">Montornés</option>
+                <option value="Polígono">Polígono</option>
+                <option value="Mataró">Mataró</option>
+                <option value="Barcelona">Barcelona</option>
               </select>
               <button id="btnRefreshReg" onclick="cargarRegularizaciones()" class="btn btn-ghost btn-sm">🔄 Actualizar</button>
             </div>
@@ -1556,10 +1565,10 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
           <div class="table-scroll">
             <table>
               <colgroup>
-                <col style="width:80px"><col style="width:110px"><col style="width:110px">
-                <col style="width:145px"><col style="width:48px"><col style="width:56px">
+                <col style="width:80px"><col style="width:90px"><col style="width:110px">
+                <col style="width:140px"><col style="width:48px"><col style="width:56px">
                 <col style="width:78px"><col style="width:82px"><col style="width:82px">
-                <col style="width:82px"><col style="width:170px">
+                <col style="width:90px"><col style="width:82px"><col style="width:170px">
               </colgroup>
               <thead><tr>
                 <th>Semáforo</th>
@@ -1571,6 +1580,7 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
                 <th>Fecha fin</th>
                 <th style="text-align:right;">Prima póliza</th>
                 <th style="text-align:right;">Prima reg.</th>
+                <th>Oficina</th>
                 <th>Últ. gestión</th>
                 <th></th>
               </tr></thead>
@@ -1592,6 +1602,7 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
           <div style="flex:1;min-width:0;">
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
               <span style="font-size:15px;font-weight:800;color:var(--text);font-family:'JetBrains Mono',monospace;" id="regModalPoliza">—</span>
+              <span id="regModalEstadoBadge"></span>
               <span id="regModalSuplBadge"></span>
             </div>
             <div style="font-size:14px;font-weight:600;color:var(--text);" id="regModalTomador">—</div>
@@ -1599,6 +1610,13 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
               <span style="font-size:12px;color:var(--text-3);" id="regModalRamo">—</span>
               <span style="font-size:12px;color:var(--text-3);">Fin: <strong id="regModalFin" style="color:var(--text);">—</strong></span>
               <span style="font-size:12px;" id="regModalSem">—</span>
+              <select id="regModalOficina" onchange="cambiarOficinaRegModal(this.value)" style="font-size:11px;padding:2px 6px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-family:inherit;cursor:pointer;">
+                <option value="">Oficina…</option>
+                <option value="Montornés">Montornés</option>
+                <option value="Polígono">Polígono</option>
+                <option value="Mataró">Mataró</option>
+                <option value="Barcelona">Barcelona</option>
+              </select>
             </div>
           </div>
           <button onclick="cerrarModalReg()" style="background:none;border:none;cursor:pointer;color:var(--text-3);font-size:20px;flex-shrink:0;line-height:1;padding:0;">✕</button>
@@ -7783,6 +7801,66 @@ document.addEventListener('DOMContentLoaded', async ()=>{
 
 // ══ REGULARIZACIONES ════════════════════════════════════════════════════════
 
+function estadoBadgeBtn(id, estado) {
+  const cfg = {
+    hecho:      { icon:'✅', label:'Hecho',    bg:'var(--green-bg)', color:'var(--green)' },
+    en_gestion: { icon:'🔄', label:'Gestión',  bg:'var(--amber-bg)', color:'var(--amber)' },
+    pendiente:  { icon:'⏳', label:'Pte.',     bg:'var(--red-dim)',  color:'var(--red)'   },
+  };
+  const c = cfg[estado] || cfg.pendiente;
+  return `<button onclick="cycleEstadoReg('${id}')" title="Cambiar estado" style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;border:none;cursor:pointer;background:${c.bg};color:${c.color};">${c.icon} ${c.label}</button>`;
+}
+
+async function cycleEstadoReg(id) {
+  const reg = regsData.find(r => r.id === id);
+  if (!reg) return;
+  const actual = reg.estado || 'pendiente';
+  const ciclo  = { pendiente:'en_gestion', en_gestion:'hecho', hecho:'pendiente' };
+  const labels = { pendiente:'Pendiente', en_gestion:'En gestión', hecho:'Hecho' };
+  const nuevo  = ciclo[actual];
+  const msg = nuevo === 'pendiente'
+    ? `¿Volver a marcar "${reg.tomador || reg.poliza}" como Pendiente?`
+    : `¿Cambiar "${reg.tomador || reg.poliza}" a ${labels[nuevo]}?`;
+  if (!confirm(msg)) return;
+  reg.estado = nuevo;
+  try {
+    await supaFetch(`/rest/v1/regularizaciones?id=eq.${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ estado: nuevo })
+    });
+    renderKpisReg();
+    renderTablaReg();
+    showToast(`✅ Estado: ${labels[nuevo]}`);
+  } catch(e) {
+    reg.estado = actual;
+    showToast('⚠️ Error al cambiar estado', 'err');
+  }
+}
+
+async function cambiarOficinaRegModal(oficina) {
+  const modal = document.getElementById('modalRegularizacion');
+  if (!modal?.dataset?.regId) return;
+  await cambiarOficinaReg(modal.dataset.regId, oficina);
+  renderTablaReg();
+}
+
+async function cambiarOficinaReg(id, oficina) {
+  const reg = regsData.find(r => r.id === id);
+  if (!reg) return;
+  reg.oficina = oficina || null;
+  try {
+    await supaFetch(`/rest/v1/regularizaciones?id=eq.${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ oficina: oficina || null })
+    });
+    showToast('✅ Oficina guardada');
+  } catch(e) {
+    showToast('⚠️ Error al guardar oficina', 'err');
+  }
+}
+
 let regsData = [];
 let regsSeguimientoCache = {};
 
@@ -7872,24 +7950,30 @@ async function cargarRegularizaciones() {
 }
 
 function renderKpisReg() {
-  let rojas=0, ambar=0, verdes=0, hechas=0, primaHecha=0;
-  regsData.forEach(r => {
+  const filtroOficina = document.getElementById('filtroRegOficina')?.value || '';
+  const datos = filtroOficina ? regsData.filter(r => r.oficina === filtroOficina) : regsData;
+  let rojas=0, ambar=0, verdes=0, pendientes=0, enGestion=0, hechas=0, primaHecha=0;
+  datos.forEach(r => {
     const s = semaforoReg(r.fecha_fin);
-    if (r.suplemento === 'S') {
+    const est = r.estado || 'pendiente';
+    if (est === 'hecho') {
       hechas++; primaHecha += (r.prima_regularizacion || 0);
     } else {
-      if (s.clase === 'rojo')  rojas++;
+      if (est === 'en_gestion') enGestion++;
+      else pendientes++;
+      if (s.clase === 'rojo')       rojas++;
       else if (s.clase === 'ambar') ambar++;
       else if (s.clase === 'verde') verdes++;
     }
   });
-  const total = regsData.length;
+  const total = datos.length;
   const pct = total > 0 ? Math.round(hechas / total * 100) : 0;
+  const labelOficina = filtroOficina ? ` · ${filtroOficina}` : '';
   const kpis = [
     { label:'Más de 30 días',  value: rojas,                  color:'#DC2626', bg:'#FEF2F2', bdr:'#FECACA', sub:'Gestión urgente'        },
-    { label:'16–30 días',      value: ambar,                  color:'#D97706', bg:'#FFFBEB', bdr:'#FDE68A', sub:'Seguimiento próximo'      },
-    { label:'0–15 días',       value: verdes,                 color:'#16A34A', bg:'#F0FDF4', bdr:'#BBF7D0', sub:'En plazo'                 },
-    { label:'Completadas',     value:`${hechas} / ${total}`,  color:'#2563EB', bg:'#EFF6FF', bdr:'#BFDBFE', sub:`${pct}% del total`       },
+    { label:'En gestión',      value: enGestion,              color:'#D97706', bg:'#FFFBEB', bdr:'#FDE68A', sub:'Con anotación activa'    },
+    { label:'Pendientes',      value: pendientes,             color:'#A3A39E', bg:'#F4F4F2', bdr:'#D4D4D0', sub:'Sin iniciar'             },
+    { label:`Completadas${labelOficina}`, value:`${hechas} / ${total}`, color:'#2563EB', bg:'#EFF6FF', bdr:'#BFDBFE', sub:`${pct}% del total` },
     { label:'Prima generada',  value: fmtEuroReg(primaHecha), color:'#16A34A', bg:'#F0FDF4', bdr:'#BBF7D0', sub:'suplementos confirmados' },
   ];
   const bar = document.getElementById('regKpisBar');
@@ -7904,14 +7988,22 @@ function renderKpisReg() {
 }
 
 function renderTablaReg() {
-  const filtroSem  = document.getElementById('filtroRegSemaforo')?.value || '';
-  const filtroRamo = document.getElementById('filtroRegRamo')?.value || '';
-  const filtroSupl = document.getElementById('filtroRegSupl')?.value || '';
+  const filtroSem     = document.getElementById('filtroRegSemaforo')?.value || '';
+  const filtroRamo    = document.getElementById('filtroRegRamo')?.value || '';
+  const filtroEstado  = document.getElementById('filtroRegEstado')?.value || '';
+  const filtroOficina = document.getElementById('filtroRegOficina')?.value || '';
+  const busqueda      = (document.getElementById('busquedaReg')?.value || '').toLowerCase().trim();
   const datos = regsData.filter(r => {
     const s = semaforoReg(r.fecha_fin);
-    if (filtroSem  && s.clase !== filtroSem) return false;
-    if (filtroRamo && r.ramo !== filtroRamo) return false;
-    if (filtroSupl && r.suplemento !== filtroSupl) return false;
+    const est = r.estado || 'pendiente';
+    if (filtroSem     && s.clase !== filtroSem)    return false;
+    if (filtroRamo    && r.ramo !== filtroRamo)    return false;
+    if (filtroEstado  && est !== filtroEstado)      return false;
+    if (filtroOficina && r.oficina !== filtroOficina) return false;
+    if (busqueda) {
+      const haystack = [r.poliza, r.tomador, r.ramo, r.oficina, r.num_riesgos].join(' ').toLowerCase();
+      if (!haystack.includes(busqueda)) return false;
+    }
     return true;
   });
   const tbody = document.getElementById('bodyReg');
@@ -7920,7 +8012,7 @@ function renderTablaReg() {
     const msgVacio = regsData.length === 0
       ? `Sin registros aún — pulsa <strong>+ Nueva</strong> para añadir la primera regularización`
       : `Sin regularizaciones con estos filtros`;
-    tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;padding:32px;color:var(--text-3);font-size:13px;">${msgVacio}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;padding:32px;color:var(--text-3);font-size:13px;">${msgVacio}</td></tr>`;
     return;
   }
   tbody.innerHTML = datos.map(r => {
@@ -7937,10 +8029,19 @@ function renderTablaReg() {
       <td style="font-size:11px;font-family:'JetBrains Mono',monospace;white-space:nowrap;">${r.poliza||'—'}</td>
       <td style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${r.tomador||''}">${r.tomador||'—'}</td>
       <td style="font-size:11px;text-align:center;">${r.num_riesgos||'—'}</td>
-      <td style="text-align:center;"><button onclick="toggleSuplemento('${r.id}')" title="${r.suplemento==='S'?'Marcar como Pendiente':'Marcar como Confirmado'}" style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;border:none;cursor:pointer;background:${r.suplemento==='S'?'var(--green-bg)':'var(--red-dim)'};color:${r.suplemento==='S'?'var(--green)':'var(--red)'};">${r.suplemento==='S'?'✅ S':'⏳ N'}</button></td>
+      <td style="text-align:center;">${estadoBadgeBtn(r.id, r.estado)}</td>
       <td style="font-size:11px;white-space:nowrap;">${fmtFechaReg(r.fecha_fin)}</td>
       <td style="font-size:11px;text-align:right;white-space:nowrap;">${fmtEuroReg(r.prima_poliza)}</td>
       <td style="font-size:11px;text-align:right;white-space:nowrap;color:${r.prima_regularizacion?'var(--green)':'var(--text-3)'};">${fmtEuroReg(r.prima_regularizacion)}</td>
+      <td style="font-size:11px;white-space:nowrap;">
+        <select onchange="cambiarOficinaReg('${r.id}', this.value)" title="Cambiar oficina" style="font-size:10px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);font-family:inherit;cursor:pointer;max-width:90px;">
+          <option value="" ${!r.oficina?'selected':''}>—</option>
+          <option value="Montornés" ${r.oficina==='Montornés'?'selected':''}>Montornés</option>
+          <option value="Polígono"  ${r.oficina==='Polígono'?'selected':''}>Polígono</option>
+          <option value="Mataró"    ${r.oficina==='Mataró'?'selected':''}>Mataró</option>
+          <option value="Barcelona" ${r.oficina==='Barcelona'?'selected':''}>Barcelona</option>
+        </select>
+      </td>
       <td style="font-size:11px;color:var(--text-3);white-space:nowrap;">${ultTipoIcon} ${ultFecha}</td>
       <td style="white-space:nowrap;padding:4px 6px;">
         <div style="display:flex;gap:4px;">
@@ -7980,7 +8081,12 @@ async function abrirModalReg(id, tab) {
   const s = semaforoReg(r.fecha_fin);
   document.getElementById('regModalSem').innerHTML = `${s.icon} <span style="color:${s.color};font-weight:700;">${s.label} desde vencimiento</span>`;
   document.getElementById('regModalSuplBadge').innerHTML = `<span style="font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;background:${r.suplemento==='S'?'var(--green-bg)':'var(--red-dim)'};color:${r.suplemento==='S'?'var(--green)':'var(--red)'};">Suplemento: ${r.suplemento==='S'?'✅ Confirmado':'⏳ Pendiente'}</span>`;
+  const estCfg = { hecho:{icon:'✅',label:'Hecho',bg:'var(--green-bg)',color:'var(--green)'}, en_gestion:{icon:'🔄',label:'En gestión',bg:'var(--amber-bg)',color:'var(--amber)'}, pendiente:{icon:'⏳',label:'Pendiente',bg:'var(--red-dim)',color:'var(--red)'} };
+  const ec = estCfg[r.estado||'pendiente'] || estCfg.pendiente;
+  document.getElementById('regModalEstadoBadge').innerHTML = `<span style="font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;background:${ec.bg};color:${ec.color};">${ec.icon} ${ec.label}</span>`;
   modal.dataset.regId = id;
+  const ofSel = document.getElementById('regModalOficina');
+  if (ofSel) ofSel.value = r.oficina || '';
   document.getElementById('regSeguTipo').value      = 'llamada';
   document.getElementById('regSeguResultado').value = '';
   document.getElementById('regSeguFecha').value     = new Date().toISOString().split('T')[0];
@@ -8064,14 +8170,26 @@ async function guardarSeguimientoReg() {
   if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
   const nombre = currentUser?.email?.split('@')[0] || currentUser?.email || '';
   const entry  = { reg_id: regId, fecha: fecha || new Date().toISOString().split('T')[0], tipo, resultado, gestionado_por: nombre };
+  const esPrimera = !regsSeguimientoCache[regId] || regsSeguimientoCache[regId].length === 0;
   try {
     const isMock = String(regId).startsWith('mock-');
     if (!isMock) {
       await supaFetch('/rest/v1/regularizaciones_seguimiento', { method:'POST', body: JSON.stringify(entry) });
     }
+    // Auto-pasar a "en gestión" si es la primera anotación y estaba pendiente
+    const reg = regsData.find(r => r.id === regId);
+    if (esPrimera && reg && (!reg.estado || reg.estado === 'pendiente') && !isMock) {
+      reg.estado = 'en_gestion';
+      supaFetch(`/rest/v1/regularizaciones?id=eq.${encodeURIComponent(regId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ estado: 'en_gestion' })
+      }).catch(e => console.warn('Error auto-estado:', e));
+    }
     if (!regsSeguimientoCache[regId]) regsSeguimientoCache[regId] = [];
     regsSeguimientoCache[regId].unshift({ ...entry, id: 'local-' + Date.now() });
     document.getElementById('regSeguResultado').value = '';
+    renderKpisReg();
     renderTablaReg();
     cerrarModalReg();
     showToast('✅ Gestión guardada');
