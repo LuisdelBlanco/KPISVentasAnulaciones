@@ -7992,6 +7992,27 @@ function cerrarModalReg() {
   if (m) m.style.display = 'none';
 }
 
+function showToast(msg, tipo='ok') {
+  let t = document.getElementById('kompassToast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'kompassToast';
+    t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:#1A1A18;color:#fff;font-size:13px;font-weight:600;padding:10px 20px;border-radius:30px;box-shadow:0 4px 16px rgba(0,0,0,0.25);z-index:99999;opacity:0;transition:opacity 0.2s,transform 0.2s;pointer-events:none;white-space:nowrap;font-family:inherit;';
+    document.body.appendChild(t);
+  }
+  if (tipo === 'ok') t.style.background = '#16A34A';
+  else if (tipo === 'err') t.style.background = '#C2003F';
+  else t.style.background = '#1A1A18';
+  t.textContent = msg;
+  t.style.opacity = '1';
+  t.style.transform = 'translateX(-50%) translateY(0)';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => {
+    t.style.opacity = '0';
+    t.style.transform = 'translateX(-50%) translateY(10px)';
+  }, 2500);
+}
+
 async function cargarSeguimientoModal(regId) {
   const lista = document.getElementById('regSeguLista');
   if (!lista) return;
@@ -8048,13 +8069,14 @@ async function guardarSeguimientoReg() {
     }
     if (!regsSeguimientoCache[regId]) regsSeguimientoCache[regId] = [];
     regsSeguimientoCache[regId].unshift({ ...entry, id: 'local-' + Date.now() });
-    await cargarSeguimientoModal(regId);
     document.getElementById('regSeguResultado').value = '';
     renderTablaReg();
+    cerrarModalReg();
+    showToast('✅ Gestión guardada');
   } catch(e) {
     alert('Error al guardar: ' + e.message);
+    if (btn) { btn.textContent = '+ Guardar gestión'; btn.disabled = false; }
   }
-  if (btn) { btn.textContent = '+ Guardar gestión'; btn.disabled = false; }
 }
 
 async function borrarSeguimientoReg(id, btnEl) {
