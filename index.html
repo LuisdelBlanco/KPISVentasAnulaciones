@@ -1551,7 +1551,6 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
                 <option value="S">✅ Hecho (S)</option>
               </select>
               <button id="btnRefreshReg" onclick="cargarRegularizaciones()" class="btn btn-ghost btn-sm">🔄 Actualizar</button>
-              <button onclick="abrirModalNuevaReg()" class="btn btn-primary btn-sm" style="margin-left:auto;">+ Nueva</button>
             </div>
           </div>
           <div class="table-scroll">
@@ -1582,70 +1581,6 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
           </div>
         </div>
 
-      </div>
-    </div>
-
-    <!-- MODAL NUEVA REGULARIZACIÓN -->
-    <div id="modalNuevaReg" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9999;align-items:center;justify-content:center;">
-      <div style="background:var(--surface);border-radius:16px;padding:0;max-width:520px;width:calc(100% - 32px);box-shadow:0 8px 32px rgba(0,0,0,0.2);overflow:hidden;">
-        <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
-          <div style="font-size:15px;font-weight:700;color:var(--text);">📋 Nueva regularización</div>
-          <button onclick="cerrarModalNuevaReg()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-3);padding:0;">✕</button>
-        </div>
-        <div style="padding:20px;display:flex;flex-direction:column;gap:14px;">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-            <div>
-              <label style="font-size:11px;font-weight:600;color:var(--text-3);display:block;margin-bottom:4px;">RAMO *</label>
-              <select id="nrRamo" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface-2);color:var(--text);">
-                <option value="">— Selecciona —</option>
-                <option>RC Comercios</option>
-                <option>RC Industrias</option>
-                <option>RC Construcció</option>
-                <option>RC Professionals</option>
-                <option>TRDM</option>
-                <option>Combinado empresas</option>
-                <option>Acc. Convenios</option>
-                <option>Acc. Colectivos</option>
-                <option>Cargadors</option>
-                <option>Transportistes</option>
-                <option>Pyme</option>
-              </select>
-            </div>
-            <div>
-              <label style="font-size:11px;font-weight:600;color:var(--text-3);display:block;margin-bottom:4px;">SUPLEMENTO</label>
-              <select id="nrSuplemento" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface-2);color:var(--text);">
-                <option value="N">⏳ Pendiente (N)</option>
-                <option value="S">✅ Confirmado (S)</option>
-              </select>
-            </div>
-          </div>
-          <div>
-            <label style="font-size:11px;font-weight:600;color:var(--text-3);display:block;margin-bottom:4px;">PÓLIZA *</label>
-            <input id="nrPoliza" type="text" placeholder="Ej. 8-77.432.891-A" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface-2);color:var(--text);box-sizing:border-box;">
-          </div>
-          <div>
-            <label style="font-size:11px;font-weight:600;color:var(--text-3);display:block;margin-bottom:4px;">TOMADOR *</label>
-            <input id="nrTomador" type="text" placeholder="Nombre del tomador" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface-2);color:var(--text);box-sizing:border-box;">
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
-            <div>
-              <label style="font-size:11px;font-weight:600;color:var(--text-3);display:block;margin-bottom:4px;">FECHA FIN REG. *</label>
-              <input id="nrFechaFin" type="date" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface-2);color:var(--text);box-sizing:border-box;">
-            </div>
-            <div>
-              <label style="font-size:11px;font-weight:600;color:var(--text-3);display:block;margin-bottom:4px;">PRIMA PÓLIZA (€)</label>
-              <input id="nrPrima" type="number" min="0" step="0.01" placeholder="0" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface-2);color:var(--text);box-sizing:border-box;">
-            </div>
-            <div>
-              <label style="font-size:11px;font-weight:600;color:var(--text-3);display:block;margin-bottom:4px;">Nº RIESGOS</label>
-              <input id="nrRiesgos" type="number" min="1" value="1" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface-2);color:var(--text);box-sizing:border-box;">
-            </div>
-          </div>
-          <div style="display:flex;gap:10px;justify-content:flex-end;padding-top:4px;">
-            <button onclick="cerrarModalNuevaReg()" class="btn btn-ghost">Cancelar</button>
-            <button id="btnGuardarNuevaReg" onclick="guardarNuevaReg()" class="btn btn-primary">Guardar</button>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -7853,44 +7788,21 @@ let regsSeguimientoCache = {};
 
 const REG_MOCK = [];
 
-function abrirModalNuevaReg() {
-  document.getElementById('nrRamo').value      = '';
-  document.getElementById('nrPoliza').value    = '';
-  document.getElementById('nrTomador').value   = '';
-  document.getElementById('nrFechaFin').value  = '';
-  document.getElementById('nrPrima').value     = '';
-  document.getElementById('nrRiesgos').value   = '1';
-  document.getElementById('nrSuplemento').value = 'N';
-  document.getElementById('modalNuevaReg').style.display = 'flex';
-}
-
-function cerrarModalNuevaReg() {
-  document.getElementById('modalNuevaReg').style.display = 'none';
-}
-
-async function guardarNuevaReg() {
-  const ramo     = document.getElementById('nrRamo').value.trim();
-  const poliza   = document.getElementById('nrPoliza').value.trim();
-  const tomador  = document.getElementById('nrTomador').value.trim();
-  const fechaFin = document.getElementById('nrFechaFin').value;
-  if (!ramo || !poliza || !tomador || !fechaFin) {
-    alert('Rellena los campos obligatorios: Ramo, Póliza, Tomador y Fecha fin');
-    return;
-  }
-  const btn = document.getElementById('btnGuardarNuevaReg');
-  if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
-  const prima    = parseFloat(document.getElementById('nrPrima').value) || null;
-  const riesgos  = parseInt(document.getElementById('nrRiesgos').value) || 1;
-  const supl     = document.getElementById('nrSuplemento').value;
-  const registro = { ramo, poliza, tomador, num_riesgos: riesgos, suplemento: supl, fecha_fin: fechaFin, prima_poliza: prima, periodicidad: 'Anual', activa: true };
+async function toggleSuplemento(id) {
+  const reg = regsData.find(r => r.id === id);
+  if (!reg) return;
+  const nuevoVal = reg.suplemento === 'S' ? 'N' : 'S';
   try {
-    await supaFetch('/rest/v1/regularizaciones', { method:'POST', body: JSON.stringify(registro) });
-    cerrarModalNuevaReg();
-    await cargarRegularizaciones();
+    await supaFetch(`/rest/v1/regularizaciones?id=eq.${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ suplemento: nuevoVal, updated_at: new Date().toISOString() })
+    });
+    reg.suplemento = nuevoVal;
+    renderKpisReg();
+    renderTablaReg();
   } catch(e) {
-    alert('Error al guardar: ' + e.message);
+    console.error('Error toggle suplemento:', e);
   }
-  if (btn) { btn.textContent = 'Guardar'; btn.disabled = false; }
 }
 
 function semaforoReg(fecha_fin) {
@@ -7938,13 +7850,12 @@ async function cargarRegularizaciones() {
 }
 
 function renderKpisReg() {
-  let rojas=0, ambar=0, verdes=0, hechas=0, primaPend=0, primaHecha=0;
+  let rojas=0, ambar=0, verdes=0, hechas=0, primaHecha=0;
   regsData.forEach(r => {
     const s = semaforoReg(r.fecha_fin);
     if (r.suplemento === 'S') {
       hechas++; primaHecha += (r.prima_regularizacion || 0);
     } else {
-      primaPend += (r.prima_poliza || 0);
       if (s.clase === 'rojo')  rojas++;
       else if (s.clase === 'ambar') ambar++;
       else if (s.clase === 'verde') verdes++;
@@ -7957,7 +7868,6 @@ function renderKpisReg() {
     { label:'16–30 días',      value: ambar,                  color:'#D97706', bg:'#FFFBEB', bdr:'#FDE68A', sub:'Seguimiento próximo'      },
     { label:'0–15 días',       value: verdes,                 color:'#16A34A', bg:'#F0FDF4', bdr:'#BBF7D0', sub:'En plazo'                 },
     { label:'Completadas',     value:`${hechas} / ${total}`,  color:'#2563EB', bg:'#EFF6FF', bdr:'#BFDBFE', sub:`${pct}% del total`       },
-    { label:'Prima pendiente', value: fmtEuroReg(primaPend),  color:'var(--text)', bg:'var(--surface)', bdr:'var(--border)', sub:'en cartera reg.' },
     { label:'Prima generada',  value: fmtEuroReg(primaHecha), color:'#16A34A', bg:'#F0FDF4', bdr:'#BBF7D0', sub:'suplementos confirmados' },
   ];
   const bar = document.getElementById('regKpisBar');
@@ -8005,7 +7915,7 @@ function renderTablaReg() {
       <td style="font-size:11px;font-family:'JetBrains Mono',monospace;white-space:nowrap;">${r.poliza||'—'}</td>
       <td style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${r.tomador||''}">${r.tomador||'—'}</td>
       <td style="font-size:11px;text-align:center;">${r.num_riesgos||'—'}</td>
-      <td style="text-align:center;"><span style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:20px;background:${r.suplemento==='S'?'var(--green-bg)':'var(--red-dim)'};color:${r.suplemento==='S'?'var(--green)':'var(--red)'};">${r.suplemento||'N'}</span></td>
+      <td style="text-align:center;"><button onclick="toggleSuplemento('${r.id}')" title="${r.suplemento==='S'?'Marcar como Pendiente':'Marcar como Confirmado'}" style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;border:none;cursor:pointer;background:${r.suplemento==='S'?'var(--green-bg)':'var(--red-dim)'};color:${r.suplemento==='S'?'var(--green)':'var(--red)'};">${r.suplemento==='S'?'✅ S':'⏳ N'}</button></td>
       <td style="font-size:11px;white-space:nowrap;">${fmtFechaReg(r.fecha_fin)}</td>
       <td style="font-size:11px;text-align:right;white-space:nowrap;">${fmtEuroReg(r.prima_poliza)}</td>
       <td style="font-size:11px;text-align:right;white-space:nowrap;color:${r.prima_regularizacion?'var(--green)':'var(--text-3)'};">${fmtEuroReg(r.prima_regularizacion)}</td>
