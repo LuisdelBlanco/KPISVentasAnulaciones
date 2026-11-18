@@ -7841,6 +7841,24 @@ async function cargarRegularizaciones() {
   } catch(e) {
     regsData = [];
   }
+  // Cargar historial de todas las regularizaciones en una sola consulta
+  if (regsData.length > 0) {
+    try {
+      const ids = regsData.map(r => r.id).join(',');
+      const seguData = await supaFetch(
+        `/rest/v1/regularizaciones_seguimiento?reg_id=in.(${ids})&order=fecha.desc&limit=500`
+      );
+      regsSeguimientoCache = {};
+      if (Array.isArray(seguData)) {
+        seguData.forEach(e => {
+          if (!regsSeguimientoCache[e.reg_id]) regsSeguimientoCache[e.reg_id] = [];
+          regsSeguimientoCache[e.reg_id].push(e);
+        });
+      }
+    } catch(e) {
+      // Si falla, el cache queda vacío pero la tabla sigue funcionando
+    }
+  }
   const ramoSel = document.getElementById('filtroRegRamo');
   if (ramoSel) {
     while (ramoSel.options.length > 1) ramoSel.remove(1);
