@@ -721,6 +721,7 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
   <div class="nav-group">
     <div class="nav-group-label">Datos</div>
     <div class="nav-item" onclick="goPage('registros')" style="display:flex;align-items:center;gap:6px;"><span class="nav-icon">☰</span> Registros<span style="width:6px;height:6px;border-radius:50%;background:#16A34A;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
+    <div class="nav-item" id="navRegularizaciones" onclick="goPage('regularizaciones')" style="display:flex;align-items:center;gap:6px;"><span class="nav-icon">📋</span> Regularizaciones<span style="width:6px;height:6px;border-radius:50%;background:#D97706;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
     <div class="nav-item" id="navDefensa" onclick="goPage('defensa')" style="display:none;display:flex;align-items:center;gap:6px;"><span class="nav-icon">🛡️</span> Defensa cartera<span style="width:6px;height:6px;border-radius:50%;background:#C2003F;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
     <div class="nav-item" id="navCambiosAgente" onclick="goPage('cambiosagente')" style="display:none;display:flex;align-items:center;gap:6px;"><span class="nav-icon">🔄</span> Cambios de agente<span style="width:6px;height:6px;border-radius:50%;background:#16A34A;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
     <div class="nav-item" id="navActividad" onclick="goPage('actividad')" style="display:flex;align-items:center;gap:6px;"><span class="nav-icon">◎</span> Actividad comercial<span style="width:6px;height:6px;border-radius:50%;background:#2563EB;display:inline-block;margin-left:auto;flex-shrink:0;"></span></div>
@@ -1518,6 +1519,123 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
               </tr></thead>
               <tbody id="bodyDefensas"></tbody>
             </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PAGE REGULARIZACIONES ══════════════════════════════════════════ -->
+    <div class="page" id="page-regularizaciones">
+      <div style="max-width:100%;">
+
+        <!-- DASHBOARD KPIs -->
+        <div id="regKpisBar" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px;"></div>
+
+        <!-- TABLA -->
+        <div class="table-card">
+          <div class="table-card-header">
+            <span class="table-card-title">Pólizas pendientes de regularizar</span>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <select id="filtroRegSemaforo" onchange="renderTablaReg()" style="height:30px;border:1px solid var(--border);border-radius:6px;padding:0 8px;font-size:12px;font-family:inherit;background:var(--surface);color:var(--text);">
+                <option value="">Todos los semáforos</option>
+                <option value="rojo">🔴 Urgente (+30d)</option>
+                <option value="ambar">🟡 Próximo (16–30d)</option>
+                <option value="verde">🟢 En plazo (0–15d)</option>
+              </select>
+              <select id="filtroRegRamo" onchange="renderTablaReg()" style="height:30px;border:1px solid var(--border);border-radius:6px;padding:0 8px;font-size:12px;font-family:inherit;background:var(--surface);color:var(--text);">
+                <option value="">Todos los ramos</option>
+              </select>
+              <select id="filtroRegSupl" onchange="renderTablaReg()" style="height:30px;border:1px solid var(--border);border-radius:6px;padding:0 8px;font-size:12px;font-family:inherit;background:var(--surface);color:var(--text);">
+                <option value="">Todos</option>
+                <option value="N">⏳ Pendiente (N)</option>
+                <option value="S">✅ Hecho (S)</option>
+              </select>
+              <button id="btnRefreshReg" onclick="cargarRegularizaciones()" class="btn btn-ghost btn-sm">🔄 Actualizar</button>
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <colgroup>
+                <col style="width:90px"><col style="width:120px"><col style="width:115px">
+                <col style="width:155px"><col style="width:52px"><col style="width:60px">
+                <col style="width:82px"><col style="width:88px"><col style="width:88px">
+                <col style="width:88px"><col style="width:110px">
+              </colgroup>
+              <thead><tr>
+                <th>Semáforo</th>
+                <th>Ramo</th>
+                <th style="font-family:'JetBrains Mono',monospace;font-size:11px;">Póliza</th>
+                <th>Tomador</th>
+                <th style="text-align:center;">Riesgos</th>
+                <th style="text-align:center;">Supl.</th>
+                <th>Fecha fin</th>
+                <th style="text-align:right;">Prima póliza</th>
+                <th style="text-align:right;">Prima reg.</th>
+                <th>Últ. gestión</th>
+                <th></th>
+              </tr></thead>
+              <tbody id="bodyReg">
+                <tr><td colspan="11" style="text-align:center;padding:32px;color:var(--text-3);">Cargando…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- MODAL SEGUIMIENTO REGULARIZACIÓN -->
+    <div id="modalRegularizacion" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9999;align-items:center;justify-content:center;">
+      <div style="background:var(--surface);border-radius:16px;padding:0;max-width:600px;width:calc(100% - 32px);max-height:90vh;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.2);display:flex;flex-direction:column;">
+        <!-- Header -->
+        <div style="padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+              <span style="font-size:15px;font-weight:800;color:var(--text);font-family:'JetBrains Mono',monospace;" id="regModalPoliza">—</span>
+              <span id="regModalSuplBadge"></span>
+            </div>
+            <div style="font-size:14px;font-weight:600;color:var(--text);" id="regModalTomador">—</div>
+            <div style="display:flex;gap:12px;margin-top:4px;flex-wrap:wrap;align-items:center;">
+              <span style="font-size:12px;color:var(--text-3);" id="regModalRamo">—</span>
+              <span style="font-size:12px;color:var(--text-3);">Fin: <strong id="regModalFin" style="color:var(--text);">—</strong></span>
+              <span style="font-size:12px;" id="regModalSem">—</span>
+            </div>
+          </div>
+          <button onclick="cerrarModalReg()" style="background:none;border:none;cursor:pointer;color:var(--text-3);font-size:20px;flex-shrink:0;line-height:1;padding:0;">✕</button>
+        </div>
+        <!-- Body -->
+        <div style="flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:14px;">
+          <!-- Historial -->
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">Historial de gestiones</div>
+            <div id="regSeguLista" style="max-height:200px;overflow-y:auto;padding-right:4px;"></div>
+          </div>
+          <!-- Form nueva gestión -->
+          <div style="background:var(--bg);border-radius:10px;padding:14px 16px;">
+            <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Registrar gestión</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+              <div>
+                <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Tipo</label>
+                <select id="regSeguTipo" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);">
+                  <option value="llamada">📞 Llamada</option>
+                  <option value="whatsapp">💬 WhatsApp</option>
+                  <option value="email">✉️ Email</option>
+                  <option value="visita">🤝 Visita</option>
+                  <option value="nota">📝 Nota interna</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Fecha</label>
+                <input type="date" id="regSeguFecha" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);">
+              </div>
+            </div>
+            <div>
+              <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Resultado / nota</label>
+              <textarea id="regSeguResultado" rows="2" placeholder="Ej: Llamado, pendiente de respuesta con datos de trabajadores. Vuelvo a llamar el 25/11." style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit;resize:vertical;background:var(--surface);color:var(--text);"></textarea>
+            </div>
+            <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+              <button id="btnGuardarSegu" onclick="guardarSeguimientoReg()" class="btn btn-primary">+ Guardar gestión</button>
+            </div>
           </div>
         </div>
       </div>
@@ -2787,7 +2905,8 @@ const pageNames = {
   defensa: ['Defensa cartera','Defensa de cartera · Autos'],
   calculadoras: ['Calculadoras','Calculadoras de productos'],
   cuestionarios: ['Cuestionarios','Cuestionarios para clientes'],
-  cambiosagente: ['Cambios de agente','Entradas y salidas por cambio de agente']
+  cambiosagente: ['Cambios de agente','Entradas y salidas por cambio de agente'],
+  regularizaciones: ['Regularizaciones','Seguimiento anual de regularizaciones']
 };
 let currentRegistrosTab = 'registros';
 
@@ -2853,6 +2972,7 @@ function goPage(id) {
   if (id==='incentivos') { initIncentivosSelectors(); setTimeout(renderIncentivos, 200); }
   if (id==='defensa') { renderDefensaPage(); cargarDefensas().then(() => renderDefensaPage()); }
   if (id==='cambiosagente') { renderCambiosPage(); cargarCambiosAgente().then(() => renderCambiosPage()); }
+  if (id==='regularizaciones') { cargarRegularizaciones(); }
   renderAll();
 }
 function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
@@ -7660,6 +7780,227 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     if(item) sbDel('actividad', String(item.uid||item.id)).catch(e=>console.warn(e));
   });
 });
+
+// ══ REGULARIZACIONES ════════════════════════════════════════════════════════
+
+let regsData = [];
+let regsSeguimientoCache = {};
+
+const REG_MOCK = [
+  { id:'mock-1', cod:'RC001', ramo:'RC Comercios',       poliza:'8-77.432.891-A', tomador:'Bar Montserrat SL',         num_riesgos:1, periodicidad:'Anual', suplemento:'N', fecha_inicio:'2025-11-01', fecha_fin:'2026-10-01', prima_poliza:1240,  prima_regularizacion:null },
+  { id:'mock-2', cod:'RC002', ramo:'Acc. Convenios',     poliza:'8-78.123.456-B', tomador:'Talleres Aranda SC',        num_riesgos:3, periodicidad:'Anual', suplemento:'N', fecha_inicio:'2025-10-10', fecha_fin:'2026-10-10', prima_poliza:3850,  prima_regularizacion:null },
+  { id:'mock-3', cod:'RC003', ramo:'Combinado empresas', poliza:'8-79.654.321-C', tomador:'Distribuciones Vidal SA',   num_riesgos:1, periodicidad:'Anual', suplemento:'S', fecha_inicio:'2025-10-25', fecha_fin:'2026-10-25', prima_poliza:5200,  prima_regularizacion:280  },
+  { id:'mock-4', cod:'RC004', ramo:'RC Industrias',      poliza:'8-80.987.654-D', tomador:'Metalmecànica Puig SL',     num_riesgos:2, periodicidad:'Anual', suplemento:'N', fecha_inicio:'2025-11-01', fecha_fin:'2026-11-01', prima_poliza:8900,  prima_regularizacion:null },
+  { id:'mock-5', cod:'RC005', ramo:'Pyme',               poliza:'8-81.246.810-E', tomador:'Supermercats Badia SCP',    num_riesgos:1, periodicidad:'Anual', suplemento:'N', fecha_inicio:'2025-11-10', fecha_fin:'2026-11-10', prima_poliza:2340,  prima_regularizacion:null },
+  { id:'mock-6', cod:'RC006', ramo:'Acc. Colectivos',    poliza:'8-82.135.791-F', tomador:'Clínica Dental Prats SC',   num_riesgos:8, periodicidad:'Anual', suplemento:'S', fecha_inicio:'2025-11-15', fecha_fin:'2026-11-15', prima_poliza:4120,  prima_regularizacion:195  },
+  { id:'mock-7', cod:'RC007', ramo:'RC Construcció',     poliza:'8-83.321.654-G', tomador:'Construccions Fàbregas SL', num_riesgos:1, periodicidad:'Anual', suplemento:'N', fecha_inicio:'2025-11-18', fecha_fin:'2026-11-18', prima_poliza:6700,  prima_regularizacion:null },
+  { id:'mock-8', cod:'RC008', ramo:'Transportistes',     poliza:'8-84.555.777-H', tomador:'Transports Molina SC',      num_riesgos:5, periodicidad:'Anual', suplemento:'N', fecha_inicio:'2025-10-15', fecha_fin:'2026-10-15', prima_poliza:12400, prima_regularizacion:null },
+];
+
+function semaforoReg(fecha_fin) {
+  if (!fecha_fin) return { icon:'⚪', label:'Sin fecha', color:'#A3A39E', clase:'gris' };
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const fin = new Date(fecha_fin); fin.setHours(0,0,0,0);
+  const dias = Math.floor((hoy - fin) / 86400000);
+  if (dias < 0)   return { icon:'🔵', label:`en ${Math.abs(dias)}d`, color:'#2563EB', clase:'futuro' };
+  if (dias <= 15) return { icon:'🟢', label:`${dias}d`,              color:'#16A34A', clase:'verde'  };
+  if (dias <= 30) return { icon:'🟡', label:`${dias}d`,              color:'#D97706', clase:'ambar'  };
+  return               { icon:'🔴', label:`${dias}d`,              color:'#DC2626', clase:'rojo'   };
+}
+
+function fmtFechaReg(iso) {
+  if (!iso) return '—';
+  const p = iso.split('-');
+  if (p.length !== 3) return iso;
+  return `${p[2]}/${p[1]}/${p[0]}`;
+}
+
+function fmtEuroReg(n) {
+  if (n == null || n === '') return '—';
+  return new Intl.NumberFormat('es-ES', { style:'currency', currency:'EUR', minimumFractionDigits:0, maximumFractionDigits:0 }).format(n);
+}
+
+async function cargarRegularizaciones() {
+  const btn = document.getElementById('btnRefreshReg');
+  if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
+  try {
+    const data = await supaFetch('/rest/v1/regularizaciones?select=*&activa=eq.true&order=fecha_fin.asc');
+    regsData = Array.isArray(data) && data.length > 0 ? data : REG_MOCK;
+  } catch(e) {
+    regsData = REG_MOCK;
+  }
+  const ramoSel = document.getElementById('filtroRegRamo');
+  if (ramoSel) {
+    while (ramoSel.options.length > 1) ramoSel.remove(1);
+    [...new Set(regsData.map(r => r.ramo).filter(Boolean))].sort().forEach(rm => {
+      const o = document.createElement('option'); o.value = rm; o.text = rm; ramoSel.add(o);
+    });
+  }
+  renderKpisReg();
+  renderTablaReg();
+  if (btn) { btn.textContent = '🔄 Actualizar'; btn.disabled = false; }
+}
+
+function renderKpisReg() {
+  let rojas=0, ambar=0, verdes=0, hechas=0, primaPend=0, primaHecha=0;
+  regsData.forEach(r => {
+    const s = semaforoReg(r.fecha_fin);
+    if (r.suplemento === 'S') {
+      hechas++; primaHecha += (r.prima_regularizacion || 0);
+    } else {
+      primaPend += (r.prima_poliza || 0);
+      if (s.clase === 'rojo')  rojas++;
+      else if (s.clase === 'ambar') ambar++;
+      else if (s.clase === 'verde') verdes++;
+    }
+  });
+  const total = regsData.length;
+  const pct = total > 0 ? Math.round(hechas / total * 100) : 0;
+  const kpis = [
+    { label:'Más de 30 días',  value: rojas,                  color:'#DC2626', bg:'#FEF2F2', bdr:'#FECACA', sub:'Gestión urgente'        },
+    { label:'16–30 días',      value: ambar,                  color:'#D97706', bg:'#FFFBEB', bdr:'#FDE68A', sub:'Seguimiento próximo'      },
+    { label:'0–15 días',       value: verdes,                 color:'#16A34A', bg:'#F0FDF4', bdr:'#BBF7D0', sub:'En plazo'                 },
+    { label:'Completadas',     value:`${hechas} / ${total}`,  color:'#2563EB', bg:'#EFF6FF', bdr:'#BFDBFE', sub:`${pct}% del total`       },
+    { label:'Prima pendiente', value: fmtEuroReg(primaPend),  color:'var(--text)', bg:'var(--surface)', bdr:'var(--border)', sub:'en cartera reg.' },
+    { label:'Prima generada',  value: fmtEuroReg(primaHecha), color:'#16A34A', bg:'#F0FDF4', bdr:'#BBF7D0', sub:'suplementos confirmados' },
+  ];
+  const bar = document.getElementById('regKpisBar');
+  if (!bar) return;
+  bar.innerHTML = kpis.map(k => `
+    <div style="background:${k.bg};border:1px solid ${k.bdr};border-radius:10px;padding:12px 14px;">
+      <div style="font-size:10px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px;">${k.label}</div>
+      <div style="font-size:22px;font-weight:800;color:${k.color};line-height:1.1;">${k.value}</div>
+      <div style="font-size:11px;color:var(--text-3);margin-top:3px;">${k.sub}</div>
+    </div>
+  `).join('');
+}
+
+function renderTablaReg() {
+  const filtroSem  = document.getElementById('filtroRegSemaforo')?.value || '';
+  const filtroRamo = document.getElementById('filtroRegRamo')?.value || '';
+  const filtroSupl = document.getElementById('filtroRegSupl')?.value || '';
+  const datos = regsData.filter(r => {
+    const s = semaforoReg(r.fecha_fin);
+    if (filtroSem  && s.clase !== filtroSem) return false;
+    if (filtroRamo && r.ramo !== filtroRamo) return false;
+    if (filtroSupl && r.suplemento !== filtroSupl) return false;
+    return true;
+  });
+  const tbody = document.getElementById('bodyReg');
+  if (!tbody) return;
+  if (datos.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;padding:32px;color:var(--text-3);font-size:13px;">Sin regularizaciones con estos filtros</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = datos.map(r => {
+    const s = semaforoReg(r.fecha_fin);
+    const ult = regsSeguimientoCache[r.id]?.[0];
+    const ultFecha = ult ? fmtFechaReg(ult.fecha?.split('T')[0]) : '—';
+    const ultTipoIcon = ult ? ({ llamada:'📞', whatsapp:'💬', email:'✉️', visita:'🤝', nota:'📝' }[ult.tipo] || '') : '';
+    return `<tr>
+      <td style="text-align:center;">
+        <span style="font-size:15px;" title="${s.label} desde ${fmtFechaReg(r.fecha_fin)}">${s.icon}</span>
+        <span style="font-size:10px;color:${s.color};font-weight:700;display:block;line-height:1.1;">${s.label}</span>
+      </td>
+      <td style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${r.ramo||''}">${r.ramo||'—'}</td>
+      <td style="font-size:11px;font-family:'JetBrains Mono',monospace;white-space:nowrap;">${r.poliza||'—'}</td>
+      <td style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${r.tomador||''}">${r.tomador||'—'}</td>
+      <td style="font-size:11px;text-align:center;">${r.num_riesgos||'—'}</td>
+      <td style="text-align:center;"><span style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:20px;background:${r.suplemento==='S'?'var(--green-bg)':'var(--red-dim)'};color:${r.suplemento==='S'?'var(--green)':'var(--red)'};">${r.suplemento||'N'}</span></td>
+      <td style="font-size:11px;white-space:nowrap;">${fmtFechaReg(r.fecha_fin)}</td>
+      <td style="font-size:11px;text-align:right;white-space:nowrap;">${fmtEuroReg(r.prima_poliza)}</td>
+      <td style="font-size:11px;text-align:right;white-space:nowrap;color:${r.prima_regularizacion?'var(--green)':'var(--text-3)'};">${fmtEuroReg(r.prima_regularizacion)}</td>
+      <td style="font-size:11px;color:var(--text-3);white-space:nowrap;">${ultTipoIcon} ${ultFecha}</td>
+      <td style="white-space:nowrap;padding:4px 6px;">
+        <button class="btn btn-ghost btn-sm" onclick="abrirModalReg('${r.id}')" style="font-size:11px;padding:0 8px;">📋 Gestión</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function abrirModalReg(id) {
+  const r = regsData.find(x => String(x.id) === String(id));
+  if (!r) return;
+  const modal = document.getElementById('modalRegularizacion');
+  if (!modal) return;
+  document.getElementById('regModalPoliza').textContent  = r.poliza  || '—';
+  document.getElementById('regModalTomador').textContent = r.tomador || '—';
+  document.getElementById('regModalRamo').textContent    = r.ramo    || '—';
+  document.getElementById('regModalFin').textContent     = fmtFechaReg(r.fecha_fin);
+  const s = semaforoReg(r.fecha_fin);
+  document.getElementById('regModalSem').innerHTML = `${s.icon} <span style="color:${s.color};font-weight:700;">${s.label} desde vencimiento</span>`;
+  document.getElementById('regModalSuplBadge').innerHTML = `<span style="font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;background:${r.suplemento==='S'?'var(--green-bg)':'var(--red-dim)'};color:${r.suplemento==='S'?'var(--green)':'var(--red)'};">Suplemento: ${r.suplemento==='S'?'✅ Confirmado':'⏳ Pendiente'}</span>`;
+  modal.dataset.regId = id;
+  document.getElementById('regSeguTipo').value      = 'llamada';
+  document.getElementById('regSeguResultado').value = '';
+  document.getElementById('regSeguFecha').value     = new Date().toISOString().split('T')[0];
+  await cargarSeguimientoModal(id);
+  modal.style.display = 'flex';
+}
+
+function cerrarModalReg() {
+  const m = document.getElementById('modalRegularizacion');
+  if (m) m.style.display = 'none';
+}
+
+async function cargarSeguimientoModal(regId) {
+  const lista = document.getElementById('regSeguLista');
+  if (!lista) return;
+  lista.innerHTML = '<div style="color:var(--text-3);font-size:12px;padding:8px 0;text-align:center;">Cargando historial…</div>';
+  let entries = [];
+  try {
+    const data = await supaFetch(`/rest/v1/regularizaciones_seguimiento?reg_id=eq.${encodeURIComponent(regId)}&order=fecha.desc&limit=20`);
+    entries = Array.isArray(data) ? data : [];
+    regsSeguimientoCache[regId] = entries;
+  } catch(e) {
+    entries = regsSeguimientoCache[regId] || [];
+  }
+  if (entries.length === 0) {
+    lista.innerHTML = '<div style="color:var(--text-3);font-size:12px;padding:12px 0;text-align:center;">Sin gestiones registradas aún</div>';
+    return;
+  }
+  const tipoIcon = { llamada:'📞', whatsapp:'💬', email:'✉️', visita:'🤝', nota:'📝' };
+  lista.innerHTML = entries.map(e => `
+    <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+      <div style="font-size:17px;flex-shrink:0;line-height:1.2;">${tipoIcon[e.tipo]||'📝'}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:11px;font-weight:600;color:var(--text);text-transform:capitalize;">${e.tipo||'nota'} · <span style="color:var(--text-3);font-weight:400;">${fmtFechaReg(e.fecha?.split('T')[0])}</span></div>
+        <div style="font-size:12px;color:var(--text-2);margin-top:2px;white-space:pre-wrap;">${e.resultado||'—'}</div>
+        ${e.gestionado_por ? `<div style="font-size:10px;color:var(--text-3);margin-top:2px;">por ${e.gestionado_por}</div>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+async function guardarSeguimientoReg() {
+  const modal = document.getElementById('modalRegularizacion');
+  if (!modal) return;
+  const regId    = modal.dataset.regId;
+  const tipo     = document.getElementById('regSeguTipo').value;
+  const resultado = document.getElementById('regSeguResultado').value.trim();
+  const fecha    = document.getElementById('regSeguFecha').value;
+  if (!resultado) { alert('Escribe el resultado de la gestión'); return; }
+  const btn = document.getElementById('btnGuardarSegu');
+  if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
+  const nombre = currentUser?.email?.split('@')[0] || currentUser?.email || '';
+  const entry  = { reg_id: regId, fecha: fecha || new Date().toISOString().split('T')[0], tipo, resultado, gestionado_por: nombre };
+  try {
+    const isMock = String(regId).startsWith('mock-');
+    if (!isMock) {
+      await supaFetch('/rest/v1/regularizaciones_seguimiento', { method:'POST', body: JSON.stringify(entry) });
+    }
+    if (!regsSeguimientoCache[regId]) regsSeguimientoCache[regId] = [];
+    regsSeguimientoCache[regId].unshift({ ...entry, id: 'local-' + Date.now() });
+    await cargarSeguimientoModal(regId);
+    document.getElementById('regSeguResultado').value = '';
+    renderTablaReg();
+  } catch(e) {
+    alert('Error al guardar: ' + e.message);
+  }
+  if (btn) { btn.textContent = '+ Guardar gestión'; btn.disabled = false; }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
 </script>
 
   <!-- MODAL RECORTE FOTO -->
