@@ -7942,9 +7942,11 @@ function renderTablaReg() {
       <td style="font-size:11px;text-align:right;white-space:nowrap;">${fmtEuroReg(r.prima_poliza)}</td>
       <td style="font-size:11px;text-align:right;white-space:nowrap;color:${r.prima_regularizacion?'var(--green)':'var(--text-3)'};">${fmtEuroReg(r.prima_regularizacion)}</td>
       <td style="font-size:11px;color:var(--text-3);white-space:nowrap;">${ultTipoIcon} ${ultFecha}</td>
-      <td style="white-space:nowrap;padding:4px 6px;display:flex;gap:4px;">
-        <button class="btn btn-primary btn-sm" onclick="abrirModalReg('${r.id}','gestion')"   style="font-size:11px;padding:0 8px;">✏️ Gestión</button>
-        <button class="btn btn-ghost btn-sm"   onclick="abrirModalReg('${r.id}','historial')" style="font-size:11px;padding:0 8px;">🕐 Historial</button>
+      <td style="white-space:nowrap;padding:4px 6px;">
+        <div style="display:flex;gap:4px;">
+          <button class="btn btn-primary btn-sm" onclick="abrirModalReg('${r.id}','gestion')"   style="font-size:11px;padding:0 8px;">✏️ Gestión</button>
+          <button class="btn btn-ghost btn-sm"   onclick="abrirModalReg('${r.id}','historial')" style="font-size:11px;padding:0 8px;">🕐 Historial</button>
+        </div>
       </td>
     </tr>`;
   }).join('');
