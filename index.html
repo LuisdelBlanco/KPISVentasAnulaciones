@@ -7792,6 +7792,10 @@ async function toggleSuplemento(id) {
   const reg = regsData.find(r => r.id === id);
   if (!reg) return;
   const nuevoVal = reg.suplemento === 'S' ? 'N' : 'S';
+  const textoConfirm = nuevoVal === 'S'
+    ? `¿Confirmas que el suplemento de ${reg.tomador || reg.poliza} ya está hecho?`
+    : `¿Quieres volver a marcar el suplemento de ${reg.tomador || reg.poliza} como pendiente?`;
+  if (!confirm(textoConfirm)) return;
   try {
     await supaFetch(`/rest/v1/regularizaciones?id=eq.${id}`, {
       method: 'PATCH',
@@ -7987,16 +7991,24 @@ async function cargarSeguimientoModal(regId) {
     return;
   }
   const tipoIcon = { llamada:'📞', whatsapp:'💬', email:'✉️', visita:'🤝', nota:'📝' };
-  lista.innerHTML = entries.map(e => `
-    <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
-      <div style="font-size:17px;flex-shrink:0;line-height:1.2;">${tipoIcon[e.tipo]||'📝'}</div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:11px;font-weight:600;color:var(--text);text-transform:capitalize;">${e.tipo||'nota'} · <span style="color:var(--text-3);font-weight:400;">${fmtFechaReg(e.fecha?.split('T')[0])}</span></div>
-        <div style="font-size:12px;color:var(--text-2);margin-top:2px;white-space:pre-wrap;">${e.resultado||'—'}</div>
-        ${e.gestionado_por ? `<div style="font-size:10px;color:var(--text-3);margin-top:2px;">por ${e.gestionado_por}</div>` : ''}
+  const meUser = currentUser?.email?.split('@')[0] || '';
+  const esAdmin = currentRole === 'advanced';
+  lista.innerHTML = entries.map(e => {
+    const esMio = e.gestionado_por === meUser || e.gestionado_por === currentUser?.email;
+    const puedeBorrar = esAdmin || esMio;
+    const idSegu = e.id || '';
+    return `
+    <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);min-height:0;">
+      <div style="font-size:14px;flex-shrink:0;line-height:1;">${tipoIcon[e.tipo]||'📝'}</div>
+      <div style="flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px;">
+        <span style="font-size:11px;font-weight:600;color:var(--text);text-transform:capitalize;">${e.tipo||'nota'}</span>
+        <span style="font-size:10px;color:var(--text-3);">${fmtFechaReg(e.fecha?.split('T')[0])}</span>
+        ${e.gestionado_por ? `<span style="font-size:10px;color:var(--text-3);">· ${e.gestionado_por}</span>` : ''}
+        <span style="font-size:11px;color:var(--text-2);width:100%;white-space:pre-wrap;">${e.resultado||'—'}</span>
       </div>
+      ${puedeBorrar && idSegu ? `<button onclick="borrarSeguimientoReg('${idSegu}', this)" title="Borrar esta gestión" style="flex-shrink:0;background:none;border:none;cursor:pointer;color:var(--text-3);font-size:13px;padding:2px 4px;line-height:1;border-radius:4px;" onmouseenter="this.style.color='#C2003F'" onmouseleave="this.style.color='var(--text-3)'">✕</button>` : '<div style="width:21px;flex-shrink:0;"></div>'}
     </div>
-  `).join('');
+  `}).join('');
 }
 
 async function guardarSeguimientoReg() {
@@ -8025,6 +8037,27 @@ async function guardarSeguimientoReg() {
     alert('Error al guardar: ' + e.message);
   }
   if (btn) { btn.textContent = '+ Guardar gestión'; btn.disabled = false; }
+}
+
+async function borrarSeguimientoReg(id, btnEl) {
+  if (!confirm('¿Borrar esta gestión del historial? No se puede deshacer.')) return;
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = '…'; }
+  try {
+    const isLocal = String(id).startsWith('local-');
+    if (!isLocal) {
+      await supaFetch(`/rest/v1/regularizaciones_seguimiento?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE' });
+    }
+    // Limpiar cache
+    for (const regId in regsSeguimientoCache) {
+      regsSeguimientoCache[regId] = regsSeguimientoCache[regId].filter(e => e.id !== id);
+    }
+    // Recargar lista
+    const modal = document.getElementById('modalRegularizacion');
+    if (modal?.dataset?.regId) await cargarSeguimientoModal(modal.dataset.regId);
+  } catch(e) {
+    alert('Error al borrar: ' + e.message);
+    if (btnEl) { btnEl.disabled = false; btnEl.textContent = '✕'; }
+  }
 }
 
 // ════════════════════════════════════════════════════════════════════════════
