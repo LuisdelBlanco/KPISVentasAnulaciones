@@ -1566,7 +1566,7 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
             <table>
               <colgroup>
                 <col style="width:80px"><col style="width:90px"><col style="width:110px">
-                <col style="width:140px"><col style="width:48px"><col style="width:56px">
+                <col style="width:140px"><col style="width:56px">
                 <col style="width:78px"><col style="width:82px"><col style="width:82px">
                 <col style="width:90px"><col style="width:82px"><col style="width:170px">
               </colgroup>
@@ -1575,7 +1575,6 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
                 <th>Ramo</th>
                 <th style="font-family:'JetBrains Mono',monospace;font-size:11px;">Póliza</th>
                 <th>Tomador</th>
-                <th style="text-align:center;">Riesgos</th>
                 <th style="text-align:center;">Supl.</th>
                 <th>Fecha fin</th>
                 <th style="text-align:right;">Prima póliza</th>
@@ -8001,7 +8000,7 @@ function renderTablaReg() {
     if (filtroEstado  && est !== filtroEstado)      return false;
     if (filtroOficina && r.oficina !== filtroOficina) return false;
     if (busqueda) {
-      const haystack = [r.poliza, r.tomador, r.ramo, r.oficina, r.num_riesgos].join(' ').toLowerCase();
+      const haystack = [r.poliza, r.tomador, r.ramo, r.oficina].join(' ').toLowerCase();
       if (!haystack.includes(busqueda)) return false;
     }
     return true;
@@ -8012,7 +8011,7 @@ function renderTablaReg() {
     const msgVacio = regsData.length === 0
       ? `Sin registros aún — pulsa <strong>+ Nueva</strong> para añadir la primera regularización`
       : `Sin regularizaciones con estos filtros`;
-    tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;padding:32px;color:var(--text-3);font-size:13px;">${msgVacio}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;padding:32px;color:var(--text-3);font-size:13px;">${msgVacio}</td></tr>`;
     return;
   }
   tbody.innerHTML = datos.map(r => {
@@ -8020,15 +8019,18 @@ function renderTablaReg() {
     const ult = regsSeguimientoCache[r.id]?.[0];
     const ultFecha = ult ? fmtFechaReg(ult.fecha?.split('T')[0]) : '—';
     const ultTipoIcon = ult ? ({ llamada:'📞', whatsapp:'💬', email:'✉️', visita:'🤝', nota:'📝' }[ult.tipo] || '') : '';
+    const est = r.estado || 'pendiente';
+    const semaforoCell = est === 'hecho'
+      ? `<td style="text-align:center;"><span style="font-size:18px;opacity:0.4;" title="Completado">✅</span></td>`
+      : `<td style="text-align:center;">
+          <span style="font-size:15px;" title="${s.label} desde ${fmtFechaReg(r.fecha_fin)}">${s.icon}</span>
+          <span style="font-size:10px;color:${s.color};font-weight:700;display:block;line-height:1.1;">${s.label}</span>
+        </td>`;
     return `<tr>
-      <td style="text-align:center;">
-        <span style="font-size:15px;" title="${s.label} desde ${fmtFechaReg(r.fecha_fin)}">${s.icon}</span>
-        <span style="font-size:10px;color:${s.color};font-weight:700;display:block;line-height:1.1;">${s.label}</span>
-      </td>
+      ${semaforoCell}
       <td style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${r.ramo||''}">${r.ramo||'—'}</td>
       <td style="font-size:11px;font-family:'JetBrains Mono',monospace;white-space:nowrap;">${r.poliza||'—'}</td>
       <td style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${r.tomador||''}">${r.tomador||'—'}</td>
-      <td style="font-size:11px;text-align:center;">${r.num_riesgos||'—'}</td>
       <td style="text-align:center;">${estadoBadgeBtn(r.id, r.estado)}</td>
       <td style="font-size:11px;white-space:nowrap;">${fmtFechaReg(r.fecha_fin)}</td>
       <td style="font-size:11px;text-align:right;white-space:nowrap;">${fmtEuroReg(r.prima_poliza)}</td>
