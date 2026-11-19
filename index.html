@@ -1627,6 +1627,24 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
         </div>
         <!-- Tab: Nueva gestión -->
         <div id="tabGestion" style="padding:18px 20px;">
+          <!-- Estado dial -->
+          <div style="margin-bottom:12px;">
+            <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:6px;font-weight:600;">Estado</label>
+            <div style="display:flex;gap:6px;">
+              <button id="dial_pendiente"  onclick="setEstadoRegModal('pendiente')"  style="flex:1;padding:7px 4px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;font-size:11px;font-weight:600;font-family:inherit;background:var(--surface);color:var(--text-3);transition:all 0.15s;">⏳ Pendiente</button>
+              <button id="dial_en_gestion" onclick="setEstadoRegModal('en_gestion')" style="flex:1;padding:7px 4px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;font-size:11px;font-weight:600;font-family:inherit;background:var(--surface);color:var(--text-3);transition:all 0.15s;">🔄 En gestión</button>
+              <button id="dial_hecho"      onclick="setEstadoRegModal('hecho')"      style="flex:1;padding:7px 4px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;font-size:11px;font-weight:600;font-family:inherit;background:var(--surface);color:var(--text-3);transition:all 0.15s;">✅ Hecho</button>
+            </div>
+          </div>
+          <!-- Prima neta -->
+          <div style="margin-bottom:12px;">
+            <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;font-weight:600;">Prima neta regularización (€)</label>
+            <input type="number" id="regModalPrima" placeholder="0.00" min="0" step="0.01" onblur="guardarPrimaRegModal(this.value)" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);box-sizing:border-box;">
+          </div>
+          <!-- Separador -->
+          <div style="border-top:1px solid var(--border);margin-bottom:12px;padding-top:12px;">
+            <span style="font-size:11px;color:var(--text-3);font-weight:600;">Nueva anotación de seguimiento</span>
+          </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
             <div>
               <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Tipo</label>
@@ -7844,6 +7862,79 @@ async function cambiarOficinaRegModal(oficina) {
   renderTablaReg();
 }
 
+function actualizarDialEstadoModal(estado) {
+  const cfg = {
+    pendiente:  { bg:'var(--red-dim)',  color:'var(--red)',   border:'var(--red)'   },
+    en_gestion: { bg:'var(--amber-bg)', color:'var(--amber)', border:'var(--amber)' },
+    hecho:      { bg:'var(--green-bg)', color:'var(--green)', border:'var(--green)' },
+  };
+  ['pendiente','en_gestion','hecho'].forEach(e => {
+    const btn = document.getElementById('dial_' + e);
+    if (!btn) return;
+    if (e === estado) {
+      const c = cfg[e];
+      btn.style.background  = c.bg;
+      btn.style.color       = c.color;
+      btn.style.borderColor = c.border;
+    } else {
+      btn.style.background  = 'var(--surface)';
+      btn.style.color       = 'var(--text-3)';
+      btn.style.borderColor = 'var(--border)';
+    }
+  });
+}
+
+async function setEstadoRegModal(nuevoEstado) {
+  const modal = document.getElementById('modalRegularizacion');
+  if (!modal?.dataset?.regId) return;
+  const regId = modal.dataset.regId;
+  const reg = regsData.find(r => r.id === regId);
+  if (!reg) return;
+  if (reg.estado === nuevoEstado) return;
+  const labels = { pendiente:'Pendiente', en_gestion:'En gestión', hecho:'Hecho' };
+  reg.estado = nuevoEstado;
+  actualizarDialEstadoModal(nuevoEstado);
+  // Actualizar badge del header del modal
+  const estCfg = { hecho:{icon:'✅',label:'Hecho',bg:'var(--green-bg)',color:'var(--green)'}, en_gestion:{icon:'🔄',label:'En gestión',bg:'var(--amber-bg)',color:'var(--amber)'}, pendiente:{icon:'⏳',label:'Pendiente',bg:'var(--red-dim)',color:'var(--red)'} };
+  const ec = estCfg[nuevoEstado] || estCfg.pendiente;
+  document.getElementById('regModalEstadoBadge').innerHTML = `<span style="font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;background:${ec.bg};color:${ec.color};">${ec.icon} ${ec.label}</span>`;
+  try {
+    await supaFetch(`/rest/v1/regularizaciones?id=eq.${encodeURIComponent(regId)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ estado: nuevoEstado })
+    });
+    renderKpisReg();
+    renderTablaReg();
+    showToast('✅ Estado: ' + labels[nuevoEstado]);
+  } catch(e) {
+    showToast('⚠️ Error al cambiar estado', 'err');
+  }
+}
+
+async function guardarPrimaRegModal(valor) {
+  const modal = document.getElementById('modalRegularizacion');
+  if (!modal?.dataset?.regId) return;
+  const regId = modal.dataset.regId;
+  const reg = regsData.find(r => r.id === regId);
+  if (!reg) return;
+  const prima = valor !== '' ? parseFloat(valor) : null;
+  if (reg.prima_regularizacion === prima) return;
+  reg.prima_regularizacion = prima;
+  try {
+    await supaFetch(`/rest/v1/regularizaciones?id=eq.${encodeURIComponent(regId)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ prima_regularizacion: prima })
+    });
+    renderKpisReg();
+    renderTablaReg();
+    showToast('✅ Prima guardada');
+  } catch(e) {
+    showToast('⚠️ Error al guardar prima', 'err');
+  }
+}
+
 async function cambiarOficinaReg(id, oficina) {
   const reg = regsData.find(r => r.id === id);
   if (!reg) return;
@@ -8089,6 +8180,11 @@ async function abrirModalReg(id, tab) {
   modal.dataset.regId = id;
   const ofSel = document.getElementById('regModalOficina');
   if (ofSel) ofSel.value = r.oficina || '';
+  // Dial de estado
+  actualizarDialEstadoModal(r.estado || 'pendiente');
+  // Prima neta
+  const primaInput = document.getElementById('regModalPrima');
+  if (primaInput) primaInput.value = r.prima_regularizacion != null ? r.prima_regularizacion : '';
   document.getElementById('regSeguTipo').value      = 'llamada';
   document.getElementById('regSeguResultado').value = '';
   document.getElementById('regSeguFecha').value     = new Date().toISOString().split('T')[0];
