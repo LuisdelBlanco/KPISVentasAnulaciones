@@ -1639,7 +1639,7 @@ tr.new-inicial td      { animation: blinkVerde 1.2s ease-in-out 3; }
           <!-- Prima neta -->
           <div style="margin-bottom:12px;">
             <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;font-weight:600;">Prima neta regularización (€)</label>
-            <input type="number" id="regModalPrima" placeholder="0.00" min="0" step="0.01" onblur="guardarPrimaRegModal(this.value)" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);box-sizing:border-box;">
+            <input type="text" inputmode="decimal" id="regModalPrima" placeholder="0,00" onblur="guardarPrimaRegModal(this.value)" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);box-sizing:border-box;">
           </div>
           <!-- Separador -->
           <div style="border-top:1px solid var(--border);margin-bottom:12px;padding-top:12px;">
@@ -7918,7 +7918,8 @@ async function guardarPrimaRegModal(valor) {
   const regId = modal.dataset.regId;
   const reg = regsData.find(r => r.id === regId);
   if (!reg) return;
-  const prima = valor !== '' ? parseFloat(valor) : null;
+  const normalizado = String(valor).trim().replace(',', '.');
+  const prima = normalizado !== '' && !isNaN(normalizado) ? parseFloat(parseFloat(normalizado).toFixed(2)) : null;
   if (reg.prima_regularizacion === prima) return;
   reg.prima_regularizacion = prima;
   try {
@@ -8184,7 +8185,7 @@ async function abrirModalReg(id, tab) {
   actualizarDialEstadoModal(r.estado || 'pendiente');
   // Prima neta
   const primaInput = document.getElementById('regModalPrima');
-  if (primaInput) primaInput.value = r.prima_regularizacion != null ? r.prima_regularizacion : '';
+  if (primaInput) primaInput.value = r.prima_regularizacion != null ? String(r.prima_regularizacion).replace('.', ',') : '';
   document.getElementById('regSeguTipo').value      = 'llamada';
   document.getElementById('regSeguResultado').value = '';
   document.getElementById('regSeguFecha').value     = new Date().toISOString().split('T')[0];
