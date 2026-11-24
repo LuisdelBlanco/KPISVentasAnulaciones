@@ -4279,7 +4279,7 @@ function actualizarCampoComision() {
   // Preview del incentivo
   const comOcc = parseFloat(document.getElementById('mComisionOcc')?.value) || 0;
   if(prev) {
-    const reg = { tipo, ramo, prima, comisionOccident: comOcc };
+    const reg = { tipo, ramo, prima, comisionOccident: comOcc, agente, fecha: new Date().toISOString().slice(0, 10) };
     const inc = calcularIncentivo70(reg);
     if(inc !== 0) {
       prev.textContent = `→ Incentivo: ${inc >= 0 ? '+' : ''}${inc.toFixed(2)} €`;
@@ -5382,24 +5382,36 @@ function renderPanel70(anio, mes, isAdv, container) {
       totalInc += inc;
       const ahorro = esRamoAhorro70(r.ramo);
       const autos  = esRamoAutos70(r.ramo);
+      const _pctR = getPctBCN(r.agente, r.fecha);
+      const _pctLabel = Math.round(_pctR * 100) + '%';
       let detalle = '';
       if(r.tipo === 'Emisión' || r.tipo === 'Aumento prevista') {
         detalle = ahorro
           ? `${r.prima}€/año ÷ 12 ÷ 10`
-          : `${(parseFloat(r.comisionOccident)||0).toFixed(2)}€ × 70%`;
+          : `${(parseFloat(r.comisionOccident)||0).toFixed(2)}€ × ${_pctLabel}`;
       } else if(r.tipo === 'Inicial/Suple') {
-        detalle = ahorro ? `${r.prima}€ ÷ 1.000` : `${(parseFloat(r.comisionOccident)||0).toFixed(2)}€ × 70%`;
+        detalle = ahorro ? `${r.prima}€ ÷ 1.000` : `${(parseFloat(r.comisionOccident)||0).toFixed(2)}€ × ${_pctLabel}`;
       } else if(r.tipo === 'Sin efecto') {
-        detalle = ahorro ? `−(${r.prima}€/año ÷ 12 ÷ 10)` : `−${(parseFloat(r.comisionOccident)||0).toFixed(2)}€ × 70%`;
+        detalle = ahorro ? `−(${r.prima}€/año ÷ 12 ÷ 10)` : `−${(parseFloat(r.comisionOccident)||0).toFixed(2)}€ × ${_pctLabel}`;
       } else if(r.tipo === 'Reemplazo') {
-        detalle = `Dif. ${(parseFloat(r.comisionOccident)||0).toFixed(2)}€ × 70%`;
+        detalle = `Dif. ${(parseFloat(r.comisionOccident)||0).toFixed(2)}€ × ${_pctLabel}`;
+      }
+      // Admin: indicativo al 70% antiguo (solo si el % cambió y no es ramo ahorro)
+      let _inc70html = '';
+      if (isAdv && _pctR !== 0.70 && !ahorro) {
+        const _comOccR = parseFloat(r.comision_occident || r.comisionOccident || 0);
+        const _tiposConPct = ['Emisión','Inicial/Suple','Sin efecto','Reemplazo'];
+        if (_comOccR !== 0 && _tiposConPct.includes(r.tipo)) {
+          const _inc70 = _comOccR * 0.70 * (r.tipo === 'Sin efecto' ? -1 : 1);
+          _inc70html = `<span style="display:block;font-size:9px;color:var(--text-3);font-weight:500;line-height:1.3;">(ant. ${_inc70>=0?'+':''}${_inc70.toFixed(2)}€)</span>`;
+        }
       }
       const puedeEditar = isAdv || !!AGENTES_70[currentUser?.id];
       return `<div onclick="event.stopPropagation();${puedeEditar ? `editarRegistro70('${r.id}')` : ''}" style="display:grid;grid-template-columns:70px 1fr 80px 80px;gap:6px;align-items:center;padding:5px 8px;border-radius:6px;font-size:11px;background:${inc < 0?'#FFF1F3':'var(--surface-2)'};${puedeEditar?'cursor:pointer;':''};" ${puedeEditar?`onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"`:''}>
         <span style="font-weight:700;color:var(--text-3);">${r.fecha?.slice(5)||''}</span>
         <span style="color:var(--text);">${r.poliza||'—'} <span style="color:var(--text-3);">${r.tipo}</span></span>
         <span style="color:var(--text-3);font-size:10px;">${detalle}</span>
-        <span style="font-weight:800;text-align:right;color:${inc>=0?'var(--green)':'var(--red)'};">${inc>=0?'+':''}${inc.toFixed(2)}€</span>
+        <span style="font-weight:800;text-align:right;color:${inc>=0?'var(--green)':'var(--red)'};">${inc>=0?'+':''}${inc.toFixed(2)}€${_inc70html}</span>
       </div>`;
     }).join('');
 
@@ -5408,7 +5420,7 @@ function renderPanel70(anio, mes, isAdv, container) {
     html70 += `<div onclick="irARegistrosAgente('${nombre.replace(/'/g,"\\'")}',${mes},${anio})" style="background:var(--surface);border-radius:12px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,0.05);overflow:hidden;cursor:pointer;transition:box-shadow 0.15s,border-color 0.15s;" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,0.1)';this.style.borderColor='var(--red)'" onmouseout="this.style.boxShadow='0 1px 4px rgba(0,0,0,0.05)';this.style.borderColor='var(--border)'">
       <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);">
         ${avatarHTML(nombre, 32)}
-        <div style="flex:1;"><div style="font-size:13px;font-weight:800;">${nombre}</div><div style="font-size:10px;color:var(--text-3);">Sistema 70% · Barcelona</div></div>
+        <div style="flex:1;"><div style="font-size:13px;font-weight:800;">${nombre}</div><div style="font-size:10px;color:var(--text-3);">Sistema ${Math.round(getPctBCN(nombre,`${anio}-${String(mes).padStart(2,'0')}-01`)*100)}% · Barcelona</div></div>
         <div style="text-align:right;">
           <div style="font-size:22px;font-weight:900;color:${totalInc>=0?'var(--red)':'#BE123C'};">${totalInc.toFixed(2)}€</div>
           <div style="font-size:9px;color:var(--text-3);">incentivo estimado</div>
@@ -7208,6 +7220,21 @@ const AGENTES_70 = {
   '4fb9dd85-ad99-4bb7-ae2e-acfd82e188c6': 'Cristina Egea',
 };
 const NOMBRES_70 = Object.values(AGENTES_70);
+// Comisiones individuales — vigente desde la fecha indicada (antes: 70% para todos)
+const COMISION_HISTORIAL_BCN = {
+  'Irene Ruiz':       [{ desde: '2026-11-01', pct: 0.95 }],
+  'Vicky Giménez':    [{ desde: '2026-11-01', pct: 0.95 }],
+  'Marta Calcerrada': [{ desde: '2026-11-01', pct: 0.80 }],
+  'Cristina Egea':    [{ desde: '2026-11-01', pct: 0.80 }],
+};
+function getPctBCN(nombre, fecha) {
+  const historial = COMISION_HISTORIAL_BCN[nombre];
+  if (!historial || !fecha) return 0.70;
+  for (const h of historial) {
+    if (fecha >= h.desde) return h.pct;
+  }
+  return 0.70;
+}
 // Admins que también ven y editan el panel Barcelona
 const ADMINS_VEN_70 = [
   '2beeddaf-8c14-4467-99bc-2dc0b80e7cbd', // Luis del Blanco
@@ -7237,22 +7264,23 @@ function calcularIncentivo70(reg) {
   const comOcc = parseFloat(reg.comisionOccident || reg.comision_occident) || 0;
   const ahorro = esRamoAhorro70(ramo);
   const autos  = esRamoAutos70(ramo);
+  const pct    = getPctBCN(reg.agente || '', reg.fecha || '');
 
   if (tipo === 'Emisión') {
-    return ahorro ? (prima / 12) / 10 : comOcc * 0.70;
+    return ahorro ? (prima / 12) / 10 : comOcc * pct;
   }
   if (tipo === 'Inicial/Suple') {
-    return ahorro ? prima / 1000 : comOcc * 0.70;
+    return ahorro ? prima / 1000 : comOcc * pct;
   }
   if (tipo === 'Aumento prevista') {
     return ahorro ? (prima / 12) / 10 : 0;
   }
   if (tipo === 'Sin efecto') {
-    const base = ahorro ? (prima / 12) / 10 : comOcc * 0.70;
+    const base = ahorro ? (prima / 12) / 10 : comOcc * pct;
     return -base;
   }
   if (tipo === 'Reemplazo' && autos) {
-    return comOcc > 0 ? comOcc * 0.70 : 0;
+    return comOcc > 0 ? comOcc * pct : 0;
   }
   return 0;
 }
