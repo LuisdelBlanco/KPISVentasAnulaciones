@@ -5410,6 +5410,11 @@ function renderPanel70(anio, mes, isAdv, container) {
     const diff70html = isAdv && Math.abs(totalInc - totalInc70) > 0.001
       ? `<div style="font-size:10px;color:var(--text-3);margin-top:2px;">Al 70%: ${totalInc70.toFixed(2)}€</div>`
       : '';
+    const _valBcn = _validacionesInc[nombre];
+    const validarBtnBcn = isAdv ? `<button onclick="event.stopPropagation();validarIncentivo('${nombre.replace(/'/g,"\\'")}',${mes},${anio},${Math.round(totalInc)})"
+      style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;border:1px solid ${_valBcn ? '#86EFAC' : 'var(--border)'};background:${_valBcn ? '#F0FDF4' : 'var(--surface-2)'};color:${_valBcn ? '#16A34A' : 'var(--text-3)'};cursor:pointer;font-family:inherit;margin-top:4px;">
+      ${_valBcn ? '✓ Validado' : 'Validar'}
+    </button>` : '';
 
     html70 += `<div onclick="irARegistrosAgente('${nombre.replace(/'/g,"\\'")}',${mes},${anio})" style="background:var(--surface);border-radius:12px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,0.05);overflow:hidden;cursor:pointer;transition:box-shadow 0.15s,border-color 0.15s;" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,0.1)';this.style.borderColor='var(--red)'" onmouseout="this.style.boxShadow='0 1px 4px rgba(0,0,0,0.05)';this.style.borderColor='var(--border)'">
       <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);">
@@ -5419,6 +5424,7 @@ function renderPanel70(anio, mes, isAdv, container) {
           <div style="font-size:22px;font-weight:900;color:${totalInc>=0?'var(--red)':'#BE123C'};">${totalInc.toFixed(2)}€</div>
           <div style="font-size:9px;color:var(--text-3);">incentivo estimado</div>
           ${diff70html}
+          ${validarBtnBcn}
         </div>
       </div>
       <div style="padding:10px 14px;display:flex;flex-direction:column;gap:4px;max-height:240px;overflow-y:auto;" onclick="event.stopPropagation()">
